@@ -95,7 +95,7 @@ const DiarioObras: React.FC = () => {
         obraService.listar(),
         pessoaService.listar(),
       ]);
-      setDiarios(Array.isArray(diariosRes?.data) ? diariosRes.data : []);
+      setDiarios(Array.isArray(diariosRes) ? diariosRes : []);
       setObras(Array.isArray(obrasRes) ? obrasRes : []);
       setPessoas(Array.isArray(pessoasRes) ? pessoasRes : []);
     } catch (error) {
@@ -167,7 +167,7 @@ const DiarioObras: React.FC = () => {
   const handleExcluir = async (id: string) => {
     if (!window.confirm("Deseja excluir este diário?")) return;
     try {
-      await diarioService.deletar(id);
+      await diarioService.deletar(Number(id)); // ✅ CONVERTER PARA NUMBER
       toast.success("Diário excluído!");
       carregarDados();
     } catch (error) {

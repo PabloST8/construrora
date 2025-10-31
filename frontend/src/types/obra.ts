@@ -2,10 +2,15 @@ export interface Obra {
   id?: number;
   nome: string;
   contrato_numero: string;
+  contratoNumero?: string; // ✅ COMPATIBILIDADE
   contratante_id: number;
   responsavel_id: number;
+  responsavelNome?: string; // ✅ ADICIONAR CAMPO
+  contratanteNome?: string; // ✅ ADICIONAR CAMPO
   data_inicio: string;
+  dataInicio?: string; // ✅ COMPATIBILIDADE
   prazo_dias: number;
+  prazoDias?: number; // ✅ COMPATIBILIDADE
   data_fim_prevista: string;
   orcamento: number;
   status:
@@ -14,6 +19,7 @@ export interface Obra {
     | "pausada"
     | "concluida"
     | "cancelada";
+  descricao?: string; // ✅ ADICIONAR CAMPO FALTANTE
   endereco_rua?: string;
   endereco_numero?: string;
   endereco_bairro?: string;
@@ -37,6 +43,7 @@ export interface ObraLegacy {
   responsavelNome?: string;
   dataInicio?: string;
   dataTerminoPrevista?: string;
+  dataInicioReal?: string; // ✅ ADICIONAR CAMPO FALTANTE
   prazoDias?: number;
   orcamento?: number;
   valorTotal?: number;

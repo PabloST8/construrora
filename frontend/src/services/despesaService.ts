@@ -8,26 +8,29 @@ export const despesaService = {
     return response.data.data || response.data;
   },
 
-  // Listar todas as despesas
-  async listar(): Promise<Despesa[]> {
-    const response = await api.get("/despesas");
+  // Listar todas as despesas (com filtros opcionais)
+  async listar(filtros?: any): Promise<Despesa[]> {
+    const response = await api.get("/despesas", { params: filtros });
     return response.data.data || response.data;
   },
 
   // Buscar despesa por ID
-  async buscarPorId(id: number): Promise<Despesa> {
+  async buscarPorId(id: number | string): Promise<Despesa> {
     const response = await api.get(`/despesas/${id}`);
     return response.data;
   },
 
   // Atualizar despesa
-  async atualizar(id: number, despesa: Partial<Despesa>): Promise<Despesa> {
+  async atualizar(
+    id: number | string,
+    despesa: Partial<Despesa>
+  ): Promise<Despesa> {
     const response = await api.put(`/despesas/${id}`, despesa);
     return response.data;
   },
 
   // Deletar despesa
-  async deletar(id: number): Promise<void> {
+  async deletar(id: number | string): Promise<void> {
     await api.delete(`/despesas/${id}`);
   },
 
