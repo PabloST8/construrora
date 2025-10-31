@@ -1,5 +1,6 @@
 import api from "./api";
-import { Despesa, RelatorioDesepesas } from "../types/apiGo";
+import type { Despesa } from "../types/despesa";
+import type { RelatorioDesepesas } from "../types/apiGo";
 
 export const despesaService = {
   // Criar nova despesa

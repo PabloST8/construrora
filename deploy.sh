@@ -77,6 +77,15 @@ fi
 # Build da aplicação frontend local (verificação)
 log "🔨 Verificando build local..."
 cd frontend
+# Se não houver react-scripts instalado localmente, instalar dependências automaticamente
+if [ ! -f "node_modules/.bin/react-scripts" ]; then
+    log "📦 Dependências do frontend não encontradas — instalando (npm ci || npm install)..."
+    if ! (npm ci --no-audit --no-fund || npm install --no-audit --no-fund); then
+        error "Falha ao instalar dependências do frontend"
+        exit 1
+    fi
+    log "✅ Dependências do frontend instaladas"
+fi
 if ! npm run build; then
     error "Falha no build local! Verifique os erros acima."
     exit 1

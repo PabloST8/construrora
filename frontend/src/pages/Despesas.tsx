@@ -156,10 +156,12 @@ const Despesas: React.FC = () => {
       console.log("📊 Despesas carregadas:", response);
 
       // Extrair array de despesas da resposta
+      // O cast para `any` é usado para lidar com formatos de resposta diferentes
+      // (ex.: { data: [...] } ou [...] ) sem causar erro de tipagem em build de produção
       const despesasArray = Array.isArray(response)
         ? response
-        : Array.isArray(response?.data)
-        ? response.data
+        : Array.isArray((response as any)?.data)
+        ? (response as any).data
         : [];
 
       // Converter dados do backend (UPPERCASE) para frontend (friendly)
@@ -345,8 +347,8 @@ const Despesas: React.FC = () => {
       // Extrair array de despesas da resposta (response.data ou response)
       const despesasArray = Array.isArray(response)
         ? response
-        : Array.isArray(response?.data)
-        ? response.data
+        : Array.isArray((response as any)?.data)
+        ? (response as any).data
         : [];
 
       // Converter dados do backend (UPPERCASE) para frontend (friendly)
