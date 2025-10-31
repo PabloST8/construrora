@@ -1,0 +1,88 @@
+import api from "./api";
+import { Despesa, RelatorioDesepesas } from "../types/apiGo";
+
+export const despesaService = {
+  // Criar nova despesa
+  async criar(despesa: Despesa): Promise<Despesa> {
+    const response = await api.post("/despesas", despesa);
+    return response.data.data || response.data;
+  },
+
+  // Listar todas as despesas
+  async listar(): Promise<Despesa[]> {
+    const response = await api.get("/despesas");
+    return response.data.data || response.data;
+  },
+
+  // Buscar despesa por ID
+  async buscarPorId(id: number): Promise<Despesa> {
+    const response = await api.get(`/despesas/${id}`);
+    return response.data;
+  },
+
+  // Atualizar despesa
+  async atualizar(id: number, despesa: Partial<Despesa>): Promise<Despesa> {
+    const response = await api.put(`/despesas/${id}`, despesa);
+    return response.data;
+  },
+
+  // Deletar despesa
+  async deletar(id: number): Promise<void> {
+    await api.delete(`/despesas/${id}`);
+  },
+
+  // Relatório de despesas por obra
+  async relatorioObra(obraId: number): Promise<RelatorioDesepesas> {
+    const response = await api.get(`/despesas/relatorio/${obraId}`);
+    return response.data;
+  },
+
+  // Buscar despesas com filtros
+  async buscarComFiltros(filtros: any): Promise<Despesa[]> {
+    const response = await api.get("/despesas", { params: filtros });
+    return response.data.data || response.data;
+  },
+
+  // === LEGACY METHODS (Para compatibilidade) ===
+  listar_legacy: async (params?: {
+    page?: number;
+    limit?: number;
+    obra?: string;
+    categoria?: string;
+    statusPagamento?: string;
+    dataInicio?: string;
+    dataFim?: string;
+  }) => {
+    const response = await api.get("/despesas", { params });
+    return response.data;
+  },
+
+  atualizarPagamento: async (
+    id: string,
+    statusPagamento: string,
+    dataPagamento?: string
+  ) => {
+    const response = await api.patch(`/despesas/${id}/pagamento`, {
+      statusPagamento,
+      dataPagamento,
+    });
+    return response.data;
+  },
+
+  buscarPorObra: async (obraId: string): Promise<Despesa[]> => {
+    const response = await api.get(`/despesas/obra/${obraId}`);
+    return response.data;
+  },
+
+  obterResumoCategoria: async (obra?: string) => {
+    const response = await api.get("/despesas/resumo/categoria", {
+      params: { obra },
+    });
+    return response.data;
+  },
+
+  deletar_legacy: async (id: string) => {
+    const response = await api.delete(`/despesas/${id}`);
+    return response.data;
+  },
+};
