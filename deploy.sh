@@ -76,22 +76,77 @@ fi
 
 # Build da aplicação frontend local (verificação)
 log "🔨 Verificando build local..."
-cd frontend
-# Se não houver react-scripts instalado localmente, instalar dependências automaticamente
-if [ ! -f "node_modules/.bin/react-scripts" ]; then
-    log "📦 Dependências do frontend não encontradas — instalando (npm ci || npm install)..."
-    if ! (npm ci --no-audit --no-fund || npm install --no-audit --no-fund); then
-        error "Falha ao instalar dependências do frontend"
-        exit 1
-    fi
-    log "✅ Dependências do frontend instaladas"
-fi
-if ! npm run build; then
-    error "Falha no build local! Verifique os erros acima."
+# Diretório do frontend
+FRONTEND_DIR="frontend"
+
+# Verifica Node e NPM
+if ! command -v node &> /dev/null; then
+    error "Node.js não encontrado. Instale o Node.js (recomenda-se v16/18+)."
     exit 1
 fi
+if ! command -v npm &> /dev/null; then
+    error "npm não encontrado. Instale o npm (vem com Node.js)."
+    exit 1
+fi
+
+log "$(node -v) $(npm -v) detectados"
+
+if [ ! -d "${FRONTEND_DIR}" ]; then
+    error "Diretório ${FRONTEND_DIR} não encontrado. Abortando build frontend."
+    exit 1
+fi
+
+cd "${FRONTEND_DIR}"
+
+# Verifica package.json
+if [ ! -f "package.json" ]; then
+    error "package.json não encontrado no ${FRONTEND_DIR}. Abortando."
+    exit 1
+fi
+
+# Determina se rodar com --unsafe-perm quando for root (evita erros em containers/roots)
+NPM_UNSAFE=""
+if [ "$(id -u)" -eq 0 ]; then
+    NPM_UNSAFE="--unsafe-perm"
+    warning "Executando como root — usando flag $NPM_UNSAFE para instalação npm."
+fi
+
+# Instala dependências se necessário
+if [ ! -d "node_modules" ] || [ ! -x "node_modules/.bin/react-scripts" ]; then
+    log "📦 Dependências do frontend não encontradas — instalando..."
+    if [ -f package-lock.json ]; then
+        if ! npm ci --no-audit --no-fund $NPM_UNSAFE; then
+            log "npm ci falhou, tentando npm install..."
+            if ! npm install --no-audit --no-fund $NPM_UNSAFE; then
+                error "Falha ao instalar dependências do frontend"
+                exit 1
+            fi
+        fi
+    else
+        if ! npm install --no-audit --no-fund $NPM_UNSAFE; then
+            error "Falha ao instalar dependências do frontend"
+            exit 1
+        fi
+    fi
+    log "✅ Dependências do frontend instaladas"
+else
+    log "📦 Dependências do frontend já presentes"
+fi
+
+# Tenta build via npm run build, com fallback para npx react-scripts build
+if npm run build --silent; then
+    log "✅ Build local OK (npm run build)"
+else
+    warning "npm run build falhou — tentando fallback com npx react-scripts build..."
+    if npx --yes react-scripts build; then
+        log "✅ Build local OK (npx react-scripts build)"
+    else
+        error "Falha no build local! Verifique os erros acima."
+        exit 1
+    fi
+fi
+
 cd ..
-log "✅ Build local OK"
 
 # Build da imagem Docker
 log "🐳 Construindo imagem Docker..."
