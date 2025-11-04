@@ -72,9 +72,7 @@ const Despesas: React.FC = () => {
     data_vencimento: new Date().toISOString().split("T")[0],
     forma_pagamento: "PIX",
     status_pagamento: "PENDENTE",
-    observacao: "",
-    // Adicionando campos que podem ser obrigatórios na API Go
-    data_despesa: new Date().toISOString().split("T")[0],
+    observacoes: "",
     data_pagamento: "", // Será preenchido automaticamente se status for PAGO
   });
 

@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -64,10 +64,10 @@ const DiarioObras: React.FC = () => {
     status_aprovacao: "pendente",
   });
 
-  // Fun√ß√£o para formatar per√≠odo
+  // FunÁ„o para formatar perÌodo
   const formatarPeriodo = (periodo: string) => {
     const periodos: Record<string, string> = {
-      manha: "Manh√£",
+      manha: "Manh„",
       tarde: "Tarde",
       noite: "Noite",
       integral: "Integral",
@@ -102,7 +102,7 @@ const DiarioObras: React.FC = () => {
       !novoDiario.atividades_realizadas ||
       !novoDiario.responsavel_id
     ) {
-      toast.error("Preencha todos os campos obrigat√≥rios");
+      toast.error("Preencha todos os campos obrigatÛrios");
       return;
     }
 
@@ -118,7 +118,7 @@ const DiarioObras: React.FC = () => {
         status_aprovacao: novoDiario.status_aprovacao || "pendente",
       };
 
-      // S√≥ adicionar responsavel_id se tiver um valor v√°lido (> 0)
+      // SÛ adicionar responsavel_id se tiver um valor v·lido (> 0)
       if (novoDiario.responsavel_id && Number(novoDiario.responsavel_id) > 0) {
         dadosEnvio.responsavel_id = Number(novoDiario.responsavel_id);
       }
@@ -130,10 +130,10 @@ const DiarioObras: React.FC = () => {
       if (novoDiario.observacoes && novoDiario.observacoes.trim()) {
         dadosEnvio.observacoes = novoDiario.observacoes;
       }
-      // N√ÉO enviar aprovado_por_id se n√£o tiver valor (evita erro de FK)
+      // N√O enviar aprovado_por_id se n„o tiver valor (evita erro de FK)
 
       await diarioService.criar(dadosEnvio);
-      toast.success("Di√°rio cadastrado com sucesso!");
+      toast.success("Di·rio cadastrado com sucesso!");
       setNovoDiario({
         obra_id: 0,
         data: "",
@@ -144,18 +144,18 @@ const DiarioObras: React.FC = () => {
       });
       carregarDados();
     } catch (error: any) {
-      console.error("‚ùå Erro completo:", error);
-      toast.error(error.response?.data?.error || "Erro ao cadastrar di√°rio");
+      console.error("? Erro completo:", error);
+      toast.error(error.response?.data?.error || "Erro ao cadastrar di·rio");
     } finally {
       setSalvando(false);
     }
   };
 
   const handleExcluir = async (id: string) => {
-    if (!window.confirm("Deseja excluir este di√°rio?")) return;
+    if (!window.confirm("Deseja excluir este di·rio?")) return;
     try {
       await diarioService.deletar(Number(id));
-      toast.success("Di√°rio exclu√≠do!");
+      toast.success("Di·rio excluÌdo!");
       carregarDados();
     } catch (error) {
       toast.error("Erro ao excluir");
@@ -172,7 +172,7 @@ const DiarioObras: React.FC = () => {
       <TabPanel value={tabValue} index={0}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Novo Di√°rio de Obra
+            Novo Di·rio de Obra
           </Typography>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <FormControl fullWidth required>
@@ -208,14 +208,14 @@ const DiarioObras: React.FC = () => {
             />
 
             <FormControl fullWidth required>
-              <InputLabel>Per√≠odo</InputLabel>
+              <InputLabel>PerÌodo</InputLabel>
               <Select
                 value={novoDiario.periodo}
                 onChange={(e) =>
                   setNovoDiario({ ...novoDiario, periodo: e.target.value })
                 }
               >
-                <MenuItem value="manha">Manh√£</MenuItem>
+                <MenuItem value="manha">Manh„</MenuItem>
                 <MenuItem value="tarde">Tarde</MenuItem>
                 <MenuItem value="noite">Noite</MenuItem>
                 <MenuItem value="integral">Integral</MenuItem>
@@ -241,7 +241,7 @@ const DiarioObras: React.FC = () => {
               fullWidth
               multiline
               rows={2}
-              label="Ocorr√™ncias (opcional)"
+              label="OcorrÍncias (opcional)"
               value={novoDiario.ocorrencias || ""}
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, ocorrencias: e.target.value })
@@ -252,7 +252,7 @@ const DiarioObras: React.FC = () => {
               fullWidth
               multiline
               rows={2}
-              label="Observa√ß√µes (opcional)"
+              label="ObservaÁıes (opcional)"
               value={novoDiario.observacoes || ""}
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, observacoes: e.target.value })
@@ -260,7 +260,7 @@ const DiarioObras: React.FC = () => {
             />
 
             <FormControl fullWidth required>
-              <InputLabel>Respons√°vel</InputLabel>
+              <InputLabel>Respons·vel</InputLabel>
               <Select
                 value={novoDiario.responsavel_id}
                 onChange={(e) =>
@@ -293,15 +293,15 @@ const DiarioObras: React.FC = () => {
       <TabPanel value={tabValue} index={1}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Di√°rios Cadastrados ({diarios.length})
+            Di·rios Cadastrados ({diarios.length})
           </Typography>
           <Box sx={{ overflowX: "auto", mt: 2 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#c62828", color: "white" }}>
-                  <th style={{ padding: "12px" }}>A√ß√£o</th>
+                  <th style={{ padding: "12px" }}>AÁ„o</th>
                   <th style={{ padding: "12px" }}>Data</th>
-                  <th style={{ padding: "12px" }}>Per√≠odo</th>
+                  <th style={{ padding: "12px" }}>PerÌodo</th>
                   <th style={{ padding: "12px" }}>Atividades</th>
                   <th style={{ padding: "12px" }}>Status</th>
                 </tr>

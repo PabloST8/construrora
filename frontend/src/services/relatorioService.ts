@@ -30,7 +30,7 @@ export const relatorioService = {
       console.log("🔍 Token encontrado:", token ? "SIM" : "NÃO");
 
       // Tenta um endpoint simples primeiro
-      const response = await api.get("/obras");
+      await api.get("/obras");
       console.log("✅ Teste de autenticação bem-sucedido");
       return true;
     } catch (error: any) {
