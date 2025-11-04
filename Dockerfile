@@ -16,7 +16,7 @@ RUN npm ci --silent
 COPY frontend/ ./
 
 # Criar arquivo .env para produção
-RUN echo "REACT_APP_API_URL=http://92.113.34.172:9090" > .env.local && \
+RUN echo "REACT_APP_API_URL=https://api.construtora.codxis.com.br/" > .env.local && \
     echo "TSC_COMPILE_ON_ERROR=true" >> .env.local && \
     echo "SKIP_PREFLIGHT_CHECK=true" >> .env.local
 
