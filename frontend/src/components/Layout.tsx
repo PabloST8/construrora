@@ -63,12 +63,15 @@ const Layout: React.FC<LayoutProps> = (props) => {
 
   // Determinar o título da página baseado na URL
   const getPageTitle = () => {
-    if (location.pathname === "/dashboard") return "Tela Inicial";
+    if (location.pathname === "/" || location.pathname === "/dashboard")
+      return "Tela Inicial";
     if (location.pathname === "/obras") return "Gestão de Obras";
     if (location.pathname === "/pessoas") return "Gestão de Pessoas";
     if (location.pathname === "/despesas") return "Gestão de Despesas";
+    if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
+    if (location.pathname === "/relatorios") return "Relatórios e Análises";
     if (location.pathname === "/diario") return "Diário de Obra";
-    return "Tela Inicial";
+    return "Sistema de Gestão de Obras";
   };
 
   const drawer = (
@@ -98,6 +101,23 @@ const Layout: React.FC<LayoutProps> = (props) => {
       </Toolbar>
 
       <List sx={{ py: 0 }}>
+        {/* Dashboard/Tela Inicial */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/dashboard")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/dashboard"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="🏠 Tela Inicial" />
+          </ListItemButton>
+        </ListItem>
+
         {/* Obras */}
         <ListItem disablePadding>
           <ListItemButton
@@ -208,10 +228,48 @@ const Layout: React.FC<LayoutProps> = (props) => {
             onClick={() => navigate("/despesas")}
             sx={{
               color: "white",
+              backgroundColor:
+                location.pathname === "/despesas"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="Despesas" />
+            <ListItemText primary="💰 Despesas" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Fornecedores */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/fornecedores")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/fornecedores"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="🏪 Fornecedores" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Relatórios */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/relatorios")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/relatorios"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="📊 Relatórios" />
           </ListItemButton>
         </ListItem>
 
@@ -221,10 +279,14 @@ const Layout: React.FC<LayoutProps> = (props) => {
             onClick={() => navigate("/diario")}
             sx={{
               color: "white",
+              backgroundColor:
+                location.pathname === "/diario"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="Diário de Obra" />
+            <ListItemText primary="📖 Diário de Obra" />
           </ListItemButton>
         </ListItem>
       </List>

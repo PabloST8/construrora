@@ -215,6 +215,7 @@ const BuscarObra: React.FC = () => {
         contrato_numero: obraEditando.contrato_numero || "",
         responsavel_id: obraEditando.responsavel_id,
         contratante_id: obraEditando.contratante_id,
+        art: obraEditando.art || "",
         endereco_rua: obraEditando.endereco_rua || "",
         endereco_numero: obraEditando.endereco_numero || "",
         endereco_bairro: obraEditando.endereco_bairro || "",
@@ -700,21 +701,34 @@ const BuscarObra: React.FC = () => {
                 }
               />
 
-              {/* Status */}
-              <FormControl fullWidth>
-                <InputLabel>Status *</InputLabel>
-                <Select
-                  value={obraEditando.status || "planejamento"}
-                  onChange={(e) => handleCampoChange("status", e.target.value)}
-                  label="Status *"
-                >
-                  <MenuItem value="planejamento">Planejamento</MenuItem>
-                  <MenuItem value="em_andamento">Em Andamento</MenuItem>
-                  <MenuItem value="pausada">Pausada</MenuItem>
-                  <MenuItem value="concluida">Concluída</MenuItem>
-                  <MenuItem value="cancelada">Cancelada</MenuItem>
-                </Select>
-              </FormControl>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                {/* Status */}
+                <FormControl fullWidth>
+                  <InputLabel>Status *</InputLabel>
+                  <Select
+                    value={obraEditando.status || "planejamento"}
+                    onChange={(e) =>
+                      handleCampoChange("status", e.target.value)
+                    }
+                    label="Status *"
+                  >
+                    <MenuItem value="planejamento">Planejamento</MenuItem>
+                    <MenuItem value="em_andamento">Em Andamento</MenuItem>
+                    <MenuItem value="pausada">Pausada</MenuItem>
+                    <MenuItem value="concluida">Concluída</MenuItem>
+                    <MenuItem value="cancelada">Cancelada</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* ART */}
+                <TextField
+                  label="ART (Anotação de Responsabilidade Técnica)"
+                  fullWidth
+                  value={obraEditando.art || ""}
+                  onChange={(e) => handleCampoChange("art", e.target.value)}
+                  placeholder="Ex: ART123456789"
+                />
+              </Box>
 
               {/* Endereço - Rua */}
               <TextField
@@ -938,25 +952,35 @@ const BuscarObra: React.FC = () => {
                 />
               </Box>
 
-              {/* Status */}
-              <TextField
-                label="Status"
-                fullWidth
-                value={
-                  obraVisualizando.status === "em_andamento"
-                    ? "Em Andamento"
-                    : obraVisualizando.status === "planejamento"
-                    ? "Planejamento"
-                    : obraVisualizando.status === "concluida"
-                    ? "Concluída"
-                    : obraVisualizando.status === "pausada"
-                    ? "Pausada"
-                    : obraVisualizando.status === "cancelada"
-                    ? "Cancelada"
-                    : obraVisualizando.status || "Não informado"
-                }
-                InputProps={{ readOnly: true }}
-              />
+              <Box sx={{ display: "flex", gap: 2 }}>
+                {/* Status */}
+                <TextField
+                  label="Status"
+                  fullWidth
+                  value={
+                    obraVisualizando.status === "em_andamento"
+                      ? "Em Andamento"
+                      : obraVisualizando.status === "planejamento"
+                      ? "Planejamento"
+                      : obraVisualizando.status === "concluida"
+                      ? "Concluída"
+                      : obraVisualizando.status === "pausada"
+                      ? "Pausada"
+                      : obraVisualizando.status === "cancelada"
+                      ? "Cancelada"
+                      : obraVisualizando.status || "Não informado"
+                  }
+                  InputProps={{ readOnly: true }}
+                />
+
+                {/* ART */}
+                <TextField
+                  label="ART"
+                  fullWidth
+                  value={obraVisualizando.art || "Não informado"}
+                  InputProps={{ readOnly: true }}
+                />
+              </Box>
 
               {/* Endereço completo */}
               {(obraVisualizando.endereco_rua ||

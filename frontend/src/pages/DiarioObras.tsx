@@ -11,20 +11,11 @@ import {
   FormControl,
   Stack,
   IconButton,
-  SelectChangeEvent,
   Tabs,
   Tab,
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
-} from "@mui/icons-material";
+import { Delete as DeleteIcon } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { diarioService } from "../services/diarioService";
 import { obraService } from "../services/obraService";
@@ -141,10 +132,7 @@ const DiarioObras: React.FC = () => {
       }
       // NÃO enviar aprovado_por_id se não tiver valor (evita erro de FK)
 
-      console.log("📤 Dados enviados:", dadosEnvio);
-      console.log("📤 JSON stringified:", JSON.stringify(dadosEnvio, null, 2));
-      const response = await diarioService.criar(dadosEnvio);
-      console.log("✅ Resposta da API:", response);
+      await diarioService.criar(dadosEnvio);
       toast.success("Diário cadastrado com sucesso!");
       setNovoDiario({
         obra_id: 0,
@@ -157,7 +145,6 @@ const DiarioObras: React.FC = () => {
       carregarDados();
     } catch (error: any) {
       console.error("❌ Erro completo:", error);
-      console.error("❌ Resposta do servidor:", error.response?.data);
       toast.error(error.response?.data?.error || "Erro ao cadastrar diário");
     } finally {
       setSalvando(false);
@@ -167,7 +154,7 @@ const DiarioObras: React.FC = () => {
   const handleExcluir = async (id: string) => {
     if (!window.confirm("Deseja excluir este diário?")) return;
     try {
-      await diarioService.deletar(Number(id)); // ✅ CONVERTER PARA NUMBER
+      await diarioService.deletar(Number(id));
       toast.success("Diário excluído!");
       carregarDados();
     } catch (error) {

@@ -17,7 +17,9 @@ import Cadastro from "./pages/Cadastro";
 import Dashboard from "./pages/Dashboard";
 import Pessoas from "./pages/Pessoas";
 import Obras from "./pages/Obras";
-import Despesas from "./pages/Despesas";
+import DespesasNovo from "./pages/DespesasNovo";
+import Fornecedores from "./pages/Fornecedores";
+import Relatorios from "./pages/Relatorios";
 import DiarioObras from "./pages/DiarioObras";
 
 const theme = createTheme({
@@ -90,16 +92,14 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="pessoas" element={<Pessoas />} />
               <Route path="obras" element={<Obras />} />
-              <Route path="despesas" element={<Despesas />} />
+              <Route path="despesas" element={<DespesasNovo />} />
+              <Route path="fornecedores" element={<Fornecedores />} />
               <Route path="diario" element={<DiarioObras />} />
               <Route
                 path="empresas"
                 element={<div>Empresas - Em desenvolvimento</div>}
               />
-              <Route
-                path="relatorios"
-                element={<div>Relatórios - Em desenvolvimento</div>}
-              />
+              <Route path="relatorios" element={<Relatorios />} />
               <Route
                 path="notificacoes"
                 element={<div>Notificações - Em desenvolvimento</div>}

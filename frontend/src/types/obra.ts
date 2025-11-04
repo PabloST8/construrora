@@ -19,6 +19,7 @@ export interface Obra {
     | "pausada"
     | "concluida"
     | "cancelada";
+  art?: string; // ✅ CAMPO ART DESCOBERTO NA API
   descricao?: string; // ✅ ADICIONAR CAMPO FALTANTE
   endereco_rua?: string;
   endereco_numero?: string;
@@ -37,6 +38,7 @@ export interface ObraLegacy {
   id?: number;
   nome: string;
   contratoNumero?: string;
+  art?: string; // ✅ CAMPO ART ADICIONADO
   contratanteId?: number;
   contratanteNome?: string;
   responsavelId?: number;

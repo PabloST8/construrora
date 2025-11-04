@@ -5,8 +5,16 @@ import type { RelatorioDesepesas } from "../types/apiGo";
 export const despesaService = {
   // Criar nova despesa
   async criar(despesa: Despesa): Promise<Despesa> {
-    const response = await api.post("/despesas", despesa);
-    return response.data.data || response.data;
+    console.log("🚀 Enviando despesa para API:", despesa);
+    try {
+      const response = await api.post("/despesas", despesa);
+      console.log("✅ Resposta da API:", response);
+      return response.data.data || response.data;
+    } catch (error: any) {
+      console.error("💥 Erro na API de despesas:", error);
+      console.error("💥 Request que falhou:", error.config?.data);
+      throw error;
+    }
   },
 
   // Listar todas as despesas (com filtros opcionais)

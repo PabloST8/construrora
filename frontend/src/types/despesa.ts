@@ -1,19 +1,51 @@
 export interface Despesa {
   id?: number;
-  obraId: number;
+  obra_id: number;
+  obraId?: number; // Compatibilidade
   obraNome?: string; // Para exibição
+  fornecedor_id: number;
+  fornecedorId?: number; // Compatibilidade
+  fornecedorNome?: string; // Para exibição
   descricao: string;
-  categoria: "Material" | "Mão de Obra" | "Imposto" | "Parceiro" | "Outros";
+  categoria:
+    | "MATERIAL"
+    | "MAO_DE_OBRA"
+    | "IMPOSTO"
+    | "PARCEIRO"
+    | "OUTROS"
+    | "Material"
+    | "Mão de Obra"
+    | "Imposto"
+    | "Parceiro"
+    | "Outros";
   valor: number;
+  data?: string; // Data da despesa
+  data_vencimento: string; // Data de vencimento
+  dataVencimento?: string; // Compatibilidade
   dataCadastro?: string;
-  formaPagamento: "À Vista" | "PIX" | "Boleto" | "Cartão";
-  statusPagamento: "Pendente" | "Pago";
-  dataPagamento?: string;
+  forma_pagamento:
+    | "A_VISTA"
+    | "PIX"
+    | "BOLETO"
+    | "CARTAO"
+    | "À Vista"
+    | "PIX"
+    | "Boleto"
+    | "Cartão";
+  formaPagamento?: string; // Compatibilidade
+  status_pagamento: "PENDENTE" | "PAGO" | "Pendente" | "Pago";
+  statusPagamento?: string; // Compatibilidade
+  data_pagamento?: string;
+  dataPagamento?: string; // Compatibilidade
+  responsavel_pagamento?: string;
   responsavelPagamentoId?: number;
   responsavelPagamentoNome?: string; // Para exibição
-  observacoes?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  observacao?: string;
+  observacoes?: string; // Compatibilidade
+  created_at?: string;
+  updated_at?: string;
+  createdAt?: string; // Compatibilidade
+  updatedAt?: string; // Compatibilidade
 }
 
 export interface DiarioObra {

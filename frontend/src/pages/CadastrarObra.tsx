@@ -39,6 +39,7 @@ const CadastrarObra: React.FC = () => {
   const [obra, setObra] = useState<ObraLegacy>({
     nome: "",
     contratoNumero: "",
+    art: "", // ✅ CAMPO ART ADICIONADO
     tipoObra: "Manutenção",
     situacao: "Em andamento",
     dataInicio: "",
@@ -273,6 +274,7 @@ const CadastrarObra: React.FC = () => {
       const dadosObra: Partial<Obra> = {
         nome: obra.nome,
         contrato_numero: obra.contratoNumero,
+        art: obra.art || undefined, // ✅ CAMPO ART INCLUÍDO
         status: mapearStatus(obra.situacao),
         data_inicio: obra.dataInicio || undefined,
         data_fim_prevista: obra.dataTerminoPrevista || undefined,
@@ -308,6 +310,7 @@ const CadastrarObra: React.FC = () => {
       setObra({
         nome: "",
         contratoNumero: "",
+        art: "", // ✅ CAMPO ART INCLUÍDO
         tipoObra: "Manutenção",
         situacao: "Em andamento",
         dataInicio: "",
@@ -458,10 +461,31 @@ const CadastrarObra: React.FC = () => {
                 <TextField
                   fullWidth
                   required
-                  label="ART"
+                  label="Número do Contrato"
                   name="contratoNumero"
                   value={obra.contratoNumero}
                   onChange={handleObraChange}
+                />
+              </Stack>
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField
+                  fullWidth
+                  label="ART (Anotação de Responsabilidade Técnica)"
+                  name="art"
+                  value={obra.art || ""}
+                  onChange={handleObraChange}
+                  placeholder="Ex: ART-CE-2025-001234"
+                  helperText="Código ART do responsável técnico pela obra"
+                />
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Data de Início Real"
+                  name="dataInicioReal"
+                  value={obra.dataInicioReal || ""}
+                  onChange={handleObraChange}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Stack>
 
