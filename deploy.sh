@@ -67,11 +67,11 @@ if docker ps -a --format 'table {{.Names}}' | grep -q "^${CONTAINER_NAME}$"; the
     log "🗑️ Container antigo removido"
 fi
 
-# Remover imagem antiga se existir
+# Manter imagem antiga para cache (não remover)
 if docker images -q ${DOCKER_IMAGE} 2>/dev/null | grep -q .; then
-    warning "Imagem ${DOCKER_IMAGE} já existe. Removendo..."
-    docker rmi ${DOCKER_IMAGE} 2>/dev/null || true
-    log "🗑️ Imagem antiga removida"
+    log "📦 Imagem ${DOCKER_IMAGE} existente encontrada - será usada para cache"
+else
+    log "🆕 Primeira build - sem cache disponível"
 fi
 
 # Build da aplicação frontend local (verificação)
@@ -111,26 +111,26 @@ if [ "$(id -u)" -eq 0 ]; then
     warning "Executando como root — usando flag $NPM_UNSAFE para instalação npm."
 fi
 
-# Instala dependências se necessário
+# Instala dependências com cache otimizado
 if [ ! -d "node_modules" ] || [ ! -x "node_modules/.bin/react-scripts" ]; then
-    log "📦 Dependências do frontend não encontradas — instalando..."
+    log "📦 Dependências do frontend não encontradas — instalando com cache..."
     if [ -f package-lock.json ]; then
-        if ! npm ci --no-audit --no-fund $NPM_UNSAFE; then
-            log "npm ci falhou, tentando npm install..."
-            if ! npm install --no-audit --no-fund $NPM_UNSAFE; then
+        if ! npm ci --no-audit --no-fund --prefer-offline --cache ~/.npm $NPM_UNSAFE; then
+            log "npm ci falhou, tentando npm install com cache..."
+            if ! npm install --no-audit --no-fund --prefer-offline --cache ~/.npm $NPM_UNSAFE; then
                 error "Falha ao instalar dependências do frontend"
                 exit 1
             fi
         fi
     else
-        if ! npm install --no-audit --no-fund $NPM_UNSAFE; then
+        if ! npm install --no-audit --no-fund --prefer-offline --cache ~/.npm $NPM_UNSAFE; then
             error "Falha ao instalar dependências do frontend"
             exit 1
         fi
     fi
-    log "✅ Dependências do frontend instaladas"
+    log "✅ Dependências do frontend instaladas (com cache)"
 else
-    log "📦 Dependências do frontend já presentes"
+    log "📦 Dependências do frontend já presentes (cache local)"
 fi
 
 # Tenta build via npm run build, com fallback para npx react-scripts build
@@ -148,13 +148,16 @@ fi
 
 cd ..
 
-# Build da imagem Docker
-log "🐳 Construindo imagem Docker..."
-if ! docker build -t ${DOCKER_IMAGE} .; then
+# Build da imagem Docker com cache
+log "🐳 Construindo imagem Docker com cache..."
+if ! docker build \
+    --cache-from ${DOCKER_IMAGE} \
+    --build-arg BUILDKIT_INLINE_CACHE=1 \
+    -t ${DOCKER_IMAGE} .; then
     error "Falha no build Docker!"
     exit 1
 fi
-log "✅ Imagem Docker criada: ${DOCKER_IMAGE}"
+log "✅ Imagem Docker criada com cache: ${DOCKER_IMAGE}"
 
 # Executar container
 log "🚀 Iniciando container..."
@@ -210,5 +213,12 @@ echo -e "   ⏹️  Parar: docker stop ${CONTAINER_NAME}"
 echo -e "   ▶️  Iniciar: docker start ${CONTAINER_NAME}"
 echo -e "   🗑️  Remover: docker rm -f ${CONTAINER_NAME}"
 echo -e "   📊 Status: docker ps | grep ${CONTAINER_NAME}"
+echo -e "   🧹 Limpar cache: docker system prune"
+echo -e "   📦 Ver imagens: docker images | grep ${DOCKER_IMAGE}"
+echo ""
+echo -e "${BLUE}💾 INFORMAÇÕES DE CACHE:${NC}"
+echo -e "   📁 Cache npm: ~/.npm (dependências)"
+echo -e "   🐳 Cache Docker: Camadas reutilizadas automaticamente"
+echo -e "   ⚡ Próximos deploys serão mais rápidos!"
 echo ""
 echo -e "${GREEN}✨ Sistema pronto para uso!${NC}"

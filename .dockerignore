@@ -1,0 +1,62 @@
+# Arquivos que não devem ir para o contexto Docker
+# Isso otimiza o cache e reduz o tamanho do contexto
+
+# Node modules (serão instalados no container)
+frontend/node_modules
+node_modules
+
+# Build local (será criado no container)
+frontend/build
+build
+
+# Arquivos de desenvolvimento
+frontend/.env.local
+frontend/.env.development
+frontend/.env.development.local
+
+# Cache e logs
+frontend/.eslintcache
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentação
+*.md
+README.md
+CHANGELOG.md
+
+# Scripts de desenvolvimento
+deploy.sh
+docker-compose*.yml
+
+# Arquivos temporários
+*.tmp
+*.temp
+.cache
+
+# Testes
+frontend/coverage
+frontend/test-results
+
+# Logs
+*.log
+logs
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock
