@@ -34,8 +34,23 @@ export const despesaService = {
     id: number | string,
     despesa: Partial<Despesa>
   ): Promise<Despesa> {
-    const response = await api.put(`/despesas/${id}`, despesa);
-    return response.data;
+    console.log(`🔄 Atualizando despesa ID ${id}:`, despesa);
+
+    try {
+      const response = await api.put(`/despesas/${id}`, despesa);
+      console.log("✅ Resposta da API de atualização:", response.data);
+
+      // Retornar os dados da resposta ou os dados enviados com o ID
+      const dadosAtualizados = response.data.data ||
+        response.data || { ...despesa, id };
+      console.log("📤 Dados finais da atualização:", dadosAtualizados);
+
+      return dadosAtualizados;
+    } catch (error: any) {
+      console.error("❌ Erro na API de atualização de despesa:", error);
+      console.error("❌ Detalhes do erro:", error.response?.data);
+      throw error;
+    }
   },
 
   // Deletar despesa

@@ -34,6 +34,7 @@ import {
 import { toast } from "react-toastify";
 import { Pessoa, PessoaFilters } from "../types/pessoa";
 import { pessoaService } from "../services/pessoaService";
+import { obraService } from "../services/obraService";
 
 const BuscarPessoa: React.FC = () => {
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
@@ -74,10 +75,20 @@ const BuscarPessoa: React.FC = () => {
       );
 
       const pessoasArray = Array.isArray(data) ? data : [];
+
+      // Limpar estados antes de atualizar
+      setPessoas([]);
+      setPessoasFiltradas([]);
+
+      // Aguardar um tick para garantir que os estados foram limpos
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Atualizar com novos dados
       setPessoas(pessoasArray);
       setPessoasFiltradas(pessoasArray);
 
       toast.success(`✅ ${pessoasArray.length} pessoa(s) carregada(s)`);
+      console.log("✅ Estados atualizados com sucesso");
     } catch (error: any) {
       console.error("❌ Erro ao carregar pessoas:", error);
       toast.error("❌ Erro ao carregar pessoas");
@@ -150,11 +161,17 @@ const BuscarPessoa: React.FC = () => {
   const handleEditar = async (id: number) => {
     try {
       setLoading(true);
+      console.log(`🔄 Iniciando edição da pessoa ID: ${id}`);
+
       const pessoa = await pessoaService.buscarPorId(id);
+      console.log("📝 Dados carregados para edição:", pessoa);
+
       setPessoaEditando(pessoa);
       setEditModalOpen(true);
+
+      console.log("✅ Modal de edição aberto com sucesso");
     } catch (error: any) {
-      console.error("❌ Erro ao carregar pessoa:", error);
+      console.error("❌ Erro ao carregar pessoa para edição:", error);
       toast.error("❌ Erro ao carregar dados da pessoa");
     } finally {
       setLoading(false);
@@ -190,11 +207,12 @@ const BuscarPessoa: React.FC = () => {
 
     try {
       setSalvando(true);
+      console.log("🔄 Salvando edição da pessoa:", pessoaEditando);
 
       const dadosAtualizados: Pessoa = {
         nome: pessoaEditando.nome,
-        email: pessoaEditando.email,
-        telefone: pessoaEditando.telefone,
+        email: pessoaEditando.email || "",
+        telefone: pessoaEditando.telefone || "",
         tipo: pessoaEditando.tipo,
         documento: pessoaEditando.documento,
         endereco_cep: pessoaEditando.endereco_cep || "",
@@ -205,12 +223,42 @@ const BuscarPessoa: React.FC = () => {
         endereco_estado: pessoaEditando.endereco_estado || "",
         endereco_complemento: pessoaEditando.endereco_complemento || "",
         cargo: pessoaEditando.cargo || "",
+        ativo: pessoaEditando.ativo !== undefined ? pessoaEditando.ativo : true, // Campo obrigatório
       };
 
-      await pessoaService.atualizar(pessoaEditando.id!, dadosAtualizados);
+      console.log("📤 Dados a serem enviados:", dadosAtualizados);
+
+      // Chamar API de atualização
+      const pessoaAtualizada = await pessoaService.atualizar(
+        pessoaEditando.id!,
+        dadosAtualizados
+      );
+      console.log("✅ Pessoa atualizada na API:", pessoaAtualizada);
+
+      // Atualizar estado local IMEDIATAMENTE
+      const novaListaPessoas = pessoas.map((p) =>
+        p.id === pessoaEditando.id
+          ? { ...p, ...dadosAtualizados, id: pessoaEditando.id }
+          : p
+      );
+
+      const novaListaFiltrada = pessoasFiltradas.map((p) =>
+        p.id === pessoaEditando.id
+          ? { ...p, ...dadosAtualizados, id: pessoaEditando.id }
+          : p
+      );
+
+      // Atualizar estados
+      setPessoas(novaListaPessoas);
+      setPessoasFiltradas(novaListaFiltrada);
+
       toast.success("✅ Pessoa atualizada com sucesso!");
       handleFecharModal();
-      carregarPessoas();
+
+      // Recarregar dados do servidor para garantir sincronização
+      setTimeout(() => {
+        carregarPessoas();
+      }, 500);
     } catch (error: any) {
       console.error("❌ Erro ao atualizar pessoa:", error);
       const mensagem =
@@ -223,25 +271,132 @@ const BuscarPessoa: React.FC = () => {
 
   const handleCampoChange = (campo: keyof Pessoa, valor: any) => {
     if (pessoaEditando) {
-      setPessoaEditando({
+      console.log(`📝 Alterando campo ${campo}:`, valor);
+
+      const pessoaAtualizada = {
         ...pessoaEditando,
         [campo]: valor,
+      };
+
+      console.log("📝 Pessoa atualizada no estado:", pessoaAtualizada);
+      setPessoaEditando(pessoaAtualizada);
+    }
+  };
+
+  const verificarAssociacaoObras = async (
+    pessoaId: number,
+    pessoaNome: string
+  ): Promise<boolean> => {
+    try {
+      console.log(
+        `🔍 Verificando associações para pessoa ID ${pessoaId} (${pessoaNome})`
+      );
+
+      // Buscar todas as obras
+      const obras = await obraService.listar();
+      console.log("📊 Obras encontradas:", obras);
+
+      // Verificar se a pessoa é responsável ou contratante de alguma obra ativa
+      const obrasAssociadas = obras.filter((obra) => {
+        const ehResponsavel = obra.responsavel_id === pessoaId;
+        const ehContratante = obra.contratante_id === pessoaId;
+        const obraAtiva =
+          obra.status !== "concluida" && obra.status !== "cancelada";
+
+        console.log(`🔍 Obra ${obra.nome}:`, {
+          ehResponsavel,
+          ehContratante,
+          obraAtiva,
+          status: obra.status,
+          responsavel_id: obra.responsavel_id,
+          contratante_id: obra.contratante_id,
+        });
+
+        return (ehResponsavel || ehContratante) && obraAtiva;
       });
+
+      console.log("🔗 Obras associadas ativas:", obrasAssociadas);
+
+      if (obrasAssociadas.length > 0) {
+        const nomesObras = obrasAssociadas.map((obra) => obra.nome).join(", ");
+        const tipoAssociacao = obrasAssociadas.some(
+          (obra) => obra.responsavel_id === pessoaId
+        )
+          ? "responsável técnico"
+          : "contratante";
+
+        console.log(
+          `❌ Pessoa ${pessoaNome} está associada às obras: ${nomesObras}`
+        );
+
+        toast.error(
+          `❌ Não é possível excluir. ${pessoaNome} é ${tipoAssociacao} da(s) obra(s): ${nomesObras}`,
+          { autoClose: 8000 }
+        );
+
+        return true; // Tem associações
+      }
+
+      console.log(`✅ Pessoa ${pessoaNome} não possui associações ativas`);
+      return false; // Não tem associações
+    } catch (error) {
+      console.error("❌ Erro ao verificar associações:", error);
+      toast.error("❌ Erro ao verificar associações da pessoa");
+      return true; // Em caso de erro, impedir exclusão por segurança
     }
   };
 
   const handleExcluir = async (id: number) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta pessoa?")) {
-      return;
-    }
-
     try {
+      // Buscar dados da pessoa para obter o nome
+      const pessoa = pessoas.find((p) => p.id === id);
+      const nomePessoa = pessoa?.nome || `ID ${id}`;
+
+      console.log(`🗑️ Iniciando processo de exclusão para: ${nomePessoa}`);
+
+      // Verificar se há associações com obras ativas
+      const temAssociacoes = await verificarAssociacaoObras(id, nomePessoa);
+
+      if (temAssociacoes) {
+        console.log(`❌ Exclusão cancelada - pessoa tem associações ativas`);
+        return; // Bloquear exclusão
+      }
+
+      // Confirmar exclusão apenas se não há associações
+      const confirmMessage = `Tem certeza que deseja excluir ${nomePessoa}?\n\n⚠️ Esta ação não pode ser desfeita!`;
+      if (!window.confirm(confirmMessage)) {
+        console.log("❌ Exclusão cancelada pelo usuário");
+        return;
+      }
+
+      console.log(`🔄 Executando exclusão para: ${nomePessoa}`);
       await pessoaService.deletar(id.toString());
-      toast.success("✅ Pessoa excluída com sucesso!");
+
+      toast.success(`✅ ${nomePessoa} foi excluída com sucesso!`);
+      console.log(`✅ Exclusão concluída para: ${nomePessoa}`);
+
       carregarPessoas(); // Recarregar lista
     } catch (error: any) {
       console.error("❌ Erro ao excluir pessoa:", error);
-      toast.error("❌ Erro ao excluir pessoa");
+
+      // Verificar se é erro de restrição de integridade
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Erro ao excluir pessoa";
+
+      if (
+        errorMessage.includes("associada") ||
+        errorMessage.includes("referenciada") ||
+        errorMessage.includes("constraint")
+      ) {
+        toast.error(
+          "❌ Não é possível excluir. Usuário está associado a uma obra ativa.",
+          { autoClose: 8000 }
+        );
+      } else {
+        toast.error(`❌ ${errorMessage}`);
+      }
     }
   };
 
@@ -406,12 +561,15 @@ const BuscarPessoa: React.FC = () => {
                     <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                       Telefone
                     </TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                      Status
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {pessoasFiltradas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                         Nenhuma pessoa encontrada
                       </TableCell>
                     </TableRow>
@@ -468,6 +626,15 @@ const BuscarPessoa: React.FC = () => {
                         <TableCell>{pessoa.cargo || "-"}</TableCell>
                         <TableCell>{pessoa.email || "-"}</TableCell>
                         <TableCell>{pessoa.telefone || "-"}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={pessoa.ativo !== false ? "Ativo" : "Inativo"}
+                            color={
+                              pessoa.ativo !== false ? "success" : "default"
+                            }
+                            size="small"
+                          />
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -536,7 +703,12 @@ const BuscarPessoa: React.FC = () => {
                 label="Telefone"
                 fullWidth
                 value={pessoaEditando.telefone || ""}
-                onChange={(e) => handleCampoChange("telefone", e.target.value)}
+                onChange={(e) => {
+                  console.log("📞 Alterando telefone:", e.target.value);
+                  handleCampoChange("telefone", e.target.value);
+                }}
+                placeholder="(99) 99999-8888"
+                helperText="Formato: (99) 99999-8888"
               />
 
               {/* Cargo */}
@@ -621,6 +793,25 @@ const BuscarPessoa: React.FC = () => {
                   handleCampoChange("endereco_complemento", e.target.value)
                 }
               />
+
+              {/* Status Ativo */}
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={
+                    pessoaEditando.ativo !== undefined
+                      ? pessoaEditando.ativo.toString()
+                      : "true"
+                  }
+                  onChange={(e) =>
+                    handleCampoChange("ativo", e.target.value === "true")
+                  }
+                  label="Status"
+                >
+                  <MenuItem value="true">Ativo</MenuItem>
+                  <MenuItem value="false">Inativo</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           )}
         </DialogContent>
@@ -711,6 +902,14 @@ const BuscarPessoa: React.FC = () => {
                 label="Cargo/Função"
                 fullWidth
                 value={pessoaVisualizando.cargo || "Não informado"}
+                InputProps={{ readOnly: true }}
+              />
+
+              {/* Status */}
+              <TextField
+                label="Status"
+                fullWidth
+                value={pessoaVisualizando.ativo !== false ? "Ativo" : "Inativo"}
                 InputProps={{ readOnly: true }}
               />
 

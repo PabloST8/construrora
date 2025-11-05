@@ -41,6 +41,13 @@ export interface DiarioObra {
   responsavel_id?: number;
   aprovado_por_id?: number;
   status_aprovacao: "pendente" | "aprovado" | "rejeitado";
+  fotos?: Array<{
+    id?: number;
+    nome: string;
+    url: string;
+    descricao?: string;
+    data_upload?: string;
+  }>;
   createdAt?: string;
   updatedAt?: string;
 }

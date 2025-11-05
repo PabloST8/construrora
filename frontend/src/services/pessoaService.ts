@@ -16,14 +16,43 @@ export const pessoaService = {
 
   // Buscar pessoa por ID
   async buscarPorId(id: number): Promise<Pessoa> {
-    const response = await api.get(`/pessoas/${id}`);
-    return response.data;
+    console.log(`🔍 Buscando pessoa por ID: ${id}`);
+
+    try {
+      const response = await api.get(`/pessoas/${id}`);
+      console.log("✅ Pessoa encontrada:", response.data);
+
+      // Garantir que retornamos os dados corretos
+      const pessoa = response.data.data || response.data;
+      console.log("📤 Dados da pessoa:", pessoa);
+
+      return pessoa;
+    } catch (error: any) {
+      console.error(`❌ Erro ao buscar pessoa ID ${id}:`, error);
+      console.error("❌ Detalhes do erro:", error.response?.data);
+      throw error;
+    }
   },
 
   // Atualizar pessoa
   async atualizar(id: number, pessoa: Pessoa): Promise<Pessoa> {
-    const response = await api.put(`/pessoas/${id}`, pessoa);
-    return response.data;
+    console.log(`🔄 Atualizando pessoa ID ${id}:`, pessoa);
+
+    try {
+      const response = await api.put(`/pessoas/${id}`, pessoa);
+      console.log("✅ Resposta da API de atualização:", response.data);
+
+      // Retornar os dados da resposta ou os dados enviados com o ID
+      const dadosAtualizados = response.data.data ||
+        response.data || { ...pessoa, id };
+      console.log("📤 Dados finais da atualização:", dadosAtualizados);
+
+      return dadosAtualizados;
+    } catch (error: any) {
+      console.error("❌ Erro na API de atualização:", error);
+      console.error("❌ Detalhes do erro:", error.response?.data);
+      throw error;
+    }
   },
 
   // Buscar com filtros

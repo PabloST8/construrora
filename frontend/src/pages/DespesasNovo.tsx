@@ -72,7 +72,7 @@ const Despesas: React.FC = () => {
     data_vencimento: new Date().toISOString().split("T")[0],
     forma_pagamento: "PIX",
     status_pagamento: "PENDENTE",
-    observacoes: "",
+    observacao: "",
     data_pagamento: "", // Será preenchido automaticamente se status for PAGO
   });
 
@@ -112,6 +112,13 @@ const Despesas: React.FC = () => {
   const carregarDados = async () => {
     setLoading(true);
     try {
+      console.log("🔄 Carregando dados das despesas...");
+
+      // Limpar estados antes de recarregar
+      setDespesas([]);
+      setObras([]);
+      setFornecedores([]);
+
       const [despesasData, obrasData, fornecedoresData] = await Promise.all([
         despesaService.listar(),
         obraService.listar(),
@@ -122,12 +129,26 @@ const Despesas: React.FC = () => {
       console.log("🔍 Obras carregadas:", obrasData);
       console.log("🔍 Fornecedores carregados:", fornecedoresData);
 
-      setDespesas(Array.isArray(despesasData) ? despesasData : []);
-      setObras(Array.isArray(obrasData) ? obrasData : []);
-      setFornecedores(Array.isArray(fornecedoresData) ? fornecedoresData : []);
+      // Aguardar um tick para garantir que os estados foram limpos
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const despesasArray = Array.isArray(despesasData) ? despesasData : [];
+      const obrasArray = Array.isArray(obrasData) ? obrasData : [];
+      const fornecedoresArray = Array.isArray(fornecedoresData)
+        ? fornecedoresData
+        : [];
+
+      setDespesas(despesasArray);
+      setObras(obrasArray);
+      setFornecedores(fornecedoresArray);
+
+      console.log("✅ Estados atualizados com sucesso");
     } catch (error) {
       console.error("❌ Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar dados");
+      toast.error("❌ Erro ao carregar dados");
+      setDespesas([]);
+      setObras([]);
+      setFornecedores([]);
     } finally {
       setLoading(false);
     }
@@ -239,15 +260,54 @@ const Despesas: React.FC = () => {
       console.log("💾 Dados originais do form:", formData);
 
       if (modoEdicao && despesaSelecionada) {
-        await despesaService.atualizar(despesaSelecionada.id!, dadosDespesa);
-        toast.success("Despesa atualizada com sucesso!");
+        console.log(`🔄 Atualizando despesa ID ${despesaSelecionada.id}`);
+
+        const despesaAtualizada = await despesaService.atualizar(
+          despesaSelecionada.id!,
+          dadosDespesa
+        );
+        console.log("✅ Despesa atualizada na API:", despesaAtualizada);
+
+        // Atualizar estado local IMEDIATAMENTE
+        const novaListaDespesas = despesas.map((d) =>
+          d.id === despesaSelecionada.id
+            ? ({ ...d, ...dadosDespesa, id: despesaSelecionada.id } as Despesa)
+            : d
+        );
+
+        console.log("📤 Nova lista de despesas:", novaListaDespesas);
+        setDespesas(novaListaDespesas);
+
+        toast.success("✅ Despesa atualizada com sucesso!");
+
+        // Recarregar dados do servidor para garantir sincronização
+        setTimeout(() => {
+          carregarDados();
+        }, 500);
       } else {
+        console.log("🆕 Criando nova despesa");
         await despesaService.criar(dadosDespesa as Despesa);
-        toast.success("Despesa criada com sucesso!");
+        toast.success("✅ Despesa criada com sucesso!");
+        carregarDados();
       }
 
       setDialogAberto(false);
-      carregarDados();
+      setModoEdicao(false);
+      setDespesaSelecionada(null);
+
+      // Limpar formulário
+      setFormData({
+        obra_id: 0,
+        fornecedor_id: 0,
+        descricao: "",
+        categoria: "MATERIAL",
+        valor: 0,
+        data_vencimento: "",
+        forma_pagamento: "PIX",
+        status_pagamento: "PENDENTE",
+        observacao: "",
+        data_pagamento: "",
+      });
     } catch (error: any) {
       console.error("❌ Erro ao salvar despesa:", error);
       console.error("❌ Response data:", error.response?.data);
@@ -640,10 +700,15 @@ const Despesas: React.FC = () => {
                 type="number"
                 label="Valor"
                 value={formData.valor || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, valor: Number(e.target.value) })
-                }
+                onChange={(e) => {
+                  const novoValor = Number(e.target.value);
+                  console.log("💰 Alterando valor da despesa:", novoValor);
+                  console.log("💰 Valor anterior:", formData.valor);
+                  setFormData({ ...formData, valor: novoValor });
+                }}
                 InputProps={{ startAdornment: "R$" }}
+                placeholder="0.00"
+                helperText="Informe o valor da despesa"
               />
             </Box>
             <Box sx={{ display: "flex", gap: 2 }}>

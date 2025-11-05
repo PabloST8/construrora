@@ -32,8 +32,42 @@ export const diarioService = {
     id: number,
     diario: Partial<DiarioObra>
   ): Promise<DiarioObra> {
+    console.log(`📝 Atualizando diário ID ${id}:`, diario);
     const response = await api.put(`/diarios/${id}`, diario);
+    console.log(`✅ Diário ${id} atualizado com sucesso:`, response.data);
     return response.data;
+  },
+
+  // Upload de fotos para diário
+  async uploadFoto(
+    diarioId: number,
+    arquivo: File,
+    descricao?: string
+  ): Promise<any> {
+    const formData = new FormData();
+    formData.append("foto", arquivo);
+    if (descricao) {
+      formData.append("descricao", descricao);
+    }
+
+    console.log(
+      `📷 Fazendo upload de foto para diário ${diarioId}:`,
+      arquivo.name
+    );
+    const response = await api.post(`/diarios/${diarioId}/fotos`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log(`✅ Foto enviada com sucesso:`, response.data);
+    return response.data;
+  },
+
+  // Remover foto do diário
+  async removerFoto(diarioId: number, fotoId: number): Promise<void> {
+    console.log(`🗑️ Removendo foto ${fotoId} do diário ${diarioId}`);
+    await api.delete(`/diarios/${diarioId}/fotos/${fotoId}`);
+    console.log(`✅ Foto ${fotoId} removida com sucesso`);
   },
 
   // Deletar diário

@@ -14,8 +14,27 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Card,
+  CardMedia,
+  CardActions,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from "@mui/material";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+import {
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Visibility as ViewIcon,
+  PhotoCamera as PhotoIcon,
+  Close as CloseIcon,
+  CloudUpload as UploadIcon,
+} from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { diarioService } from "../services/diarioService";
 import { obraService } from "../services/obraService";
@@ -55,6 +74,14 @@ const DiarioObras: React.FC = () => {
   const [pessoas, setPessoas] = useState<any[]>([]);
   const [salvando, setSalvando] = useState(false);
 
+  // Estados para edição e visualização
+  const [dialogVisualizacao, setDialogVisualizacao] = useState(false);
+  const [dialogEdicao, setDialogEdicao] = useState(false);
+  const [diarioSelecionado, setDiarioSelecionado] = useState<any>(null);
+  const [dadosEdicao, setDadosEdicao] = useState<any>({});
+  const [uploadandoFoto, setUploadandoFoto] = useState(false);
+  const [fotosParaUpload, setFotosParaUpload] = useState<File[]>([]);
+
   const [novoDiario, setNovoDiario] = useState<DiarioForm>({
     obra_id: 0,
     data: "",
@@ -64,10 +91,10 @@ const DiarioObras: React.FC = () => {
     status_aprovacao: "pendente",
   });
 
-  // Fun��o para formatar per�odo
+  // Fun��o para formatar per�odo
   const formatarPeriodo = (periodo: string) => {
     const periodos: Record<string, string> = {
-      manha: "Manh�",
+      manha: "Manh�",
       tarde: "Tarde",
       noite: "Noite",
       integral: "Integral",
@@ -102,7 +129,7 @@ const DiarioObras: React.FC = () => {
       !novoDiario.atividades_realizadas ||
       !novoDiario.responsavel_id
     ) {
-      toast.error("Preencha todos os campos obrigat�rios");
+      toast.error("Preencha todos os campos obrigat�rios");
       return;
     }
 
@@ -118,7 +145,7 @@ const DiarioObras: React.FC = () => {
         status_aprovacao: novoDiario.status_aprovacao || "pendente",
       };
 
-      // S� adicionar responsavel_id se tiver um valor v�lido (> 0)
+      // S� adicionar responsavel_id se tiver um valor v�lido (> 0)
       if (novoDiario.responsavel_id && Number(novoDiario.responsavel_id) > 0) {
         dadosEnvio.responsavel_id = Number(novoDiario.responsavel_id);
       }
@@ -130,10 +157,10 @@ const DiarioObras: React.FC = () => {
       if (novoDiario.observacoes && novoDiario.observacoes.trim()) {
         dadosEnvio.observacoes = novoDiario.observacoes;
       }
-      // N�O enviar aprovado_por_id se n�o tiver valor (evita erro de FK)
+      // N�O enviar aprovado_por_id se n�o tiver valor (evita erro de FK)
 
       await diarioService.criar(dadosEnvio);
-      toast.success("Di�rio cadastrado com sucesso!");
+      toast.success("Di�rio cadastrado com sucesso!");
       setNovoDiario({
         obra_id: 0,
         data: "",
@@ -145,20 +172,161 @@ const DiarioObras: React.FC = () => {
       carregarDados();
     } catch (error: any) {
       console.error("? Erro completo:", error);
-      toast.error(error.response?.data?.error || "Erro ao cadastrar di�rio");
+      toast.error(error.response?.data?.error || "Erro ao cadastrar di�rio");
     } finally {
       setSalvando(false);
     }
   };
 
   const handleExcluir = async (id: string) => {
-    if (!window.confirm("Deseja excluir este di�rio?")) return;
+    if (!window.confirm("Deseja excluir este diário?")) return;
     try {
       await diarioService.deletar(Number(id));
-      toast.success("Di�rio exclu�do!");
+      toast.success("Diário excluído!");
       carregarDados();
     } catch (error) {
       toast.error("Erro ao excluir");
+    }
+  };
+
+  // === FUNÇÕES DE VISUALIZAÇÃO ===
+  const abrirDialogVisualizacao = async (diario: any) => {
+    try {
+      console.log("👁️ Abrindo visualização do diário:", diario.id);
+      const diarioCompleto = await diarioService.buscarPorId(diario.id);
+      setDiarioSelecionado(diarioCompleto);
+      setDialogVisualizacao(true);
+    } catch (error) {
+      console.error("Erro ao carregar diário:", error);
+      toast.error("Erro ao carregar dados do diário");
+    }
+  };
+
+  const fecharDialogVisualizacao = () => {
+    setDialogVisualizacao(false);
+    setDiarioSelecionado(null);
+  };
+
+  // === FUNÇÕES DE EDIÇÃO ===
+  const abrirDialogEdicao = async (diario: any) => {
+    try {
+      console.log("✏️ Abrindo edição do diário:", diario.id);
+      const diarioCompleto = await diarioService.buscarPorId(diario.id);
+      setDiarioSelecionado(diarioCompleto);
+      setDadosEdicao({
+        obra_id: diarioCompleto.obra_id,
+        data: diarioCompleto.data,
+        periodo: diarioCompleto.periodo,
+        atividades_realizadas: diarioCompleto.atividades_realizadas,
+        ocorrencias: diarioCompleto.ocorrencias || "",
+        observacoes: diarioCompleto.observacoes || "",
+        responsavel_id: diarioCompleto.responsavel_id,
+        status_aprovacao: diarioCompleto.status_aprovacao,
+      });
+      setFotosParaUpload([]);
+      setDialogEdicao(true);
+    } catch (error) {
+      console.error("Erro ao carregar diário:", error);
+      toast.error("Erro ao carregar dados do diário");
+    }
+  };
+
+  const fecharDialogEdicao = () => {
+    setDialogEdicao(false);
+    setDiarioSelecionado(null);
+    setDadosEdicao({});
+    setFotosParaUpload([]);
+  };
+
+  const salvarEdicao = async () => {
+    try {
+      setSalvando(true);
+      console.log("💾 Salvando edição do diário:", diarioSelecionado.id);
+
+      // 1. Atualizar dados do diário
+      const dadosParaAtualizar = {
+        obra_id: Number(dadosEdicao.obra_id),
+        data: dadosEdicao.data,
+        periodo: dadosEdicao.periodo,
+        atividades_realizadas: dadosEdicao.atividades_realizadas,
+        ocorrencias: dadosEdicao.ocorrencias || "",
+        observacoes: dadosEdicao.observacoes || "",
+        responsavel_id: Number(dadosEdicao.responsavel_id),
+        status_aprovacao: dadosEdicao.status_aprovacao,
+      };
+
+      await diarioService.atualizar(diarioSelecionado.id, dadosParaAtualizar);
+
+      // 2. Upload das novas fotos (se houver)
+      if (fotosParaUpload.length > 0) {
+        setUploadandoFoto(true);
+        for (const foto of fotosParaUpload) {
+          await diarioService.uploadFoto(diarioSelecionado.id, foto);
+        }
+        setUploadandoFoto(false);
+      }
+
+      toast.success("Diário atualizado com sucesso!");
+
+      // Atualizar lista imediatamente (estado local)
+      const novaListaDiarios = diarios.map((d) =>
+        d.id === diarioSelecionado.id
+          ? { ...d, ...dadosParaAtualizar, id: diarioSelecionado.id }
+          : d
+      );
+      setDiarios(novaListaDiarios);
+
+      fecharDialogEdicao();
+      // Recarregar dados do servidor para garantir sincronização
+      setTimeout(() => carregarDados(), 500);
+    } catch (error: any) {
+      console.error("❌ Erro ao salvar edição:", error);
+      toast.error(error.response?.data?.error || "Erro ao salvar alterações");
+    } finally {
+      setSalvando(false);
+      setUploadandoFoto(false);
+    }
+  };
+
+  // === FUNÇÕES DE UPLOAD DE FOTOS ===
+  const handleSelecionarFotos = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const arquivos = Array.from(event.target.files || []);
+    const fotosValidas = arquivos.filter((arquivo) => {
+      const isImage = arquivo.type.startsWith("image/");
+      const isValidSize = arquivo.size <= 5 * 1024 * 1024; // 5MB
+      if (!isImage) {
+        toast.error(`${arquivo.name} não é uma imagem válida`);
+      }
+      if (!isValidSize) {
+        toast.error(`${arquivo.name} excede o tamanho máximo de 5MB`);
+      }
+      return isImage && isValidSize;
+    });
+
+    setFotosParaUpload((prev) => [...prev, ...fotosValidas]);
+  };
+
+  const removerFotoParaUpload = (index: number) => {
+    setFotosParaUpload((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removerFotoExistente = async (fotoId: number) => {
+    if (!window.confirm("Deseja remover esta foto?")) return;
+
+    try {
+      await diarioService.removerFoto(diarioSelecionado.id, fotoId);
+      toast.success("Foto removida com sucesso!");
+
+      // Atualizar o diário selecionado
+      setDiarioSelecionado((prev: any) => ({
+        ...prev,
+        fotos: prev.fotos?.filter((f: any) => f.id !== fotoId) || [],
+      }));
+    } catch (error) {
+      console.error("Erro ao remover foto:", error);
+      toast.error("Erro ao remover foto");
     }
   };
 
@@ -172,7 +340,7 @@ const DiarioObras: React.FC = () => {
       <TabPanel value={tabValue} index={0}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Novo Di�rio de Obra
+            Novo Di�rio de Obra
           </Typography>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <FormControl fullWidth required>
@@ -208,14 +376,14 @@ const DiarioObras: React.FC = () => {
             />
 
             <FormControl fullWidth required>
-              <InputLabel>Per�odo</InputLabel>
+              <InputLabel>Per�odo</InputLabel>
               <Select
                 value={novoDiario.periodo}
                 onChange={(e) =>
                   setNovoDiario({ ...novoDiario, periodo: e.target.value })
                 }
               >
-                <MenuItem value="manha">Manh�</MenuItem>
+                <MenuItem value="manha">Manh�</MenuItem>
                 <MenuItem value="tarde">Tarde</MenuItem>
                 <MenuItem value="noite">Noite</MenuItem>
                 <MenuItem value="integral">Integral</MenuItem>
@@ -241,7 +409,7 @@ const DiarioObras: React.FC = () => {
               fullWidth
               multiline
               rows={2}
-              label="Ocorr�ncias (opcional)"
+              label="Ocorr�ncias (opcional)"
               value={novoDiario.ocorrencias || ""}
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, ocorrencias: e.target.value })
@@ -252,7 +420,7 @@ const DiarioObras: React.FC = () => {
               fullWidth
               multiline
               rows={2}
-              label="Observa��es (opcional)"
+              label="Observa��es (opcional)"
               value={novoDiario.observacoes || ""}
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, observacoes: e.target.value })
@@ -260,7 +428,7 @@ const DiarioObras: React.FC = () => {
             />
 
             <FormControl fullWidth required>
-              <InputLabel>Respons�vel</InputLabel>
+              <InputLabel>Respons�vel</InputLabel>
               <Select
                 value={novoDiario.responsavel_id}
                 onChange={(e) =>
@@ -293,30 +461,67 @@ const DiarioObras: React.FC = () => {
       <TabPanel value={tabValue} index={1}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Di�rios Cadastrados ({diarios.length})
+            Di�rios Cadastrados ({diarios.length})
           </Typography>
           <Box sx={{ overflowX: "auto", mt: 2 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#c62828", color: "white" }}>
-                  <th style={{ padding: "12px" }}>A��o</th>
+                  <th style={{ padding: "12px" }}>Ações</th>
                   <th style={{ padding: "12px" }}>Data</th>
-                  <th style={{ padding: "12px" }}>Per�odo</th>
+                  <th style={{ padding: "12px" }}>Período</th>
                   <th style={{ padding: "12px" }}>Atividades</th>
                   <th style={{ padding: "12px" }}>Status</th>
+                  <th style={{ padding: "12px" }}>Fotos</th>
                 </tr>
               </thead>
               <tbody>
                 {diarios.map((d) => (
                   <tr key={d.id} style={{ borderBottom: "1px solid #e0e0e0" }}>
                     <td style={{ padding: "12px" }}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleExcluir(d.id!)}
-                        sx={{ backgroundColor: "#f44336", color: "white" }}
-                      >
-                        <DeleteIcon sx={{ fontSize: 18 }} />
-                      </IconButton>
+                      <Stack direction="row" spacing={0.5}>
+                        {/* Botão Visualizar */}
+                        <IconButton
+                          size="small"
+                          onClick={() => abrirDialogVisualizacao(d)}
+                          sx={{
+                            backgroundColor: "#2196f3",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#1976d2" },
+                          }}
+                          title="Visualizar"
+                        >
+                          <ViewIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+
+                        {/* Botão Editar */}
+                        <IconButton
+                          size="small"
+                          onClick={() => abrirDialogEdicao(d)}
+                          sx={{
+                            backgroundColor: "#ff9800",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#f57c00" },
+                          }}
+                          title="Editar"
+                        >
+                          <EditIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+
+                        {/* Botão Excluir */}
+                        <IconButton
+                          size="small"
+                          onClick={() => handleExcluir(d.id!)}
+                          sx={{
+                            backgroundColor: "#f44336",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#d32f2f" },
+                          }}
+                          title="Excluir"
+                        >
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Stack>
                     </td>
                     <td style={{ padding: "12px" }}>{d.data}</td>
                     <td style={{ padding: "12px" }}>
@@ -325,7 +530,33 @@ const DiarioObras: React.FC = () => {
                     <td style={{ padding: "12px" }}>
                       {d.atividades_realizadas.substring(0, 50)}...
                     </td>
-                    <td style={{ padding: "12px" }}>{d.status_aprovacao}</td>
+                    <td style={{ padding: "12px" }}>
+                      <Chip
+                        label={d.status_aprovacao}
+                        color={
+                          d.status_aprovacao === "aprovado"
+                            ? "success"
+                            : d.status_aprovacao === "rejeitado"
+                            ? "error"
+                            : "warning"
+                        }
+                        size="small"
+                      />
+                    </td>
+                    <td style={{ padding: "12px" }}>
+                      {d.fotos && d.fotos.length > 0 ? (
+                        <Chip
+                          icon={<PhotoIcon />}
+                          label={`${d.fotos.length}`}
+                          color="primary"
+                          size="small"
+                        />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          Sem fotos
+                        </Typography>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -333,6 +564,434 @@ const DiarioObras: React.FC = () => {
           </Box>
         </Paper>
       </TabPanel>
+
+      {/* === DIALOG DE VISUALIZAÇÃO === */}
+      <Dialog
+        open={dialogVisualizacao}
+        onClose={fecharDialogVisualizacao}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6">Visualizar Diário de Obra</Typography>
+          <IconButton onClick={fecharDialogVisualizacao}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {diarioSelecionado && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 2,
+                }}
+              >
+                <TextField
+                  fullWidth
+                  label="Data"
+                  value={diarioSelecionado.data || ""}
+                  InputProps={{ readOnly: true }}
+                />
+                <TextField
+                  fullWidth
+                  label="Período"
+                  value={formatarPeriodo(diarioSelecionado.periodo) || ""}
+                  InputProps={{ readOnly: true }}
+                />
+              </Box>
+
+              <TextField
+                fullWidth
+                label="Atividades Realizadas"
+                value={diarioSelecionado.atividades_realizadas || ""}
+                multiline
+                rows={4}
+                InputProps={{ readOnly: true }}
+              />
+
+              {diarioSelecionado.ocorrencias && (
+                <TextField
+                  fullWidth
+                  label="Ocorrências"
+                  value={diarioSelecionado.ocorrencias}
+                  multiline
+                  rows={2}
+                  InputProps={{ readOnly: true }}
+                />
+              )}
+
+              {diarioSelecionado.observacoes && (
+                <TextField
+                  fullWidth
+                  label="Observações"
+                  value={diarioSelecionado.observacoes}
+                  multiline
+                  rows={2}
+                  InputProps={{ readOnly: true }}
+                />
+              )}
+
+              <TextField
+                fullWidth
+                label="Status de Aprovação"
+                value={diarioSelecionado.status_aprovacao || ""}
+                InputProps={{ readOnly: true }}
+              />
+
+              {/* Fotos */}
+              {diarioSelecionado.fotos &&
+                diarioSelecionado.fotos.length > 0 && (
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      Fotos ({diarioSelecionado.fotos.length})
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(200px, 1fr))",
+                        gap: 2,
+                      }}
+                    >
+                      {diarioSelecionado.fotos.map(
+                        (foto: any, index: number) => (
+                          <Card key={index}>
+                            <CardMedia
+                              component="img"
+                              height="200"
+                              image={foto.url}
+                              alt={foto.descricao || `Foto ${index + 1}`}
+                            />
+                            {foto.descricao && (
+                              <Box sx={{ p: 1 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {foto.descricao}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Card>
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={fecharDialogVisualizacao}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* === DIALOG DE EDIÇÃO === */}
+      <Dialog
+        open={dialogEdicao}
+        onClose={fecharDialogEdicao}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6">Editar Diário de Obra</Typography>
+          <IconButton onClick={fecharDialogEdicao}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {diarioSelecionado && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 2,
+                }}
+              >
+                <FormControl fullWidth>
+                  <InputLabel>Obra</InputLabel>
+                  <Select
+                    value={dadosEdicao.obra_id || 0}
+                    onChange={(e) =>
+                      setDadosEdicao({
+                        ...dadosEdicao,
+                        obra_id: Number(e.target.value),
+                      })
+                    }
+                  >
+                    <MenuItem value={0}>Selecione</MenuItem>
+                    {obras.map((o) => (
+                      <MenuItem key={o.id} value={o.id}>
+                        {o.nome}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Data"
+                  value={dadosEdicao.data || ""}
+                  onChange={(e) =>
+                    setDadosEdicao({ ...dadosEdicao, data: e.target.value })
+                  }
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 2,
+                }}
+              >
+                <FormControl fullWidth>
+                  <InputLabel>Período</InputLabel>
+                  <Select
+                    value={dadosEdicao.periodo || ""}
+                    onChange={(e) =>
+                      setDadosEdicao({
+                        ...dadosEdicao,
+                        periodo: e.target.value,
+                      })
+                    }
+                  >
+                    <MenuItem value="manha">Manhã</MenuItem>
+                    <MenuItem value="tarde">Tarde</MenuItem>
+                    <MenuItem value="noite">Noite</MenuItem>
+                    <MenuItem value="integral">Integral</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>Responsável</InputLabel>
+                  <Select
+                    value={dadosEdicao.responsavel_id || 0}
+                    onChange={(e) =>
+                      setDadosEdicao({
+                        ...dadosEdicao,
+                        responsavel_id: Number(e.target.value),
+                      })
+                    }
+                  >
+                    <MenuItem value={0}>Selecione</MenuItem>
+                    {pessoas.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.nome}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Atividades Realizadas"
+                value={dadosEdicao.atividades_realizadas || ""}
+                onChange={(e) =>
+                  setDadosEdicao({
+                    ...dadosEdicao,
+                    atividades_realizadas: e.target.value,
+                  })
+                }
+              />
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 2,
+                }}
+              >
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="Ocorrências (opcional)"
+                  value={dadosEdicao.ocorrencias || ""}
+                  onChange={(e) =>
+                    setDadosEdicao({
+                      ...dadosEdicao,
+                      ocorrencias: e.target.value,
+                    })
+                  }
+                />
+
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="Observações (opcional)"
+                  value={dadosEdicao.observacoes || ""}
+                  onChange={(e) =>
+                    setDadosEdicao({
+                      ...dadosEdicao,
+                      observacoes: e.target.value,
+                    })
+                  }
+                />
+              </Box>
+
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={dadosEdicao.status_aprovacao || "pendente"}
+                  onChange={(e) =>
+                    setDadosEdicao({
+                      ...dadosEdicao,
+                      status_aprovacao: e.target.value,
+                    })
+                  }
+                >
+                  <MenuItem value="pendente">Pendente</MenuItem>
+                  <MenuItem value="aprovado">Aprovado</MenuItem>
+                  <MenuItem value="rejeitado">Rejeitado</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Upload de Novas Fotos */}
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  Anexar Novas Fotos
+                </Typography>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<UploadIcon />}
+                  sx={{ mb: 2 }}
+                >
+                  Selecionar Fotos
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    onChange={handleSelecionarFotos}
+                  />
+                </Button>
+
+                {/* Preview das fotos selecionadas */}
+                {fotosParaUpload.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Fotos selecionadas para upload:
+                    </Typography>
+                    <List dense>
+                      {fotosParaUpload.map((foto, index) => (
+                        <ListItem key={index}>
+                          <ListItemText
+                            primary={foto.name}
+                            secondary={`${(foto.size / 1024 / 1024).toFixed(
+                              2
+                            )} MB`}
+                          />
+                          <ListItemSecondaryAction>
+                            <IconButton
+                              edge="end"
+                              onClick={() => removerFotoParaUpload(index)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Fotos Existentes */}
+              {diarioSelecionado.fotos &&
+                diarioSelecionado.fotos.length > 0 && (
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      Fotos Existentes ({diarioSelecionado.fotos.length})
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(200px, 1fr))",
+                        gap: 2,
+                      }}
+                    >
+                      {diarioSelecionado.fotos.map(
+                        (foto: any, index: number) => (
+                          <Card key={index}>
+                            <CardMedia
+                              component="img"
+                              height="150"
+                              image={foto.url}
+                              alt={foto.descricao || `Foto ${index + 1}`}
+                            />
+                            {foto.descricao && (
+                              <Box sx={{ p: 1 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {foto.descricao}
+                                </Typography>
+                              </Box>
+                            )}
+                            <CardActions>
+                              <Button
+                                size="small"
+                                color="error"
+                                startIcon={<DeleteIcon />}
+                                onClick={() => removerFotoExistente(foto.id)}
+                              >
+                                Remover
+                              </Button>
+                            </CardActions>
+                          </Card>
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={fecharDialogEdicao} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={salvarEdicao}
+            variant="contained"
+            disabled={salvando || uploadandoFoto}
+            startIcon={
+              salvando || uploadandoFoto ? <CircularProgress size={20} /> : null
+            }
+          >
+            {uploadandoFoto
+              ? "Enviando fotos..."
+              : salvando
+              ? "Salvando..."
+              : "Salvar Alterações"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
