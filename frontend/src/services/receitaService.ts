@@ -41,7 +41,7 @@ export const receitaService = {
   /**
    * Cria nova receita
    * POST /receitas
-   * 
+   *
    * IMPORTANTE: A API Go espera data_recebimento no payload
    */
   async criar(receita: Receita): Promise<{ id: number }> {

@@ -105,7 +105,11 @@ const Receitas: React.FC = () => {
   const carregarDados = async () => {
     try {
       setLoading(true);
-      await Promise.all([carregarReceitas(), carregarObras(), carregarResponsaveis()]);
+      await Promise.all([
+        carregarReceitas(),
+        carregarObras(),
+        carregarResponsaveis(),
+      ]);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
@@ -121,11 +125,12 @@ const Receitas: React.FC = () => {
       if (filtros.fonte_receita) params.fonte_receita = filtros.fonte_receita;
       if (filtros.data_inicio) params.data_inicio = filtros.data_inicio;
       if (filtros.data_fim) params.data_fim = filtros.data_fim;
-      if (filtros.responsavel_id) params.responsavel_id = parseInt(filtros.responsavel_id);
+      if (filtros.responsavel_id)
+        params.responsavel_id = parseInt(filtros.responsavel_id);
 
       const data: any = await receitaService.listar(params);
       // ✅ Garantir que sempre seja um array
-      const receitasArray = Array.isArray(data) ? data : (data?.data || []);
+      const receitasArray = Array.isArray(data) ? data : data?.data || [];
       setReceitas(receitasArray);
     } catch (error) {
       console.error("Erro ao carregar receitas:", error);
@@ -179,11 +184,14 @@ const Receitas: React.FC = () => {
         obra_id: receitaCompleta.obra_id,
         descricao: receitaCompleta.descricao,
         valor: receitaCompleta.valor,
-        data: receitaCompleta.data?.split("T")[0] || new Date().toISOString().split("T")[0],
+        data:
+          receitaCompleta.data?.split("T")[0] ||
+          new Date().toISOString().split("T")[0],
         fonte_receita: receitaCompleta.fonte_receita || "CONTRATO",
         numero_documento: receitaCompleta.numero_documento || "",
         responsavel_id: receitaCompleta.responsavel_id || 0,
-        observacao: receitaCompleta.observacao || receitaCompleta.observacoes || "",
+        observacao:
+          receitaCompleta.observacao || receitaCompleta.observacoes || "",
       });
       setDialogAberto(true);
     } catch (error) {
@@ -249,7 +257,10 @@ const Receitas: React.FC = () => {
       };
 
       if (modoEdicao && receitaSelecionada?.id) {
-        await receitaService.atualizar(receitaSelecionada.id, receitaParaSalvar);
+        await receitaService.atualizar(
+          receitaSelecionada.id,
+          receitaParaSalvar
+        );
         toast.success("Receita atualizada com sucesso!");
       } else {
         await receitaService.criar(receitaParaSalvar);
@@ -324,7 +335,12 @@ const Receitas: React.FC = () => {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
         <Typography variant="h4" component="h1">
           💵 Receitas
         </Typography>
@@ -371,7 +387,9 @@ const Receitas: React.FC = () => {
             <InputLabel>Obra</InputLabel>
             <Select
               value={filtros.obra_id}
-              onChange={(e) => setFiltros({ ...filtros, obra_id: e.target.value })}
+              onChange={(e) =>
+                setFiltros({ ...filtros, obra_id: e.target.value })
+              }
               label="Obra"
             >
               <MenuItem value="">Todas</MenuItem>
@@ -387,7 +405,9 @@ const Receitas: React.FC = () => {
             <InputLabel>Fonte de Receita</InputLabel>
             <Select
               value={filtros.fonte_receita}
-              onChange={(e) => setFiltros({ ...filtros, fonte_receita: e.target.value })}
+              onChange={(e) =>
+                setFiltros({ ...filtros, fonte_receita: e.target.value })
+              }
               label="Fonte de Receita"
             >
               <MenuItem value="">Todas</MenuItem>
@@ -404,7 +424,9 @@ const Receitas: React.FC = () => {
             <InputLabel>Responsável</InputLabel>
             <Select
               value={filtros.responsavel_id}
-              onChange={(e) => setFiltros({ ...filtros, responsavel_id: e.target.value })}
+              onChange={(e) =>
+                setFiltros({ ...filtros, responsavel_id: e.target.value })
+              }
               label="Responsável"
             >
               <MenuItem value="">Todos</MenuItem>
@@ -420,7 +442,9 @@ const Receitas: React.FC = () => {
             label="Data Início"
             type="date"
             value={filtros.data_inicio}
-            onChange={(e) => setFiltros({ ...filtros, data_inicio: e.target.value })}
+            onChange={(e) =>
+              setFiltros({ ...filtros, data_inicio: e.target.value })
+            }
             InputLabelProps={{ shrink: true }}
             sx={{ minWidth: 150 }}
           />
@@ -429,7 +453,9 @@ const Receitas: React.FC = () => {
             label="Data Fim"
             type="date"
             value={filtros.data_fim}
-            onChange={(e) => setFiltros({ ...filtros, data_fim: e.target.value })}
+            onChange={(e) =>
+              setFiltros({ ...filtros, data_fim: e.target.value })
+            }
             InputLabelProps={{ shrink: true }}
             sx={{ minWidth: 150 }}
           />
@@ -482,8 +508,12 @@ const Receitas: React.FC = () => {
                   <TableCell>{receita.descricao}</TableCell>
                   <TableCell>
                     <Chip
-                      label={getFonteReceitaLabel(receita.fonte_receita || receita.fonteReceita)}
-                      color={getChipColorFonteReceita(receita.fonte_receita || receita.fonteReceita)}
+                      label={getFonteReceitaLabel(
+                        receita.fonte_receita || receita.fonteReceita
+                      )}
+                      color={getChipColorFonteReceita(
+                        receita.fonte_receita || receita.fonteReceita
+                      )}
                       size="small"
                     />
                   </TableCell>
@@ -493,9 +523,7 @@ const Receitas: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>{formatDate(receita.data)}</TableCell>
-                  <TableCell>
-                    {receita.responsavelNome || "-"}
-                  </TableCell>
+                  <TableCell>{receita.responsavelNome || "-"}</TableCell>
                   <TableCell align="center">
                     <IconButton
                       color="primary"
@@ -527,7 +555,12 @@ const Receitas: React.FC = () => {
       )}
 
       {/* Dialog de Cadastro/Edição */}
-      <Dialog open={dialogAberto} onClose={handleFecharDialog} maxWidth="md" fullWidth>
+      <Dialog
+        open={dialogAberto}
+        onClose={handleFecharDialog}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {modoEdicao ? "✏️ Editar Receita" : "➕ Nova Receita"}
         </DialogTitle>
@@ -537,7 +570,9 @@ const Receitas: React.FC = () => {
               <InputLabel>Obra</InputLabel>
               <Select
                 value={formData.obra_id}
-                onChange={(e) => setFormData({ ...formData, obra_id: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({ ...formData, obra_id: Number(e.target.value) })
+                }
                 label="Obra"
               >
                 <MenuItem value={0}>Selecione...</MenuItem>
@@ -552,7 +587,9 @@ const Receitas: React.FC = () => {
             <TextField
               label="Descrição"
               value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, descricao: e.target.value })
+              }
               required
               fullWidth
               multiline
@@ -563,7 +600,9 @@ const Receitas: React.FC = () => {
               label="Valor (R$)"
               type="number"
               value={formData.valor}
-              onChange={(e) => setFormData({ ...formData, valor: Number(e.target.value) })}
+              onChange={(e) =>
+                setFormData({ ...formData, valor: Number(e.target.value) })
+              }
               required
               fullWidth
               inputProps={{ min: 0, step: 0.01 }}
@@ -573,7 +612,9 @@ const Receitas: React.FC = () => {
               label="Data de Recebimento"
               type="date"
               value={formData.data}
-              onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, data: e.target.value })
+              }
               required
               fullWidth
               InputLabelProps={{ shrink: true }}
@@ -583,7 +624,12 @@ const Receitas: React.FC = () => {
               <InputLabel>Fonte de Receita</InputLabel>
               <Select
                 value={formData.fonte_receita}
-                onChange={(e) => setFormData({ ...formData, fonte_receita: e.target.value as any })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    fonte_receita: e.target.value as any,
+                  })
+                }
                 label="Fonte de Receita"
               >
                 <MenuItem value="CONTRATO">Contrato</MenuItem>
@@ -598,7 +644,9 @@ const Receitas: React.FC = () => {
             <TextField
               label="Número do Documento"
               value={formData.numero_documento}
-              onChange={(e) => setFormData({ ...formData, numero_documento: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, numero_documento: e.target.value })
+              }
               fullWidth
               placeholder="Nº do contrato, nota fiscal, etc."
             />
@@ -607,7 +655,12 @@ const Receitas: React.FC = () => {
               <InputLabel>Responsável</InputLabel>
               <Select
                 value={formData.responsavel_id}
-                onChange={(e) => setFormData({ ...formData, responsavel_id: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    responsavel_id: Number(e.target.value),
+                  })
+                }
                 label="Responsável"
               >
                 <MenuItem value={0}>Não informado</MenuItem>
@@ -622,7 +675,9 @@ const Receitas: React.FC = () => {
             <TextField
               label="Observações"
               value={formData.observacao}
-              onChange={(e) => setFormData({ ...formData, observacao: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, observacao: e.target.value })
+              }
               fullWidth
               multiline
               rows={3}
@@ -675,7 +730,9 @@ const Receitas: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">
                   Descrição
                 </Typography>
-                <Typography variant="body1">{receitaSelecionada.descricao}</Typography>
+                <Typography variant="body1">
+                  {receitaSelecionada.descricao}
+                </Typography>
               </Box>
 
               <Box>
@@ -703,10 +760,12 @@ const Receitas: React.FC = () => {
                 <Typography variant="body1">
                   <Chip
                     label={getFonteReceitaLabel(
-                      receitaSelecionada.fonte_receita || receitaSelecionada.fonteReceita
+                      receitaSelecionada.fonte_receita ||
+                        receitaSelecionada.fonteReceita
                     )}
                     color={getChipColorFonteReceita(
-                      receitaSelecionada.fonte_receita || receitaSelecionada.fonteReceita
+                      receitaSelecionada.fonte_receita ||
+                        receitaSelecionada.fonteReceita
                     )}
                   />
                 </Typography>
@@ -718,7 +777,8 @@ const Receitas: React.FC = () => {
                     Número do Documento
                   </Typography>
                   <Typography variant="body1">
-                    {receitaSelecionada.numero_documento || receitaSelecionada.numeroDocumento}
+                    {receitaSelecionada.numero_documento ||
+                      receitaSelecionada.numeroDocumento}
                   </Typography>
                 </Box>
               )}
@@ -734,13 +794,15 @@ const Receitas: React.FC = () => {
                 </Box>
               )}
 
-              {(receitaSelecionada.observacao || receitaSelecionada.observacoes) && (
+              {(receitaSelecionada.observacao ||
+                receitaSelecionada.observacoes) && (
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     Observações
                   </Typography>
                   <Typography variant="body1">
-                    {receitaSelecionada.observacao || receitaSelecionada.observacoes}
+                    {receitaSelecionada.observacao ||
+                      receitaSelecionada.observacoes}
                   </Typography>
                 </Box>
               )}
@@ -750,17 +812,26 @@ const Receitas: React.FC = () => {
                   Data de Cadastro
                 </Typography>
                 <Typography variant="body1">
-                  {formatDate((receitaSelecionada.created_at || receitaSelecionada.createdAt) || "")}
+                  {formatDate(
+                    receitaSelecionada.created_at ||
+                      receitaSelecionada.createdAt ||
+                      ""
+                  )}
                 </Typography>
               </Box>
 
-              {(receitaSelecionada.updated_at || receitaSelecionada.updatedAt) && (
+              {(receitaSelecionada.updated_at ||
+                receitaSelecionada.updatedAt) && (
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     Última Atualização
                   </Typography>
                   <Typography variant="body1">
-                    {formatDate((receitaSelecionada.updated_at || receitaSelecionada.updatedAt) || "")}
+                    {formatDate(
+                      receitaSelecionada.updated_at ||
+                        receitaSelecionada.updatedAt ||
+                        ""
+                    )}
                   </Typography>
                 </Box>
               )}
