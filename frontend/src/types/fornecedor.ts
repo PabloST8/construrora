@@ -18,6 +18,7 @@ export interface Fornecedor {
   contato_email?: string;
   contatoEmail?: string; // Compatibilidade
   ativo: boolean; // ✅ REQUIRED (Model Go exige)
+  foto?: string; // ✅ NOVO - Base64 encoded image (logo/foto do fornecedor)
   created_at?: string;
   updated_at?: string;
   createdAt?: string; // Compatibilidade

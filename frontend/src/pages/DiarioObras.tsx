@@ -33,6 +33,7 @@ import { toast } from "react-toastify";
 import { diarioService } from "../services/diarioService";
 import { obraService } from "../services/obraService";
 import { pessoaService } from "../services/pessoaService";
+import FotoUpload from "../components/FotoUpload";
 
 interface DiarioForm {
   obra_id: number;
@@ -76,7 +77,6 @@ const DiarioObras: React.FC = () => {
   const [dialogEdicao, setDialogEdicao] = useState(false);
   const [diarioSelecionado, setDiarioSelecionado] = useState<any>(null);
   const [dadosEdicao, setDadosEdicao] = useState<any>({});
-  const [arquivoFoto, setArquivoFoto] = useState<File | null>(null); // ✅ NOVO - Arquivo de foto selecionado
 
   const [novoDiario, setNovoDiario] = useState<DiarioForm>({
     obra_id: 0,
@@ -89,20 +89,10 @@ const DiarioObras: React.FC = () => {
     progresso_percentual: 0, // ✅ NOVO
   });
 
-  // ✅ NOVO - Converter arquivo de foto para base64
-  const converterFotoParaBase64 = async (arquivo: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(arquivo);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  // Fun��o para formatar per�odo
+  // Função para formatar período
   const formatarPeriodo = (periodo: string) => {
     const periodos: Record<string, string> = {
-      manha: "Manh�",
+      manha: "Manhã",
       tarde: "Tarde",
       noite: "Noite",
       integral: "Integral",
@@ -155,13 +145,12 @@ const DiarioObras: React.FC = () => {
         progresso_percentual: Number(novoDiario.progresso_percentual) || 0, // ✅ NOVO
       };
 
-      // ✅ NOVO - Converter foto para base64 se houver
-      if (arquivoFoto) {
-        const fotoBase64 = await converterFotoParaBase64(arquivoFoto);
-        dadosEnvio.foto = fotoBase64;
+      // ✅ Adicionar foto se houver (já vem em base64 do FotoUpload)
+      if (novoDiario.foto) {
+        dadosEnvio.foto = novoDiario.foto;
       }
 
-      // S� adicionar responsavel_id se tiver um valor v�lido (> 0)
+      // Só adicionar responsavel_id se tiver um valor válido (> 0)
       if (novoDiario.responsavel_id && Number(novoDiario.responsavel_id) > 0) {
         dadosEnvio.responsavel_id = Number(novoDiario.responsavel_id);
       }
@@ -187,7 +176,6 @@ const DiarioObras: React.FC = () => {
         clima: "SOL", // ✅ NOVO
         progresso_percentual: 0, // ✅ NOVO
       });
-      setArquivoFoto(null); // ✅ NOVO - Limpar foto
       carregarDados();
     } catch (error: any) {
       console.error("? Erro completo:", error);
@@ -253,7 +241,6 @@ const DiarioObras: React.FC = () => {
     setDialogEdicao(false);
     setDiarioSelecionado(null);
     setDadosEdicao({});
-    setArquivoFoto(null); // ✅ CORRIGIDO
   };
 
   const salvarEdicao = async () => {
@@ -306,7 +293,7 @@ const DiarioObras: React.FC = () => {
       <TabPanel value={tabValue} index={0}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Novo Di�rio de Obra
+            Novo Diário de Obra
           </Typography>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <FormControl fullWidth required>
@@ -342,14 +329,14 @@ const DiarioObras: React.FC = () => {
             />
 
             <FormControl fullWidth required>
-              <InputLabel>Per�odo</InputLabel>
+              <InputLabel>Período</InputLabel>
               <Select
                 value={novoDiario.periodo}
                 onChange={(e) =>
                   setNovoDiario({ ...novoDiario, periodo: e.target.value })
                 }
               >
-                <MenuItem value="manha">Manh�</MenuItem>
+                <MenuItem value="manha">Manhã</MenuItem>
                 <MenuItem value="tarde">Tarde</MenuItem>
                 <MenuItem value="noite">Noite</MenuItem>
                 <MenuItem value="integral">Integral</MenuItem>
@@ -386,15 +373,38 @@ const DiarioObras: React.FC = () => {
               fullWidth
               multiline
               rows={2}
-              label="Observa��es (opcional)"
+              label="Observações (opcional)"
               value={novoDiario.observacoes || ""}
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, observacoes: e.target.value })
               }
             />
 
+            {/* Upload de Foto */}
+            <Box
+              sx={{
+                p: 2,
+                border: "1px dashed",
+                borderColor: "grey.400",
+                borderRadius: 1,
+                backgroundColor: "grey.50",
+              }}
+            >
+              <FotoUpload
+                foto={novoDiario.foto}
+                onFotoChange={(fotoBase64) =>
+                  setNovoDiario({
+                    ...novoDiario,
+                    foto: fotoBase64 || undefined,
+                  })
+                }
+                label="Foto do Progresso (opcional)"
+                tamanho={120}
+              />
+            </Box>
+
             <FormControl fullWidth required>
-              <InputLabel>Respons�vel</InputLabel>
+              <InputLabel>Responsável</InputLabel>
               <Select
                 value={novoDiario.responsavel_id}
                 onChange={(e) =>
@@ -510,10 +520,10 @@ const DiarioObras: React.FC = () => {
                       />
                     </td>
                     <td style={{ padding: "12px" }}>
-                      {d.fotos && d.fotos.length > 0 ? (
+                      {d.foto ? (
                         <Chip
                           icon={<PhotoIcon />}
-                          label={`${d.fotos.length}`}
+                          label="Com foto"
                           color="primary"
                           size="small"
                         />
@@ -545,7 +555,7 @@ const DiarioObras: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">Visualizar Diário de Obra</Typography>
+          Visualizar Diário de Obra
           <IconButton onClick={fecharDialogVisualizacao}>
             <CloseIcon />
           </IconButton>
@@ -612,46 +622,27 @@ const DiarioObras: React.FC = () => {
                 InputProps={{ readOnly: true }}
               />
 
-              {/* Fotos */}
-              {diarioSelecionado.fotos &&
-                diarioSelecionado.fotos.length > 0 && (
-                  <Box>
-                    <Typography variant="h6" gutterBottom>
-                      Fotos ({diarioSelecionado.fotos.length})
-                    </Typography>
-                    <Box
+              {/* Foto */}
+              {diarioSelecionado.foto && (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Foto do Diário
+                  </Typography>
+                  <Card sx={{ maxWidth: 600, mx: "auto" }}>
+                    <CardMedia
+                      component="img"
+                      image={diarioSelecionado.foto}
+                      alt="Foto do diário de obra"
                       sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(200px, 1fr))",
-                        gap: 2,
+                        width: "100%",
+                        height: "auto",
+                        maxHeight: 400,
+                        objectFit: "contain",
                       }}
-                    >
-                      {diarioSelecionado.fotos.map(
-                        (foto: any, index: number) => (
-                          <Card key={index}>
-                            <CardMedia
-                              component="img"
-                              height="200"
-                              image={foto.url}
-                              alt={foto.descricao || `Foto ${index + 1}`}
-                            />
-                            {foto.descricao && (
-                              <Box sx={{ p: 1 }}>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {foto.descricao}
-                                </Typography>
-                              </Box>
-                            )}
-                          </Card>
-                        )
-                      )}
-                    </Box>
-                  </Box>
-                )}
+                    />
+                  </Card>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>

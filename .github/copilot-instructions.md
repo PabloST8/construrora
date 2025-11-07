@@ -65,19 +65,19 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 
 #### **Pessoas - CRUD + VIEW 100%**
 
-- ✅ CREATE: Cadastro completo com validações
+- ✅ CREATE: Cadastro completo com validações + upload de foto
 - ✅ READ: Busca com filtros avançados
-- ✅ **VIEW: Modal de visualização somente leitura** 👁️
-- ✅ **UPDATE: Modal de edição com todos os campos** ✏️
+- ✅ **VIEW: Modal de visualização somente leitura + foto** 👁️
+- ✅ **UPDATE: Modal de edição com todos os campos + foto** ✏️
 - ✅ DELETE: Exclusão com confirmação 🗑️
-- ✅ **3 botões de ação na tabela**
+- ✅ **3 botões de ação na tabela** + Avatar 40px
 
 #### **Obras - CRUD + VIEW 100%**
 
 - ✅ CREATE: Cadastro com cálculo automático de prazo_dias
 - ✅ READ: Busca com filtros e status coloridos
-- ✅ **VIEW: Modal de visualização com formatação avançada** 👁️
-- ✅ **UPDATE: Modal de edição com todos os campos + cálculo automático** ✏️
+- ✅ **VIEW: Modal de visualização com formatação avançada + foto (Card 400x250)** 👁️
+- ✅ **UPDATE: Modal de edição com todos os campos + foto + cálculo automático** ✏️
 - ✅ DELETE: Exclusão com confirmação 🗑️
 - ✅ **3 botões de ação na tabela**
 
@@ -90,14 +90,24 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 - ✅ DELETE: Exclusão com confirmação 🗑️
 - ✅ **Resumo financeiro** (Total, Pago, Pendente)
 
-#### **Diário de Obras - CRUD + VIEW 100%** 🆕
+#### **Diário de Obras - CRUD + VIEW 100%**
 
-- ✅ CREATE: Cadastro com conversão de período/status
+- ✅ CREATE: Cadastro com conversão de período/status + upload de foto
 - ✅ READ: Busca com 5 filtros (obra, data, responsável, status)
-- ✅ **VIEW: Modal de visualização somente leitura** 👁️
-- ✅ **UPDATE: Modal de edição com todos os campos** ✏️
+- ✅ **VIEW: Modal de visualização somente leitura + foto** 👁️
+- ✅ **UPDATE: Modal de edição com todos os campos + foto** ✏️
 - ✅ DELETE: Exclusão com confirmação 🗑️
 - ✅ **Conversões bidirecionais** (Integral ↔ integral)
+- ✅ **3 botões de ação na tabela**
+
+#### **Fornecedores - CRUD + VIEW 100%** 🆕
+
+- ✅ CREATE: Cadastro completo + upload de foto/logo
+- ✅ READ: Busca com filtros
+- ✅ **VIEW: Modal de visualização somente leitura + foto (Avatar 120px)** 👁️
+- ✅ **UPDATE: Modal de edição com todos os campos + foto** ✏️
+- ✅ DELETE: Exclusão com confirmação 🗑️
+- ✅ **Avatar na tabela** (40px, com fallback de inicial)
 - ✅ **3 botões de ação na tabela**
 
 #### **Recursos dos Modais**
@@ -108,6 +118,7 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 - ✅ **Formatação inteligente** (datas pt-BR, moeda R$, status traduzido)
 - ✅ **Campos condicionais** (só exibe se houver dados)
 - ✅ **Seção de endereço** organizada (em Obras)
+- ✅ **Exibição de fotos** (Avatar 120px ou Card/CardMedia para imagens grandes)
 - ✅ **Datas de criação/atualização**
 - ✅ **Design limpo** e profissional
 
@@ -115,6 +126,7 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 
 - ✅ **Material-UI Dialog** responsivo
 - ✅ **Formulário completo** com todos os campos
+- ✅ **Upload de fotos** com FotoUpload component (validação + preview)
 - ✅ **Pré-população automática** dos dados via API
 - ✅ **Validações** em tempo real
 - ✅ **Loading states** durante salvamento
@@ -122,6 +134,18 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 - ✅ **Atualização automática** da lista após salvar
 - ✅ **Cálculo automático** de prazo_dias nas obras
 - ✅ **Selects dinâmicos** (responsável, contratante)
+
+**Sistema de Upload de Fotos:**
+
+- ✅ **Componente reutilizável** `FotoUpload.tsx`
+- ✅ **Validações**: Max 5MB, somente imagens
+- ✅ **Preview** em tempo real com Avatar
+- ✅ **Conversão automática** para Base64
+- ✅ **Botão de exclusão** de foto
+- ✅ **Loading states** durante upload
+- ✅ **Armazenamento**: Base64 no banco de dados
+- ✅ **Exibição em tabelas**: Avatar 40px com fallback (primeira letra)
+- ✅ **Implementado em**: Pessoas, Obras, Diário de Obras, Fornecedores
 
 ### Próximos Passos para Desenvolvimento
 
@@ -166,24 +190,27 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 - **Frontend**: React 19.1.1 + TypeScript 4.9.5 + Material-UI v7.3.2
 - **Autenticação**: JWT (Access + Refresh tokens)
 - **API**: RESTful completa
-- **Build**: 230.71 kB gzipped (otimizado)
-- **CRUD + VIEW**: 100% implementado para Pessoas e Obras
+- **Build**: 242.08 kB gzipped (otimizado)
+- **CRUD + VIEW**: 100% implementado para todos os módulos
+- **Upload de Fotos**: Sistema completo com Base64 em 4 módulos
 - **Testes**: API testada e funcionando perfeitamente
 
 ---
 
 ## 🎯 Status Geral
 
-| Módulo              | Status      | Observações                         |
-| ------------------- | ----------- | ----------------------------------- |
-| Backend API         | ✅ 100%     | Todas as rotas funcionando          |
-| Autenticação JWT    | ✅ 100%     | Interceptor + Refresh implementado  |
-| **Pessoas CRUD**    | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Obras CRUD**      | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Despesas CRUD**   | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Diário de Obras** | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| Dashboard           | ✅ 80%      | Funcionando, melhorias possíveis    |
-| Relatórios          | 🔄 30%      | Estrutura básica                    |
+| Módulo                | Status      | Observações                         |
+| --------------------- | ----------- | ----------------------------------- |
+| Backend API           | ✅ 100%     | Todas as rotas funcionando          |
+| Autenticação JWT      | ✅ 100%     | Interceptor + Refresh implementado  |
+| **Pessoas CRUD**      | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
+| **Obras CRUD**        | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
+| **Despesas CRUD**     | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
+| **Diário de Obras**   | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
+| **Fornecedores CRUD** | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
+| **Upload de Fotos**   | ✅ **100%** | **4 módulos com sistema completo**  |
+| Dashboard             | ✅ 80%      | Funcionando, melhorias possíveis    |
+| Relatórios            | 🔄 30%      | Estrutura básica                    |
 
 ---
 
@@ -233,6 +260,23 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 3. Confirme a exclusão no alerta
 4. Toast de sucesso + Lista atualizada automaticamente
 
+### **Visualizar Fornecedor:**
+
+1. Acesse "Fornecedores" → Lista de fornecedores
+2. Clique no botão 👁️ (azul) no fornecedor desejado
+3. Modal abre com todos os dados em modo somente leitura
+4. Visualize foto/logo do fornecedor (Avatar 120px)
+5. Clique em "Fechar"
+
+### **Editar Fornecedor:**
+
+1. Acesse "Fornecedores" → Lista de fornecedores
+2. Clique no botão ✏️ (laranja) no fornecedor desejado
+3. Modal abre com dados pré-preenchidos
+4. Edite campos e faça upload de nova foto/logo
+5. Clique em "Salvar"
+6. Toast de sucesso + Lista atualizada automaticamente
+
 ---
 
-✨ **Sistema completo de gestão de obras com CRUD 100% funcional!** ✨
+✨ **Sistema completo de gestão de obras com CRUD 100% funcional + Upload de Fotos em todos os módulos!** ✨

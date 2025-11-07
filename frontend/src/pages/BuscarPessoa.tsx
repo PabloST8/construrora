@@ -569,7 +569,7 @@ const BuscarPessoa: React.FC = () => {
                 <TableBody>
                   {pessoasFiltradas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                         Nenhuma pessoa encontrada
                       </TableCell>
                     </TableRow>
@@ -660,6 +660,7 @@ const BuscarPessoa: React.FC = () => {
             <Box
               sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
             >
+              {/* ✅ NOVO - Upload de Foto */}
               {/* Nome */}
               <TextField
                 label="Nome Completo *"
