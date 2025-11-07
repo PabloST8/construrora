@@ -37,15 +37,18 @@ import { toast } from "react-toastify";
 import { despesaService } from "../services/despesaService";
 import { obraService } from "../services/obraService";
 import { fornecedorService } from "../services/fornecedorService";
+import { pessoaService } from "../services/pessoaService";
 import { Fornecedor } from "../types/apiGo";
 import type { Despesa } from "../types/despesa";
 import type { Obra } from "../types/obra";
+import type { Pessoa } from "../types/pessoa";
 import { formatCurrency, formatDate } from "../utils/formatters";
 
 const Despesas: React.FC = () => {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [dialogVisualizacao, setDialogVisualizacao] = useState(false);
@@ -118,16 +121,20 @@ const Despesas: React.FC = () => {
       setDespesas([]);
       setObras([]);
       setFornecedores([]);
+      setPessoas([]);
 
-      const [despesasData, obrasData, fornecedoresData] = await Promise.all([
-        despesaService.listar(),
-        obraService.listar(),
-        fornecedorService.listar(),
-      ]);
+      const [despesasData, obrasData, fornecedoresData, pessoasData] =
+        await Promise.all([
+          despesaService.listar(),
+          obraService.listar(),
+          fornecedorService.listar(),
+          pessoaService.listar(),
+        ]);
 
       console.log("🔍 Despesas carregadas:", despesasData);
       console.log("🔍 Obras carregadas:", obrasData);
       console.log("🔍 Fornecedores carregados:", fornecedoresData);
+      console.log("🔍 Pessoas carregadas:", pessoasData);
 
       // Aguardar um tick para garantir que os estados foram limpos
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -137,10 +144,12 @@ const Despesas: React.FC = () => {
       const fornecedoresArray = Array.isArray(fornecedoresData)
         ? fornecedoresData
         : [];
+      const pessoasArray = Array.isArray(pessoasData) ? pessoasData : [];
 
       setDespesas(despesasArray);
       setObras(obrasArray);
       setFornecedores(fornecedoresArray);
+      setPessoas(pessoasArray);
 
       console.log("✅ Estados atualizados com sucesso");
     } catch (error) {
@@ -149,6 +158,7 @@ const Despesas: React.FC = () => {
       setDespesas([]);
       setObras([]);
       setFornecedores([]);
+      setPessoas([]);
     } finally {
       setLoading(false);
     }
@@ -359,6 +369,18 @@ const Despesas: React.FC = () => {
     return fornecedor?.nome || `Fornecedor ${fornecedorId}`;
   };
 
+  const getPessoaNome = (pessoaId: number) => {
+    const pessoa = pessoas.find((p) => p.id === pessoaId);
+    return pessoa?.nome || `Pessoa ${pessoaId}`;
+  };
+
+  const getFornecedorOuResponsavel = (despesa: Despesa) => {
+    if (despesa.categoria === "MAO_DE_OBRA") {
+      return getPessoaNome(despesa.fornecedor_id || 0);
+    }
+    return getFornecedorNome(despesa.fornecedor_id || 0);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case "PAGO":
@@ -555,7 +577,7 @@ const Despesas: React.FC = () => {
               <TableCell>Obra</TableCell>
               <TableCell>Descrição</TableCell>
               <TableCell>Categoria</TableCell>
-              <TableCell>Fornecedor</TableCell>
+              <TableCell>Fornecedor/Responsável</TableCell>
               <TableCell>Valor</TableCell>
               <TableCell>Vencimento</TableCell>
               <TableCell>Status</TableCell>
@@ -606,9 +628,7 @@ const Despesas: React.FC = () => {
                     {getCategoriaIcon(despesa.categoria || "")}{" "}
                     {despesa.categoria || "N/A"}
                   </TableCell>
-                  <TableCell>
-                    {getFornecedorNome(despesa.fornecedor_id || 0)}
-                  </TableCell>
+                  <TableCell>{getFornecedorOuResponsavel(despesa)}</TableCell>
                   <TableCell>{formatCurrency(despesa.valor)}</TableCell>
                   <TableCell>
                     {formatDate(despesa.data_vencimento || new Date())}
@@ -663,24 +683,47 @@ const Despesas: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth required>
-                <InputLabel>Fornecedor</InputLabel>
-                <Select
-                  value={formData.fornecedor_id || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      fornecedor_id: Number(e.target.value),
-                    })
-                  }
-                >
-                  {fornecedores.map((fornecedor) => (
-                    <MenuItem key={fornecedor.id} value={fornecedor.id}>
-                      {fornecedor.nome}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+
+              {/* 🔄 CONDICIONAL: Se categoria = MAO_DE_OBRA, mostra Responsável, senão mostra Fornecedor */}
+              {formData.categoria === "MAO_DE_OBRA" ? (
+                <FormControl fullWidth required>
+                  <InputLabel>Responsável/Profissional</InputLabel>
+                  <Select
+                    value={formData.fornecedor_id || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        fornecedor_id: Number(e.target.value),
+                      })
+                    }
+                  >
+                    {pessoas.map((pessoa) => (
+                      <MenuItem key={pessoa.id} value={pessoa.id}>
+                        {pessoa.nome}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : (
+                <FormControl fullWidth required>
+                  <InputLabel>Fornecedor</InputLabel>
+                  <Select
+                    value={formData.fornecedor_id || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        fornecedor_id: Number(e.target.value),
+                      })
+                    }
+                  >
+                    {fornecedores.map((fornecedor) => (
+                      <MenuItem key={fornecedor.id} value={fornecedor.id}>
+                        {fornecedor.nome}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </Box>
             <TextField
               fullWidth
@@ -852,8 +895,12 @@ const Despesas: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label="Fornecedor"
-                value={getFornecedorNome(despesaSelecionada.fornecedor_id || 0)}
+                label={
+                  despesaSelecionada.categoria === "MAO_DE_OBRA"
+                    ? "Responsável/Profissional"
+                    : "Fornecedor"
+                }
+                value={getFornecedorOuResponsavel(despesaSelecionada)}
                 InputProps={{ readOnly: true }}
                 fullWidth
               />

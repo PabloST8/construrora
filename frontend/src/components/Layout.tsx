@@ -70,7 +70,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/despesas") return "Gestão de Despesas";
     if (location.pathname === "/receitas") return "Gestão de Receitas";
     if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
-    if (location.pathname === "/relatorios") return "Relatórios e Análises";
+    if (location.pathname === "/relatorios") return "📊 Relatórios";
     if (location.pathname === "/diario") return "Diário de Obra";
     return "Sistema de Gestão de Obras";
   };

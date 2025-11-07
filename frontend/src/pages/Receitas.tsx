@@ -120,6 +120,30 @@ const Receitas: React.FC = () => {
 
   const carregarReceitas = async () => {
     try {
+      console.log("🔍 Filtros selecionados:", filtros);
+
+      // ✅ Se filtrar apenas por obra, usar endpoint específico
+      if (
+        filtros.obra_id &&
+        !filtros.fonte_receita &&
+        !filtros.data_inicio &&
+        !filtros.data_fim &&
+        !filtros.responsavel_id
+      ) {
+        console.log(
+          "📍 Usando endpoint /receitas/obra/:id para obra_id:",
+          filtros.obra_id
+        );
+        const data: any = await receitaService.buscarPorObra(
+          parseInt(filtros.obra_id)
+        );
+        const receitasArray = Array.isArray(data) ? data : data?.data || [];
+        console.log("📊 Receitas retornadas:", receitasArray.length);
+        setReceitas(receitasArray);
+        return;
+      }
+
+      // ✅ Caso contrário, usar endpoint com query params
       const params: any = {};
       if (filtros.obra_id) params.obra_id = parseInt(filtros.obra_id);
       if (filtros.fonte_receita) params.fonte_receita = filtros.fonte_receita;
@@ -128,9 +152,12 @@ const Receitas: React.FC = () => {
       if (filtros.responsavel_id)
         params.responsavel_id = parseInt(filtros.responsavel_id);
 
+      console.log("🔍 Filtros aplicados (query params):", params);
+
       const data: any = await receitaService.listar(params);
       // ✅ Garantir que sempre seja um array
       const receitasArray = Array.isArray(data) ? data : data?.data || [];
+      console.log("📊 Receitas retornadas:", receitasArray.length);
       setReceitas(receitasArray);
     } catch (error) {
       console.error("Erro ao carregar receitas:", error);

@@ -20,7 +20,7 @@ import Obras from "./pages/Obras";
 import DespesasNovo from "./pages/DespesasNovo";
 import Receitas from "./pages/Receitas";
 import Fornecedores from "./pages/Fornecedores";
-import Relatorios from "./pages/Relatorios";
+import RelatoriosApiGo from "./pages/RelatoriosApiGo";
 import DiarioObras from "./pages/DiarioObras";
 
 const theme = createTheme({
@@ -101,7 +101,7 @@ function App() {
                 path="empresas"
                 element={<div>Empresas - Em desenvolvimento</div>}
               />
-              <Route path="relatorios" element={<Relatorios />} />
+              <Route path="relatorios" element={<RelatoriosApiGo />} />
               <Route
                 path="notificacoes"
                 element={<div>Notificações - Em desenvolvimento</div>}
