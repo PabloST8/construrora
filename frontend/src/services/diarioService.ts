@@ -21,9 +21,9 @@ export const diarioService = {
     return response.data;
   },
 
-  // Buscar diários por obra
+  // ✅ Buscar diários por obra (ENDPOINT CORRETO: /diarios/obra/:id)
   async buscarPorObra(obraId: number): Promise<DiarioObra[]> {
-    const response = await api.get(`/diarios/${obraId}/obra`);
+    const response = await api.get(`/diarios/obra/${obraId}`); // ✅ CORRIGIDO
     return response.data.data || response.data;
   },
 
@@ -38,36 +38,17 @@ export const diarioService = {
     return response.data;
   },
 
-  // Upload de fotos para diário
-  async uploadFoto(
-    diarioId: number,
-    arquivo: File,
-    descricao?: string
-  ): Promise<any> {
-    const formData = new FormData();
-    formData.append("foto", arquivo);
-    if (descricao) {
-      formData.append("descricao", descricao);
-    }
+  // ❌ REMOVIDO - API Go NÃO TEM upload separado de fotos
+  // Foto deve ir como BASE64 no JSON do diário
 
-    console.log(
-      `📷 Fazendo upload de foto para diário ${diarioId}:`,
-      arquivo.name
-    );
-    const response = await api.post(`/diarios/${diarioId}/fotos`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+  // ✅ NOVO - Converter arquivo para base64
+  async converterFotoParaBase64(arquivo: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(arquivo);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
     });
-    console.log(`✅ Foto enviada com sucesso:`, response.data);
-    return response.data;
-  },
-
-  // Remover foto do diário
-  async removerFoto(diarioId: number, fotoId: number): Promise<void> {
-    console.log(`🗑️ Removendo foto ${fotoId} do diário ${diarioId}`);
-    await api.delete(`/diarios/${diarioId}/fotos/${fotoId}`);
-    console.log(`✅ Foto ${fotoId} removida com sucesso`);
   },
 
   // Deletar diário
@@ -75,52 +56,7 @@ export const diarioService = {
     await api.delete(`/diarios/${id}`);
   },
 
-  // === MÉTODOS LEGACY (Para compatibilidade) ===
-  listar_legacy: async (params?: {
-    page?: number;
-    limit?: number;
-    obra?: string;
-    dataInicio?: string;
-    dataFim?: string;
-  }) => {
-    const response = await api.get("/diarios", { params });
-    return response.data.data || response.data;
-  },
-
-  buscarPorId_legacy: async (id: string) => {
-    const response = await api.get(`/diarios/${id}`);
-    return response.data;
-  },
-
-  buscarPorObra_legacy: async (obraId: string) => {
-    const response = await api.get(`/diarios/${obraId}/obra`);
-    return response.data.data || response.data;
-  },
-
-  criar_legacy: async (diarioData: any) => {
-    const response = await api.post("/diarios", diarioData);
-    return response.data.data || response.data;
-  },
-
-  atualizar_legacy: async (id: string, diarioData: any) => {
-    const response = await api.put(`/diarios/${id}`, diarioData);
-    return response.data;
-  },
-
-  obterEstatisticas: async (obraId: string) => {
-    const response = await api.get(`/diarios/estatisticas/${obraId}`);
-    return response.data;
-  },
-
-  obterResumoMensal: async (obraId: string, ano: number, mes: number) => {
-    const response = await api.get(
-      `/diarios/resumo/mensal/${obraId}/${ano}/${mes}`
-    );
-    return response.data;
-  },
-
-  deletar_legacy: async (id: string) => {
-    const response = await api.delete(`/diarios/${id}`);
-    return response.data;
-  },
+  // ❌ MÉTODOS LEGADOS REMOVIDOS - API Go não tem esses endpoints
+  // - GET /diarios/estatisticas/:obraId
+  // - GET /diarios/resumo/mensal/:obraId/:ano/:mes
 };

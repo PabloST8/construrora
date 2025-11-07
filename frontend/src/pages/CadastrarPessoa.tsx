@@ -57,7 +57,7 @@ const CadastrarPessoa: React.FC = () => {
   const [salvando, setSalvando] = useState(false);
   const [formData, setFormData] = useState<Pessoa>({
     nome: "",
-    tipo: "PF",
+    tipo: "CPF", // ✅ API Go usa "CPF" ou "CNPJ", não "PF"/"PJ"
     documento: "",
     email: "",
     telefone: "",
@@ -84,7 +84,7 @@ const CadastrarPessoa: React.FC = () => {
     setTipoPessoa(tipo);
     setFormData({
       ...formData,
-      tipo: tipo === "FISICA" ? "PF" : "PJ",
+      tipo: tipo === "FISICA" ? "CPF" : "CNPJ", // ✅ API Go usa "CPF"/"CNPJ"
       documento: "",
     });
   };
@@ -163,7 +163,7 @@ const CadastrarPessoa: React.FC = () => {
       // Limpar formulário após sucesso
       setFormData({
         nome: "",
-        tipo: "PF",
+        tipo: "CPF", // ✅ API Go usa "CPF" ou "CNPJ"
         documento: "",
         email: "",
         telefone: "",

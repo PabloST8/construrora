@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -672,7 +672,7 @@ const Despesas: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Obra</InputLabel>
                 <Select
-                  name="obraId"
+                  name="obra_id"
                   value={filtros.obraId}
                   onChange={handleFiltroChange}
                   label="Obra"
@@ -1064,7 +1064,7 @@ const Despesas: React.FC = () => {
                 <Select
                   value={despesaEditando.obraId}
                   onChange={(e) =>
-                    handleCampoChange("obraId", Number(e.target.value))
+                    handleCampoChange("obra_id", Number(e.target.value))
                   }
                   label="Obra"
                 >

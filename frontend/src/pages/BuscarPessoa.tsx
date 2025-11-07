@@ -612,12 +612,12 @@ const BuscarPessoa: React.FC = () => {
                         <TableCell>
                           <Chip
                             label={
-                              pessoa.tipo === "PF"
+                              pessoa.tipo === "CPF"
                                 ? "Pessoa Física"
                                 : "Pessoa Jurídica"
                             }
                             color={
-                              pessoa.tipo === "PF" ? "primary" : "secondary"
+                              pessoa.tipo === "CPF" ? "primary" : "secondary"
                             }
                             size="small"
                           />
@@ -672,18 +672,18 @@ const BuscarPessoa: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Tipo de Pessoa *</InputLabel>
                 <Select
-                  value={pessoaEditando.tipo || "PF"}
+                  value={pessoaEditando.tipo || "CPF"}
                   onChange={(e) => handleCampoChange("tipo", e.target.value)}
                   label="Tipo de Pessoa *"
                 >
-                  <MenuItem value="PF">Pessoa Física</MenuItem>
-                  <MenuItem value="PJ">Pessoa Jurídica</MenuItem>
+                  <MenuItem value="CPF">Pessoa Física</MenuItem>
+                  <MenuItem value="CNPJ">Pessoa Jurídica</MenuItem>
                 </Select>
               </FormControl>
 
               {/* Documento (CPF/CNPJ) */}
               <TextField
-                label={pessoaEditando.tipo === "PF" ? "CPF *" : "CNPJ *"}
+                label={pessoaEditando.tipo === "CPF" ? "CPF *" : "CNPJ *"}
                 fullWidth
                 value={pessoaEditando.documento || ""}
                 onChange={(e) => handleCampoChange("documento", e.target.value)}
@@ -866,7 +866,7 @@ const BuscarPessoa: React.FC = () => {
                 label="Tipo de Pessoa"
                 fullWidth
                 value={
-                  pessoaVisualizando.tipo === "PF"
+                  pessoaVisualizando.tipo === "CPF"
                     ? "Pessoa Física"
                     : "Pessoa Jurídica"
                 }
@@ -875,7 +875,7 @@ const BuscarPessoa: React.FC = () => {
 
               {/* Documento (CPF/CNPJ) */}
               <TextField
-                label={pessoaVisualizando.tipo === "PF" ? "CPF" : "CNPJ"}
+                label={pessoaVisualizando.tipo === "CPF" ? "CPF" : "CNPJ"}
                 fullWidth
                 value={pessoaVisualizando.documento || ""}
                 InputProps={{ readOnly: true }}
@@ -995,23 +995,23 @@ const BuscarPessoa: React.FC = () => {
 
               {/* Datas de criação/atualização */}
               <Box sx={{ display: "flex", gap: 2 }}>
-                {pessoaVisualizando.created_at && (
+                {pessoaVisualizando.createdAt && (
                   <TextField
                     label="Data de Criação"
                     fullWidth
                     value={new Date(
-                      pessoaVisualizando.created_at
+                      pessoaVisualizando.createdAt
                     ).toLocaleString("pt-BR")}
                     InputProps={{ readOnly: true }}
                   />
                 )}
 
-                {pessoaVisualizando.updated_at && (
+                {pessoaVisualizando.updatedAt && (
                   <TextField
                     label="Última Atualização"
                     fullWidth
                     value={new Date(
-                      pessoaVisualizando.updated_at
+                      pessoaVisualizando.updatedAt
                     ).toLocaleString("pt-BR")}
                     InputProps={{ readOnly: true }}
                   />

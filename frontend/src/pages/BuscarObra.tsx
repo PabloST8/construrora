@@ -206,7 +206,6 @@ const BuscarObra: React.FC = () => {
 
       const dadosAtualizados: Partial<Obra> = {
         nome: obraEditando.nome,
-        descricao: obraEditando.descricao || "",
         data_inicio: obraEditando.data_inicio,
         data_fim_prevista: obraEditando.data_fim_prevista,
         prazo_dias: prazo_dias,
@@ -590,16 +589,6 @@ const BuscarObra: React.FC = () => {
                 onChange={(e) => handleCampoChange("nome", e.target.value)}
               />
 
-              {/* Descrição */}
-              <TextField
-                label="Descrição"
-                fullWidth
-                multiline
-                rows={3}
-                value={obraEditando.descricao || ""}
-                onChange={(e) => handleCampoChange("descricao", e.target.value)}
-              />
-
               {/* Contrato Número */}
               <TextField
                 label="Número do Contrato"
@@ -842,18 +831,6 @@ const BuscarObra: React.FC = () => {
                 value={obraVisualizando.nome || ""}
                 InputProps={{ readOnly: true }}
               />
-
-              {/* Descrição */}
-              {obraVisualizando.descricao && (
-                <TextField
-                  label="Descrição"
-                  fullWidth
-                  multiline
-                  rows={3}
-                  value={obraVisualizando.descricao}
-                  InputProps={{ readOnly: true }}
-                />
-              )}
 
               {/* Contrato Número */}
               <TextField

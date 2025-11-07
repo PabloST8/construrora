@@ -42,10 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (email) {
         // Criar um objeto de usuário básico com o email do token
         setUser({
-          id: "0",
-          nomeCompleto: email.split("@")[0], // Nome temporário baseado no email
+          id: 0,
+          nome: email.split("@")[0], // Nome temporário baseado no email
           email: email,
-          permissoes: "ENGENHEIRO",
+          perfil_acesso: "usuario",
         });
       }
     } catch (error) {
@@ -66,10 +66,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const email = authService.getUserEmail();
       if (email) {
         setUser({
-          id: "0",
-          nomeCompleto: email.split("@")[0],
+          id: 0,
+          nome: email.split("@")[0],
           email: email,
-          permissoes: "ENGENHEIRO",
+          perfil_acesso: "usuario",
         });
       }
 

@@ -2,7 +2,7 @@ import api from "./api";
 import { Pessoa, PessoaFilters } from "../types/pessoa";
 
 export const pessoaService = {
-  // Criar nova pessoa
+  // ✅ Criar nova pessoa (Model Go espera campo "tipo", não "tipo_documento")
   async criar(pessoa: Pessoa): Promise<{ id: number }> {
     const response = await api.post("/pessoas", pessoa);
     return response.data.data || response.data;

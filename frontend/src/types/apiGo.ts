@@ -29,55 +29,57 @@ export interface Fornecedor {
   updated_at?: string;
 }
 
-// Interface para Diário de Obra da API Go
+// ✅ Interface para Diário de Obra 100% match com Model Go
 export interface DiarioObra {
   id?: number;
   obra_id: number;
   data: string;
-  periodo: "manhã" | "tarde" | "integral";
+  periodo?: "manha" | "tarde" | "noite" | "integral"; // ✅ Match Model Go (sem acento)
   atividades_realizadas: string;
   ocorrencias?: string;
   observacoes?: string;
+  foto?: string; // ✅ Base64 encoded image (Model Go)
+  clima?: "ENSOLARADO" | "NUBLADO" | "CHUVOSO" | "VENTOSO" | "OUTROS"; // ✅ NOVO
+  progresso_percentual?: number; // ✅ NOVO
   responsavel_id?: number;
   aprovado_por_id?: number;
-  status_aprovacao: "pendente" | "aprovado" | "rejeitado";
-  fotos?: Array<{
-    id?: number;
-    nome: string;
-    url: string;
-    descricao?: string;
-    data_upload?: string;
-  }>;
+  status_aprovacao?: "pendente" | "aprovado" | "rejeitado";
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Interface para Despesas da API Go
+// ✅ Interface para Despesas 100% match com Model Go
 export interface Despesa {
   id?: number;
   obra_id: number;
   fornecedor_id?: number;
+  data?: string; // ✅ Data da despesa/compra (opcional)
+  data_vencimento?: string; // ✅ Data de vencimento (PRINCIPAL)
   descricao: string;
-  categoria:
+  categoria?:
     | "MATERIAL"
     | "MAO_DE_OBRA"
-    | "TRANSPORTE"
-    | "EQUIPAMENTO"
+    | "COMBUSTIVEL" // ✅ NOVO
     | "ALIMENTACAO"
+    | "MATERIAL_ELETRICO" // ✅ NOVO
+    | "ALUGUEL_EQUIPAMENTO" // ✅ NOVO
+    | "TRANSPORTE"
+    | "IMPOSTO" // ✅ NOVO
+    | "PARCEIRO" // ✅ NOVO
     | "OUTROS";
   valor: number;
-  data_vencimento: string;
-  data_pagamento?: string;
-  forma_pagamento:
+  forma_pagamento?:
     | "PIX"
     | "BOLETO"
     | "CARTAO_CREDITO"
     | "CARTAO_DEBITO"
     | "TRANSFERENCIA"
-    | "DINHEIRO"
+    | "ESPECIE" // ✅ Match Model Go (não "DINHEIRO")
     | "CHEQUE";
-  status_pagamento: "PENDENTE" | "PAGO" | "VENCIDO" | "CANCELADO";
-  observacoes?: string;
+  status_pagamento?: "PENDENTE" | "PAGO" | "VENCIDO" | "CANCELADO";
+  data_pagamento?: string;
+  responsavel_pagamento?: string; // ✅ Match Model Go
+  observacao?: string; // ✅ Match Model Go (não "observacoes")
   created_at?: string;
   updated_at?: string;
 }

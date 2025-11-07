@@ -1,26 +1,29 @@
+// ✅ Ajustado 100% para match com model Go Obra
 export interface Obra {
   id?: number;
   nome: string;
   contrato_numero: string;
-  contratoNumero?: string; // ✅ COMPATIBILIDADE
+  contratoNumero?: string; // Compatibilidade
   contratante_id: number;
-  responsavel_id: number;
-  responsavelNome?: string; // ✅ ADICIONAR CAMPO
-  contratanteNome?: string; // ✅ ADICIONAR CAMPO
+  contratanteId?: number; // Compatibilidade
+  contratanteNome?: string; // Para exibição (JOIN)
+  responsavel_id?: number;
+  responsavelId?: number; // Compatibilidade
+  responsavelNome?: string; // Para exibição (JOIN)
   data_inicio: string;
-  dataInicio?: string; // ✅ COMPATIBILIDADE
+  dataInicio?: string; // Compatibilidade
   prazo_dias: number;
-  prazoDias?: number; // ✅ COMPATIBILIDADE
-  data_fim_prevista: string;
-  orcamento: number;
+  prazoDias?: number; // Compatibilidade
+  data_fim_prevista?: string;
+  dataFimPrevista?: string; // Compatibilidade
+  orcamento?: number;
   status:
     | "planejamento"
     | "em_andamento"
     | "pausada"
     | "concluida"
     | "cancelada";
-  art?: string; // ✅ CAMPO ART DESCOBERTO NA API
-  descricao?: string; // ✅ ADICIONAR CAMPO FALTANTE
+  art?: string; // ✅ Campo ART da API Go
   endereco_rua?: string;
   endereco_numero?: string;
   endereco_bairro?: string;
@@ -31,90 +34,10 @@ export interface Obra {
   ativo?: boolean;
   created_at?: string;
   updated_at?: string;
+  createdAt?: string; // Compatibilidade
+  updatedAt?: string; // Compatibilidade
 }
 
-// Interface para compatibilidade com frontend antigo
-export interface ObraLegacy {
-  id?: number;
-  nome: string;
-  contratoNumero?: string;
-  art?: string; // ✅ CAMPO ART ADICIONADO
-  contratanteId?: number;
-  contratanteNome?: string;
-  responsavelId?: number;
-  responsavelNome?: string;
-  dataInicio?: string;
-  dataTerminoPrevista?: string;
-  dataInicioReal?: string; // ✅ ADICIONAR CAMPO FALTANTE
-  prazoDias?: number;
-  orcamento?: number;
-  valorTotal?: number;
-  valorUtilizado?: number;
-  saldoObra?: number;
-  tipoObra?: string;
-  situacao?: string;
-  status?: string;
-  descricao?: string;
-  enderecoRua?: string;
-  enderecoNumero?: string;
-  enderecoBairro?: string;
-  enderecoCidade?: string;
-  enderecoEstado?: string;
-  enderecoCep?: string;
-  observacoes?: string;
-  ativo?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface ObraFinanceiro {
-  orcamentoEstimado: number;
-  valorTotal: number;
-  valorUtilizado: number;
-  saldoObra: number;
-  aditivos?: Aditivo[];
-}
-
-export interface Aditivo {
-  id?: number;
-  valor: number;
-  data: string;
-}
-
-export interface Despesa {
-  id?: number;
-  obraId: number;
-  categoria: string;
-  fornecedor: string;
-  pagoPor: string;
-  status: string;
-  dataPagamento: string;
-  valor: number;
-  descricao?: string;
-  situacao?: string;
-}
-
-export interface FolhaPagamento {
-  id?: number;
-  obraId: number;
-  funcionario: string;
-  diasTrabalhados: number;
-  pagoPor: string;
-  periodoReferencia: string;
-  status: string;
-  dataPagamento: string;
-  valorDiaria: number;
-  valor: number;
-  descricao?: string;
-}
-
-export type TipoObra =
-  | "Manutenção"
-  | "Construção"
-  | "Reforma"
-  | "Infraestrutura";
-export type SituacaoObra =
-  | "Em andamento"
-  | "Pausada"
-  | "Concluída"
-  | "Cancelada";
+// ✅ Removidas interfaces antigas não usadas na API Go
+// (ObraLegacy, ObraFinanceiro, Aditivo, Despesa, FolhaPagamento)
+// As despesas agora têm arquivo próprio: despesa.ts

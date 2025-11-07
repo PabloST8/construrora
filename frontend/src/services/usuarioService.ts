@@ -2,7 +2,7 @@ import api from "./api";
 import { Usuario } from "../types/apiGo";
 
 export const usuarioService = {
-  // Cadastrar novo usuário (público)
+  // ✅ Cadastrar novo usuário (ROTA PÚBLICA - não precisa token JWT)
   async cadastrar(usuario: Usuario): Promise<Usuario> {
     const response = await api.post("/usuarios", usuario);
     return response.data.data || response.data;

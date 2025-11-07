@@ -484,6 +484,13 @@ const Despesas: React.FC = () => {
               <MenuItem value="">Todas</MenuItem>
               <MenuItem value="MATERIAL">Material</MenuItem>
               <MenuItem value="MAO_DE_OBRA">Mão de Obra</MenuItem>
+              <MenuItem value="COMBUSTIVEL">Combustível</MenuItem>
+              <MenuItem value="ALIMENTACAO">Alimentação</MenuItem>
+              <MenuItem value="MATERIAL_ELETRICO">Material Elétrico</MenuItem>
+              <MenuItem value="ALUGUEL_EQUIPAMENTO">
+                Aluguel Equipamento
+              </MenuItem>
+              <MenuItem value="TRANSPORTE">Transporte</MenuItem>
               <MenuItem value="IMPOSTO">Imposto</MenuItem>
               <MenuItem value="PARCEIRO">Parceiro</MenuItem>
               <MenuItem value="OUTROS">Outros</MenuItem>
@@ -500,6 +507,8 @@ const Despesas: React.FC = () => {
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="PENDENTE">Pendente</MenuItem>
               <MenuItem value="PAGO">Pago</MenuItem>
+              <MenuItem value="VENCIDO">Vencido</MenuItem>
+              <MenuItem value="CANCELADO">Cancelado</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -594,17 +603,24 @@ const Despesas: React.FC = () => {
                   <TableCell>{getObraNome(despesa.obra_id)}</TableCell>
                   <TableCell>{despesa.descricao}</TableCell>
                   <TableCell>
-                    {getCategoriaIcon(despesa.categoria)} {despesa.categoria}
+                    {getCategoriaIcon(despesa.categoria || "")}{" "}
+                    {despesa.categoria || "N/A"}
                   </TableCell>
                   <TableCell>
-                    {getFornecedorNome(despesa.fornecedor_id)}
+                    {getFornecedorNome(despesa.fornecedor_id || 0)}
                   </TableCell>
                   <TableCell>{formatCurrency(despesa.valor)}</TableCell>
-                  <TableCell>{formatDate(despesa.data_vencimento)}</TableCell>
+                  <TableCell>
+                    {formatDate(despesa.data_vencimento || new Date())}
+                  </TableCell>
                   <TableCell>
                     <Chip
-                      label={despesa.status_pagamento}
-                      color={getStatusColor(despesa.status_pagamento) as any}
+                      label={despesa.status_pagamento || "PENDENTE"}
+                      color={
+                        getStatusColor(
+                          despesa.status_pagamento || "PENDENTE"
+                        ) as any
+                      }
                       size="small"
                     />
                   </TableCell>
@@ -689,6 +705,15 @@ const Despesas: React.FC = () => {
                 >
                   <MenuItem value="MATERIAL">🏗️ Material</MenuItem>
                   <MenuItem value="MAO_DE_OBRA">👷 Mão de Obra</MenuItem>
+                  <MenuItem value="COMBUSTIVEL">⛽ Combustível</MenuItem>
+                  <MenuItem value="ALIMENTACAO">🍔 Alimentação</MenuItem>
+                  <MenuItem value="MATERIAL_ELETRICO">
+                    💡 Material Elétrico
+                  </MenuItem>
+                  <MenuItem value="ALUGUEL_EQUIPAMENTO">
+                    🚜 Aluguel Equipamento
+                  </MenuItem>
+                  <MenuItem value="TRANSPORTE">🚛 Transporte</MenuItem>
                   <MenuItem value="IMPOSTO">📋 Imposto</MenuItem>
                   <MenuItem value="PARCEIRO">🤝 Parceiro</MenuItem>
                   <MenuItem value="OUTROS">📦 Outros</MenuItem>
@@ -734,10 +759,13 @@ const Despesas: React.FC = () => {
                     })
                   }
                 >
-                  <MenuItem value="A_VISTA">À Vista</MenuItem>
                   <MenuItem value="PIX">PIX</MenuItem>
                   <MenuItem value="BOLETO">Boleto</MenuItem>
-                  <MenuItem value="CARTAO">Cartão</MenuItem>
+                  <MenuItem value="CARTAO_CREDITO">Cartão de Crédito</MenuItem>
+                  <MenuItem value="CARTAO_DEBITO">Cartão de Débito</MenuItem>
+                  <MenuItem value="TRANSFERENCIA">Transferência</MenuItem>
+                  <MenuItem value="ESPECIE">Dinheiro (Espécie)</MenuItem>
+                  <MenuItem value="CHEQUE">Cheque</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -761,6 +789,8 @@ const Despesas: React.FC = () => {
               >
                 <MenuItem value="PENDENTE">Pendente</MenuItem>
                 <MenuItem value="PAGO">Pago</MenuItem>
+                <MenuItem value="VENCIDO">Vencido</MenuItem>
+                <MenuItem value="CANCELADO">Cancelado</MenuItem>
               </Select>
             </FormControl>
 
@@ -823,7 +853,7 @@ const Despesas: React.FC = () => {
               />
               <TextField
                 label="Fornecedor"
-                value={getFornecedorNome(despesaSelecionada.fornecedor_id)}
+                value={getFornecedorNome(despesaSelecionada.fornecedor_id || 0)}
                 InputProps={{ readOnly: true }}
                 fullWidth
               />
@@ -838,9 +868,9 @@ const Despesas: React.FC = () => {
               <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="Categoria"
-                  value={`${getCategoriaIcon(despesaSelecionada.categoria)} ${
-                    despesaSelecionada.categoria
-                  }`}
+                  value={`${getCategoriaIcon(
+                    despesaSelecionada.categoria || ""
+                  )} ${despesaSelecionada.categoria || "N/A"}`}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
@@ -854,13 +884,15 @@ const Despesas: React.FC = () => {
               <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="Vencimento"
-                  value={formatDate(despesaSelecionada.data_vencimento)}
+                  value={formatDate(
+                    despesaSelecionada.data_vencimento || new Date()
+                  )}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
                 <TextField
                   label="Status"
-                  value={despesaSelecionada.status_pagamento}
+                  value={despesaSelecionada.status_pagamento || "PENDENTE"}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />

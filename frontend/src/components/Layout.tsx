@@ -68,6 +68,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/obras") return "Gestão de Obras";
     if (location.pathname === "/pessoas") return "Gestão de Pessoas";
     if (location.pathname === "/despesas") return "Gestão de Despesas";
+    if (location.pathname === "/receitas") return "Gestão de Receitas";
     if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
     if (location.pathname === "/relatorios") return "Relatórios e Análises";
     if (location.pathname === "/diario") return "Diário de Obra";
@@ -239,6 +240,23 @@ const Layout: React.FC<LayoutProps> = (props) => {
           </ListItemButton>
         </ListItem>
 
+        {/* Receitas */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/receitas")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/receitas"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="💵 Receitas" />
+          </ListItemButton>
+        </ListItem>
+
         {/* Fornecedores */}
         <ListItem disablePadding>
           <ListItemButton
@@ -334,7 +352,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
           {/* Avatar do usuário */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography variant="body2" sx={{ color: "#666" }}>
-              {user?.nomeCompleto || "Usuário"}
+              {user?.nome || "Usuário"}
             </Typography>
             <IconButton
               edge="end"
@@ -344,7 +362,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               sx={{ color: "#333" }}
             >
               <Avatar sx={{ width: 32, height: 32, bgcolor: "#d32f2f" }}>
-                {user?.nomeCompleto?.charAt(0)?.toUpperCase() || "U"}
+                {user?.nome?.charAt(0)?.toUpperCase() || "U"}
               </Avatar>
             </IconButton>
           </Box>

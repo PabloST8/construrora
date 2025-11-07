@@ -35,15 +35,11 @@ export const obraService = {
     return response.data;
   },
 
-  atualizarStatus: async (id: string, status: string) => {
-    const response = await api.patch(`/obras/${id}/status`, { status });
-    return response.data;
-  },
+  // ❌ REMOVIDO - API Go NÃO TEM PATCH /obras/:id/status
+  // atualizarStatus: async (id: string, status: string) => {...}
 
-  buscarPorStatus: async (status: string): Promise<Obra[]> => {
-    const response = await api.get(`/obras/status/${status}`);
-    return response.data;
-  },
+  // ❌ REMOVIDO - API Go NÃO TEM GET /obras/status/:status
+  // buscarPorStatus: async (status: string) => {...}
 
   deletar: async (id: string) => {
     const response = await api.delete(`/obras/${id}`);

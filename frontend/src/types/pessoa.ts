@@ -1,25 +1,24 @@
+// ✅ Ajustado 100% para match com model Go Pessoa
 export interface Pessoa {
   id?: number;
   nome: string;
-  tipo: "PF" | "PJ"; // ✅ Corrigido para match com API Go
+  tipo: "CPF" | "CNPJ"; // ✅ Match EXATO com Model Go (json:"tipo")
   documento: string;
   email?: string;
   telefone?: string;
   cargo?: string;
   ativo?: boolean;
 
-  // Campos de endereço
-  endereco_cep?: string;
+  // ✅ Campos de endereço (match com API Go)
   endereco_rua?: string;
   endereco_numero?: string;
+  endereco_complemento?: string;
   endereco_bairro?: string;
   endereco_cidade?: string;
   endereco_estado?: string;
-  endereco_complemento?: string;
+  endereco_cep?: string;
 
   // Timestamps
-  created_at?: string;
-  updated_at?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -30,4 +29,5 @@ export interface PessoaFilters {
   documento?: string;
   cpf?: string;
   funcao?: string;
+  cargo?: string;
 }

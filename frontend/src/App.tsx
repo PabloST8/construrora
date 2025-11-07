@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import Pessoas from "./pages/Pessoas";
 import Obras from "./pages/Obras";
 import DespesasNovo from "./pages/DespesasNovo";
+import Receitas from "./pages/Receitas";
 import Fornecedores from "./pages/Fornecedores";
 import Relatorios from "./pages/Relatorios";
 import DiarioObras from "./pages/DiarioObras";
@@ -93,6 +94,7 @@ function App() {
               <Route path="pessoas" element={<Pessoas />} />
               <Route path="obras" element={<Obras />} />
               <Route path="despesas" element={<DespesasNovo />} />
+              <Route path="receitas" element={<Receitas />} />
               <Route path="fornecedores" element={<Fornecedores />} />
               <Route path="diario" element={<DiarioObras />} />
               <Route

@@ -3,11 +3,19 @@ import type { Despesa } from "../types/despesa";
 import type { RelatorioDesepesas } from "../types/apiGo";
 
 export const despesaService = {
-  // Criar nova despesa
+  // ✅ Criar nova despesa (SEMPRE enviar data_vencimento como campo principal)
   async criar(despesa: Despesa): Promise<Despesa> {
     console.log("🚀 Enviando despesa para API:", despesa);
+
+    // ✅ Garantir que data_vencimento está presente
+    const despesaParaEnviar = {
+      ...despesa,
+      // Se não tiver data_vencimento mas tiver data, usar data como vencimento
+      data_vencimento: despesa.data_vencimento || despesa.data,
+    };
+
     try {
-      const response = await api.post("/despesas", despesa);
+      const response = await api.post("/despesas", despesaParaEnviar);
       console.log("✅ Resposta da API:", response);
       return response.data.data || response.data;
     } catch (error: any) {
@@ -70,46 +78,8 @@ export const despesaService = {
     return response.data.data || response.data;
   },
 
-  // === LEGACY METHODS (Para compatibilidade) ===
-  listar_legacy: async (params?: {
-    page?: number;
-    limit?: number;
-    obra?: string;
-    categoria?: string;
-    statusPagamento?: string;
-    dataInicio?: string;
-    dataFim?: string;
-  }) => {
-    const response = await api.get("/despesas", { params });
-    return response.data;
-  },
-
-  atualizarPagamento: async (
-    id: string,
-    statusPagamento: string,
-    dataPagamento?: string
-  ) => {
-    const response = await api.patch(`/despesas/${id}/pagamento`, {
-      statusPagamento,
-      dataPagamento,
-    });
-    return response.data;
-  },
-
-  buscarPorObra: async (obraId: string): Promise<Despesa[]> => {
-    const response = await api.get(`/despesas/obra/${obraId}`);
-    return response.data;
-  },
-
-  obterResumoCategoria: async (obra?: string) => {
-    const response = await api.get("/despesas/resumo/categoria", {
-      params: { obra },
-    });
-    return response.data;
-  },
-
-  deletar_legacy: async (id: string) => {
-    const response = await api.delete(`/despesas/${id}`);
-    return response.data;
-  },
+  // ❌ MÉTODOS LEGADOS REMOVIDOS - API Go não tem esses endpoints
+  // - PATCH /despesas/:id/pagamento (usar PUT /despesas/:id)
+  // - GET /despesas/obra/:obraId (filtrar com params)
+  // - GET /despesas/resumo/categoria (usar GET /relatorios/despesas/:obra_id)
 };

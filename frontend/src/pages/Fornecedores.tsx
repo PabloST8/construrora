@@ -174,15 +174,22 @@ const Fornecedores: React.FC = () => {
 
   const salvarFornecedor = async () => {
     try {
-      if (!formData.nome || !formData.documento) {
+      if (!formData.nome || !formData.documento || !formData.tipo_documento) {
         toast.error("Preencha todos os campos obrigatórios");
         return;
       }
 
       setLoading(true);
 
-      const dadosFornecedor = {
-        ...formData,
+      const dadosFornecedor: Fornecedor = {
+        nome: formData.nome,
+        tipo_documento: formData.tipo_documento,
+        documento: formData.documento,
+        email: formData.email,
+        telefone: formData.telefone,
+        endereco: formData.endereco,
+        cidade: formData.cidade,
+        estado: formData.estado,
         ativo: Boolean(formData.ativo),
       };
 
@@ -195,7 +202,7 @@ const Fornecedores: React.FC = () => {
         );
         toast.success("Fornecedor atualizado com sucesso!");
       } else {
-        await fornecedorService.criar(dadosFornecedor as Fornecedor);
+        await fornecedorService.criar(dadosFornecedor);
         toast.success("Fornecedor criado com sucesso!");
       }
 

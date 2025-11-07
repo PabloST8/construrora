@@ -135,6 +135,8 @@ export const getStatusLabel = (status: string): string => {
       return "Pendente";
     case "PAGO":
       return "Pago";
+    case "VENCIDO":
+      return "Vencido";
     case "FISICA":
       return "Pessoa Física";
     case "JURIDICA":
@@ -174,6 +176,97 @@ export const getStatusLabel = (status: string): string => {
     default:
       return status;
   }
+};
+
+// ✅ NOVOS FORMATADORES PARA API GO
+
+export const formatCategoriaDespesa = (categoria: string): string => {
+  const categorias: Record<string, string> = {
+    MATERIAL: "Material",
+    MAO_DE_OBRA: "Mão de Obra",
+    COMBUSTIVEL: "Combustível",
+    ALIMENTACAO: "Alimentação",
+    MATERIAL_ELETRICO: "Material Elétrico",
+    ALUGUEL_EQUIPAMENTO: "Aluguel de Equipamento",
+    TRANSPORTE: "Transporte",
+    IMPOSTO: "Imposto",
+    PARCEIRO: "Parceiro",
+    OUTROS: "Outros",
+  };
+  return categorias[categoria] || categoria;
+};
+
+export const formatFormaPagamento = (forma: string): string => {
+  const formas: Record<string, string> = {
+    PIX: "PIX",
+    BOLETO: "Boleto",
+    CARTAO_CREDITO: "Cartão de Crédito",
+    CARTAO_DEBITO: "Cartão de Débito",
+    TRANSFERENCIA: "Transferência Bancária",
+    ESPECIE: "Dinheiro em Espécie",
+    CHEQUE: "Cheque",
+  };
+  return formas[forma] || forma;
+};
+
+export const formatStatusPagamento = (status: string): string => {
+  const statuses: Record<string, string> = {
+    PENDENTE: "Pendente",
+    PAGO: "Pago",
+    VENCIDO: "Vencido",
+    CANCELADO: "Cancelado",
+  };
+  return statuses[status] || status;
+};
+
+export const formatClima = (clima: string): string => {
+  const climas: Record<string, string> = {
+    SOL: "☀️ Sol",
+    CHUVA: "🌧️ Chuva",
+    NUBLADO: "☁️ Nublado",
+    VENTOSO: "💨 Ventoso",
+    TEMPESTADE: "⛈️ Tempestade",
+  };
+  return climas[clima] || clima;
+};
+
+export const formatPeriodo = (periodo: string): string => {
+  const periodos: Record<string, string> = {
+    integral: "Integral (dia todo)",
+    manha: "Manhã",
+    tarde: "Tarde",
+    noite: "Noite",
+  };
+  return periodos[periodo] || periodo;
+};
+
+export const formatFonteReceita = (fonte: string): string => {
+  const fontes: Record<string, string> = {
+    PAGAMENTO_CLIENTE: "Pagamento do Cliente",
+    ADITIVO_CONTRATO: "Aditivo de Contrato",
+    MEDICAO: "Medição",
+    ADIANTAMENTO: "Adiantamento",
+    REEMBOLSO: "Reembolso",
+    OUTROS: "Outros",
+  };
+  return fontes[fonte] || fonte;
+};
+
+export const formatPerfilAcesso = (perfil: string): string => {
+  const perfis: Record<string, string> = {
+    ADMIN: "👑 Administrador",
+    ENGENHEIRO: "🏗️ Engenheiro",
+    FINANCEIRO: "💰 Financeiro",
+  };
+  return perfis[perfil] || perfil;
+};
+
+export const formatTipoDocumento = (tipo: string): string => {
+  const tipos: Record<string, string> = {
+    CPF: "CPF (Pessoa Física)",
+    CNPJ: "CNPJ (Pessoa Jurídica)",
+  };
+  return tipos[tipo] || tipo;
 };
 
 export const calculatePercentage = (value: number, total: number): number => {

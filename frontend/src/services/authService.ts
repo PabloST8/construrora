@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "https://api.construtora.codxis.com.br";
+// ✅ API Go rodando na porta 9090 (conforme README)
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:9090";
 
 export interface LoginCredentials {
   email: string;

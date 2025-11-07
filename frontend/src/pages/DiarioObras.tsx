@@ -20,12 +20,7 @@ import {
   DialogActions,
   Card,
   CardMedia,
-  CardActions,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -33,7 +28,6 @@ import {
   Visibility as ViewIcon,
   PhotoCamera as PhotoIcon,
   Close as CloseIcon,
-  CloudUpload as UploadIcon,
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { diarioService } from "../services/diarioService";
@@ -50,6 +44,9 @@ interface DiarioForm {
   responsavel_id: number;
   aprovado_por_id?: number;
   status_aprovacao: string;
+  clima?: string; // ✅ NOVO - API Go
+  progresso_percentual?: number; // ✅ NOVO - API Go
+  foto?: string; // ✅ NOVO - Base64 da foto
 }
 
 interface TabPanelProps {
@@ -79,8 +76,7 @@ const DiarioObras: React.FC = () => {
   const [dialogEdicao, setDialogEdicao] = useState(false);
   const [diarioSelecionado, setDiarioSelecionado] = useState<any>(null);
   const [dadosEdicao, setDadosEdicao] = useState<any>({});
-  const [uploadandoFoto, setUploadandoFoto] = useState(false);
-  const [fotosParaUpload, setFotosParaUpload] = useState<File[]>([]);
+  const [arquivoFoto, setArquivoFoto] = useState<File | null>(null); // ✅ NOVO - Arquivo de foto selecionado
 
   const [novoDiario, setNovoDiario] = useState<DiarioForm>({
     obra_id: 0,
@@ -89,7 +85,19 @@ const DiarioObras: React.FC = () => {
     atividades_realizadas: "",
     responsavel_id: 0,
     status_aprovacao: "pendente",
+    clima: "SOL", // ✅ NOVO
+    progresso_percentual: 0, // ✅ NOVO
   });
+
+  // ✅ NOVO - Converter arquivo de foto para base64
+  const converterFotoParaBase64 = async (arquivo: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(arquivo);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
   // Fun��o para formatar per�odo
   const formatarPeriodo = (periodo: string) => {
@@ -143,7 +151,15 @@ const DiarioObras: React.FC = () => {
         periodo: novoDiario.periodo,
         atividades_realizadas: novoDiario.atividades_realizadas,
         status_aprovacao: novoDiario.status_aprovacao || "pendente",
+        clima: novoDiario.clima || "SOL", // ✅ NOVO
+        progresso_percentual: Number(novoDiario.progresso_percentual) || 0, // ✅ NOVO
       };
+
+      // ✅ NOVO - Converter foto para base64 se houver
+      if (arquivoFoto) {
+        const fotoBase64 = await converterFotoParaBase64(arquivoFoto);
+        dadosEnvio.foto = fotoBase64;
+      }
 
       // S� adicionar responsavel_id se tiver um valor v�lido (> 0)
       if (novoDiario.responsavel_id && Number(novoDiario.responsavel_id) > 0) {
@@ -160,7 +176,7 @@ const DiarioObras: React.FC = () => {
       // N�O enviar aprovado_por_id se n�o tiver valor (evita erro de FK)
 
       await diarioService.criar(dadosEnvio);
-      toast.success("Di�rio cadastrado com sucesso!");
+      toast.success("Diário cadastrado com sucesso!");
       setNovoDiario({
         obra_id: 0,
         data: "",
@@ -168,7 +184,10 @@ const DiarioObras: React.FC = () => {
         atividades_realizadas: "",
         responsavel_id: 0,
         status_aprovacao: "pendente",
+        clima: "SOL", // ✅ NOVO
+        progresso_percentual: 0, // ✅ NOVO
       });
+      setArquivoFoto(null); // ✅ NOVO - Limpar foto
       carregarDados();
     } catch (error: any) {
       console.error("? Erro completo:", error);
@@ -223,7 +242,6 @@ const DiarioObras: React.FC = () => {
         responsavel_id: diarioCompleto.responsavel_id,
         status_aprovacao: diarioCompleto.status_aprovacao,
       });
-      setFotosParaUpload([]);
       setDialogEdicao(true);
     } catch (error) {
       console.error("Erro ao carregar diário:", error);
@@ -235,7 +253,7 @@ const DiarioObras: React.FC = () => {
     setDialogEdicao(false);
     setDiarioSelecionado(null);
     setDadosEdicao({});
-    setFotosParaUpload([]);
+    setArquivoFoto(null); // ✅ CORRIGIDO
   };
 
   const salvarEdicao = async () => {
@@ -257,15 +275,6 @@ const DiarioObras: React.FC = () => {
 
       await diarioService.atualizar(diarioSelecionado.id, dadosParaAtualizar);
 
-      // 2. Upload das novas fotos (se houver)
-      if (fotosParaUpload.length > 0) {
-        setUploadandoFoto(true);
-        for (const foto of fotosParaUpload) {
-          await diarioService.uploadFoto(diarioSelecionado.id, foto);
-        }
-        setUploadandoFoto(false);
-      }
-
       toast.success("Diário atualizado com sucesso!");
 
       // Atualizar lista imediatamente (estado local)
@@ -284,49 +293,6 @@ const DiarioObras: React.FC = () => {
       toast.error(error.response?.data?.error || "Erro ao salvar alterações");
     } finally {
       setSalvando(false);
-      setUploadandoFoto(false);
-    }
-  };
-
-  // === FUNÇÕES DE UPLOAD DE FOTOS ===
-  const handleSelecionarFotos = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const arquivos = Array.from(event.target.files || []);
-    const fotosValidas = arquivos.filter((arquivo) => {
-      const isImage = arquivo.type.startsWith("image/");
-      const isValidSize = arquivo.size <= 5 * 1024 * 1024; // 5MB
-      if (!isImage) {
-        toast.error(`${arquivo.name} não é uma imagem válida`);
-      }
-      if (!isValidSize) {
-        toast.error(`${arquivo.name} excede o tamanho máximo de 5MB`);
-      }
-      return isImage && isValidSize;
-    });
-
-    setFotosParaUpload((prev) => [...prev, ...fotosValidas]);
-  };
-
-  const removerFotoParaUpload = (index: number) => {
-    setFotosParaUpload((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removerFotoExistente = async (fotoId: number) => {
-    if (!window.confirm("Deseja remover esta foto?")) return;
-
-    try {
-      await diarioService.removerFoto(diarioSelecionado.id, fotoId);
-      toast.success("Foto removida com sucesso!");
-
-      // Atualizar o diário selecionado
-      setDiarioSelecionado((prev: any) => ({
-        ...prev,
-        fotos: prev.fotos?.filter((f: any) => f.id !== fotoId) || [],
-      }));
-    } catch (error) {
-      console.error("Erro ao remover foto:", error);
-      toast.error("Erro ao remover foto");
     }
   };
 
@@ -867,108 +833,6 @@ const DiarioObras: React.FC = () => {
                   <MenuItem value="rejeitado">Rejeitado</MenuItem>
                 </Select>
               </FormControl>
-
-              {/* Upload de Novas Fotos */}
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  Anexar Novas Fotos
-                </Typography>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<UploadIcon />}
-                  sx={{ mb: 2 }}
-                >
-                  Selecionar Fotos
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    hidden
-                    onChange={handleSelecionarFotos}
-                  />
-                </Button>
-
-                {/* Preview das fotos selecionadas */}
-                {fotosParaUpload.length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Fotos selecionadas para upload:
-                    </Typography>
-                    <List dense>
-                      {fotosParaUpload.map((foto, index) => (
-                        <ListItem key={index}>
-                          <ListItemText
-                            primary={foto.name}
-                            secondary={`${(foto.size / 1024 / 1024).toFixed(
-                              2
-                            )} MB`}
-                          />
-                          <ListItemSecondaryAction>
-                            <IconButton
-                              edge="end"
-                              onClick={() => removerFotoParaUpload(index)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                )}
-              </Box>
-
-              {/* Fotos Existentes */}
-              {diarioSelecionado.fotos &&
-                diarioSelecionado.fotos.length > 0 && (
-                  <Box>
-                    <Typography variant="h6" gutterBottom>
-                      Fotos Existentes ({diarioSelecionado.fotos.length})
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(200px, 1fr))",
-                        gap: 2,
-                      }}
-                    >
-                      {diarioSelecionado.fotos.map(
-                        (foto: any, index: number) => (
-                          <Card key={index}>
-                            <CardMedia
-                              component="img"
-                              height="150"
-                              image={foto.url}
-                              alt={foto.descricao || `Foto ${index + 1}`}
-                            />
-                            {foto.descricao && (
-                              <Box sx={{ p: 1 }}>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {foto.descricao}
-                                </Typography>
-                              </Box>
-                            )}
-                            <CardActions>
-                              <Button
-                                size="small"
-                                color="error"
-                                startIcon={<DeleteIcon />}
-                                onClick={() => removerFotoExistente(foto.id)}
-                              >
-                                Remover
-                              </Button>
-                            </CardActions>
-                          </Card>
-                        )
-                      )}
-                    </Box>
-                  </Box>
-                )}
             </Box>
           )}
         </DialogContent>
@@ -979,16 +843,10 @@ const DiarioObras: React.FC = () => {
           <Button
             onClick={salvarEdicao}
             variant="contained"
-            disabled={salvando || uploadandoFoto}
-            startIcon={
-              salvando || uploadandoFoto ? <CircularProgress size={20} /> : null
-            }
+            disabled={salvando}
+            startIcon={salvando ? <CircularProgress size={20} /> : null}
           >
-            {uploadandoFoto
-              ? "Enviando fotos..."
-              : salvando
-              ? "Salvando..."
-              : "Salvar Alterações"}
+            {salvando ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </DialogActions>
       </Dialog>
