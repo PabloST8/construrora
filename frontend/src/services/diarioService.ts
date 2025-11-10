@@ -32,10 +32,18 @@ export const diarioService = {
     id: number,
     diario: Partial<DiarioObra>
   ): Promise<DiarioObra> {
-    console.log(`📝 Atualizando diário ID ${id}:`, diario);
-    const response = await api.put(`/diarios/${id}`, diario);
-    console.log(`✅ Diário ${id} atualizado com sucesso:`, response.data);
-    return response.data;
+    try {
+      console.log(`📝 Atualizando diário ID ${id}:`, diario);
+      console.log("📋 JSON enviado para API:", JSON.stringify(diario, null, 2));
+      const response = await api.put(`/diarios/${id}`, diario);
+      console.log(`✅ Diário ${id} atualizado com sucesso:`, response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Erro ao atualizar diário:", error);
+      console.error("❌ Mensagem de erro da API:", error.response?.data?.error);
+      console.error("❌ Request que falhou:", JSON.stringify(diario, null, 2));
+      throw error;
+    }
   },
 
   // ❌ REMOVIDO - API Go NÃO TEM upload separado de fotos

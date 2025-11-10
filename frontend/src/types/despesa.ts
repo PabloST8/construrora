@@ -7,6 +7,9 @@ export interface Despesa {
   fornecedor_id?: number;
   fornecedorId?: number; // Compatibilidade
   fornecedorNome?: string; // Para exibição (JOIN)
+  pessoa_id?: number; // 🆕 Campo para associar despesa de mão de obra a uma pessoa
+  pessoaId?: number; // Compatibilidade
+  pessoaNome?: string; // Para exibição (JOIN)
   data?: string; // Data da despesa/compra
   data_vencimento?: string; // Data de vencimento do pagamento
   dataVencimento?: string; // Compatibilidade

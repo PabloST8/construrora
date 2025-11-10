@@ -134,10 +134,17 @@ const DiarioObras: React.FC = () => {
     try {
       setSalvando(true);
 
+      // Função para adicionar timestamp às datas (API Go requer formato completo)
+      const adicionarTimestamp = (data: string): string => {
+        if (!data) return "";
+        if (data.includes("T")) return data; // Já tem timestamp
+        return `${data}T00:00:00Z`; // YYYY-MM-DD → YYYY-MM-DDTHH:MM:SSZ
+      };
+
       // Preparar dados para envio (garantir formato correto)
       const dadosEnvio: any = {
         obra_id: Number(novoDiario.obra_id),
-        data: novoDiario.data, // Formato YYYY-MM-DD do input type="date"
+        data: adicionarTimestamp(novoDiario.data), // ✅ Convertido para timestamp
         periodo: novoDiario.periodo,
         atividades_realizadas: novoDiario.atividades_realizadas,
         status_aprovacao: novoDiario.status_aprovacao || "pendente",
@@ -219,16 +226,28 @@ const DiarioObras: React.FC = () => {
     try {
       console.log("✏️ Abrindo edição do diário:", diario.id);
       const diarioCompleto = await diarioService.buscarPorId(diario.id);
+
+      // Função para formatar data (remover timestamp para exibição no input type="date")
+      const formatarData = (data: string | undefined | null): string => {
+        if (!data) return "";
+        if (data.includes("T")) return data.split("T")[0]; // Remove timestamp
+        // Já está em formato YYYY-MM-DD
+        return data;
+      };
+
       setDiarioSelecionado(diarioCompleto);
       setDadosEdicao({
         obra_id: diarioCompleto.obra_id,
-        data: diarioCompleto.data,
+        data: formatarData(diarioCompleto.data), // ✅ Formatado para YYYY-MM-DD
         periodo: diarioCompleto.periodo,
         atividades_realizadas: diarioCompleto.atividades_realizadas,
         ocorrencias: diarioCompleto.ocorrencias || "",
         observacoes: diarioCompleto.observacoes || "",
         responsavel_id: diarioCompleto.responsavel_id,
         status_aprovacao: diarioCompleto.status_aprovacao,
+        clima: diarioCompleto.clima || "SOL", // ✅ Clima
+        progresso_percentual: diarioCompleto.progresso_percentual || 0, // ✅ Progresso
+        aprovado_por_id: diarioCompleto.aprovado_por_id || 0, // ✅ Aprovado por
       });
       setDialogEdicao(true);
     } catch (error) {
@@ -248,17 +267,55 @@ const DiarioObras: React.FC = () => {
       setSalvando(true);
       console.log("💾 Salvando edição do diário:", diarioSelecionado.id);
 
+      // Função para adicionar timestamp às datas (API Go requer formato completo)
+      const adicionarTimestamp = (data: string): string => {
+        if (!data) return "";
+        if (data.includes("T")) return data; // Já tem timestamp
+        // Converter DD/MM/YYYY para YYYY-MM-DD se necessário
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
+          const [dia, mes, ano] = data.split("/");
+          return `${ano}-${mes}-${dia}T00:00:00Z`;
+        }
+        // YYYY-MM-DD → YYYY-MM-DDTHH:MM:SSZ
+        return `${data}T00:00:00Z`;
+      };
+
       // 1. Atualizar dados do diário
-      const dadosParaAtualizar = {
+      const dadosParaAtualizar: any = {
         obra_id: Number(dadosEdicao.obra_id),
-        data: dadosEdicao.data,
+        data: adicionarTimestamp(dadosEdicao.data), // ✅ Convertido para timestamp
         periodo: dadosEdicao.periodo,
         atividades_realizadas: dadosEdicao.atividades_realizadas,
         ocorrencias: dadosEdicao.ocorrencias || "",
         observacoes: dadosEdicao.observacoes || "",
         responsavel_id: Number(dadosEdicao.responsavel_id),
         status_aprovacao: dadosEdicao.status_aprovacao,
+        clima: dadosEdicao.clima || "SOL", // ✅ Clima
+        progresso_percentual: Number(dadosEdicao.progresso_percentual) || 0, // ✅ Progresso
       };
+
+      // ✅ Lógica para aprovado_por_id:
+      // - PENDENTE: NÃO enviar o campo (será omitido)
+      // - APROVADO/REJEITADO: Obrigatório (ID > 0)
+      if (dadosEdicao.status_aprovacao !== "pendente") {
+        // Status aprovado ou rejeitado: campo é OBRIGATÓRIO
+        if (
+          !dadosEdicao.aprovado_por_id ||
+          Number(dadosEdicao.aprovado_por_id) === 0
+        ) {
+          const acao =
+            dadosEdicao.status_aprovacao === "aprovado"
+              ? "aprovou"
+              : "rejeitou";
+          toast.error(`Você deve selecionar quem ${acao} o diário.`);
+          setSalvando(false);
+          return;
+        }
+        dadosParaAtualizar.aprovado_por_id = Number(
+          dadosEdicao.aprovado_por_id
+        );
+      }
+      // Se status = pendente, aprovado_por_id NÃO é adicionado ao payload
 
       await diarioService.atualizar(diarioSelecionado.id, dadosParaAtualizar);
 
@@ -665,7 +722,7 @@ const DiarioObras: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">Editar Diário de Obra</Typography>
+          Editar Diário de Obra
           <IconButton onClick={fecharDialogEdicao}>
             <CloseIcon />
           </IconButton>
@@ -822,6 +879,39 @@ const DiarioObras: React.FC = () => {
                   <MenuItem value="pendente">Pendente</MenuItem>
                   <MenuItem value="aprovado">Aprovado</MenuItem>
                   <MenuItem value="rejeitado">Rejeitado</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* ✅ Campo Aprovado Por - visível sempre, obrigatório se status ≠ pendente */}
+              <FormControl
+                fullWidth
+                required={dadosEdicao.status_aprovacao !== "pendente"}
+              >
+                <InputLabel>
+                  Aprovado/Rejeitado Por{" "}
+                  {dadosEdicao.status_aprovacao !== "pendente"
+                    ? "*"
+                    : "(opcional)"}
+                </InputLabel>
+                <Select
+                  value={dadosEdicao.aprovado_por_id || 0}
+                  onChange={(e) =>
+                    setDadosEdicao({
+                      ...dadosEdicao,
+                      aprovado_por_id: Number(e.target.value),
+                    })
+                  }
+                >
+                  <MenuItem value={0}>
+                    {dadosEdicao.status_aprovacao === "pendente"
+                      ? "Ninguém"
+                      : "Selecione"}
+                  </MenuItem>
+                  {pessoas.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.nome}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>

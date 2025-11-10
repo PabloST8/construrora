@@ -43,6 +43,7 @@ export const despesaService = {
     despesa: Partial<Despesa>
   ): Promise<Despesa> {
     console.log(`🔄 Atualizando despesa ID ${id}:`, despesa);
+    console.log(`📋 JSON enviado para API:`, JSON.stringify(despesa, null, 2));
 
     try {
       const response = await api.put(`/despesas/${id}`, despesa);
@@ -57,6 +58,12 @@ export const despesaService = {
     } catch (error: any) {
       console.error("❌ Erro na API de atualização de despesa:", error);
       console.error("❌ Detalhes do erro:", error.response?.data);
+      console.error(
+        "❌ Mensagem de erro da API:",
+        error.response?.data?.error || error.response?.data?.message
+      );
+      console.error("❌ Status HTTP:", error.response?.status);
+      console.error("❌ Request que falhou:", JSON.stringify(despesa, null, 2));
       throw error;
     }
   },

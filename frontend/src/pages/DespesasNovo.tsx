@@ -209,10 +209,54 @@ const Despesas: React.FC = () => {
   };
 
   const abrirDialogEdicao = (despesa: Despesa) => {
+    // ✅ Formatar datas corretamente (YYYY-MM-DD) e tratar valores null/undefined
+    const formatarData = (data: string | undefined | null): string => {
+      if (!data) return "";
+
+      // Se já estiver no formato YYYY-MM-DD, retornar
+      if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+        return data;
+      }
+
+      // Se tiver timestamp, pegar apenas a data
+      if (data.includes("T")) {
+        return data.split("T")[0];
+      }
+
+      // Se for DD/MM/YYYY, converter para YYYY-MM-DD
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
+        const [dia, mes, ano] = data.split("/");
+        return `${ano}-${mes}-${dia}`;
+      }
+
+      return "";
+    };
+
     setFormData({
       ...despesa,
-      data_vencimento: despesa.data_vencimento?.split("T")[0] || "",
+      // ✅ Garantir que datas estão no formato correto (YYYY-MM-DD)
+      data: formatarData(despesa.data),
+      data_vencimento: formatarData(despesa.data_vencimento),
+      data_pagamento: formatarData(despesa.data_pagamento),
+      // ✅ Garantir que campos numéricos são números
+      obra_id: despesa.obra_id || 0,
+      fornecedor_id: despesa.fornecedor_id || 0,
+      pessoa_id: despesa.pessoa_id || 0,
+      valor: despesa.valor || 0,
+      // ✅ Garantir que campos de texto não são undefined
+      descricao: despesa.descricao || "",
+      observacao: despesa.observacao || despesa.observacoes || "",
+      categoria: despesa.categoria || "MATERIAL",
+      forma_pagamento: despesa.forma_pagamento || "PIX",
+      status_pagamento: despesa.status_pagamento || "PENDENTE",
     });
+
+    console.log("📝 FormData após edição:", {
+      data: formatarData(despesa.data),
+      data_vencimento: formatarData(despesa.data_vencimento),
+      data_pagamento: formatarData(despesa.data_pagamento),
+    });
+
     setDespesaSelecionada(despesa);
     setModoEdicao(true);
     setDialogAberto(true);
@@ -225,19 +269,23 @@ const Despesas: React.FC = () => {
 
   const salvarDespesa = async () => {
     try {
-      if (!formData.obra_id || !formData.fornecedor_id || !formData.descricao) {
-        toast.error("Preencha todos os campos obrigatórios");
+      // ✅ Validação básica atualizada
+      if (!formData.obra_id || !formData.descricao) {
+        toast.error("Preencha todos os campos obrigatórios (Obra e Descrição)");
+        return;
+      }
+
+      // ✅ Validar que tem pelo menos fornecedor OU pessoa
+      const temFornecedor =
+        formData.fornecedor_id && Number(formData.fornecedor_id) > 0;
+      const temPessoa = formData.pessoa_id && Number(formData.pessoa_id) > 0;
+
+      if (!temFornecedor && !temPessoa) {
+        toast.error("Selecione um Fornecedor ou Responsável");
         return;
       }
 
       setLoading(true);
-
-      // Validação básica
-      if (!formData.obra_id || !formData.fornecedor_id || !formData.descricao) {
-        toast.error("Por favor, preencha todos os campos obrigatórios");
-        setLoading(false);
-        return;
-      }
 
       // Validação específica: se status é PAGO, data_pagamento é obrigatória
       if (formData.status_pagamento === "PAGO" && !formData.data_pagamento) {
@@ -246,28 +294,92 @@ const Despesas: React.FC = () => {
         return;
       }
 
-      const dadosDespesa = {
+      // ✅ Construir objeto apenas com campos válidos (sem strings vazias)
+      const dadosDespesa: any = {
         obra_id: Number(formData.obra_id),
-        fornecedor_id: Number(formData.fornecedor_id),
         descricao: formData.descricao,
         categoria: formData.categoria,
         valor: Number(formData.valor),
-        data_vencimento:
-          formData.data_vencimento || new Date().toISOString().split("T")[0],
         forma_pagamento: formData.forma_pagamento || "PIX",
         status_pagamento: formData.status_pagamento || "PENDENTE",
-        observacao: formData.observacao || "",
-        // Campos que podem ser necessários baseados na API Go
-        data_despesa: new Date().toISOString().split("T")[0],
-        // REGRA: Se status é PAGO, data_pagamento é OBRIGATÓRIA
-        ...(formData.status_pagamento === "PAGO" && {
-          data_pagamento:
-            formData.data_pagamento || new Date().toISOString().split("T")[0],
-        }),
       };
+
+      // ✅ Garantir que data_vencimento está sempre no formato YYYY-MM-DDTHH:MM:SSZ
+      let dataVencimento = formData.data_vencimento;
+      if (dataVencimento) {
+        // Se estiver no formato DD/MM/YYYY, converter
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dataVencimento)) {
+          const [dia, mes, ano] = dataVencimento.split("/");
+          dataVencimento = `${ano}-${mes}-${dia}`;
+        }
+        // ✅ ADICIONAR timestamp completo para API Go (T00:00:00Z)
+        if (!/T/.test(dataVencimento)) {
+          dataVencimento = `${dataVencimento}T00:00:00Z`;
+        }
+      } else {
+        const hoje = new Date().toISOString().split("T")[0];
+        dataVencimento = `${hoje}T00:00:00Z`;
+      }
+      dadosDespesa.data_vencimento = dataVencimento;
+
+      // ✅ Adicionar fornecedor_id apenas se for válido (> 0)
+      if (formData.fornecedor_id && Number(formData.fornecedor_id) > 0) {
+        dadosDespesa.fornecedor_id = Number(formData.fornecedor_id);
+      }
+
+      // ✅ Adicionar pessoa_id apenas se for válido (> 0)
+      if (formData.pessoa_id && Number(formData.pessoa_id) > 0) {
+        dadosDespesa.pessoa_id = Number(formData.pessoa_id);
+      }
+
+      // ✅ Adicionar observacao apenas se não estiver vazia
+      if (formData.observacao && formData.observacao.trim() !== "") {
+        dadosDespesa.observacao = formData.observacao;
+      }
+
+      // ✅ Adicionar data apenas se estiver preenchida (formato YYYY-MM-DDTHH:MM:SSZ)
+      if (formData.data && formData.data.trim() !== "") {
+        let dataFormatada = formData.data;
+        // Se estiver no formato DD/MM/YYYY, converter
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dataFormatada)) {
+          const [dia, mes, ano] = dataFormatada.split("/");
+          dataFormatada = `${ano}-${mes}-${dia}`;
+        }
+        // ✅ ADICIONAR timestamp completo para API Go
+        if (!/T/.test(dataFormatada)) {
+          dataFormatada = `${dataFormatada}T00:00:00Z`;
+        }
+        dadosDespesa.data = dataFormatada;
+      }
+
+      // ✅ REGRA: Se status é PAGO, data_pagamento é OBRIGATÓRIA
+      if (formData.status_pagamento === "PAGO") {
+        let dataPagamento =
+          formData.data_pagamento || new Date().toISOString().split("T")[0];
+        // Se estiver no formato DD/MM/YYYY, converter
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dataPagamento)) {
+          const [dia, mes, ano] = dataPagamento.split("/");
+          dataPagamento = `${ano}-${mes}-${dia}`;
+        }
+        // ✅ ADICIONAR timestamp completo para API Go
+        if (!/T/.test(dataPagamento)) {
+          dataPagamento = `${dataPagamento}T00:00:00Z`;
+        }
+        dadosDespesa.data_pagamento = dataPagamento;
+      }
+      // ✅ Se não for PAGO, NÃO enviar data_pagamento (nem string vazia)
 
       console.log("💾 Salvando despesa:", dadosDespesa);
       console.log("💾 Dados originais do form:", formData);
+      console.log("🔍 Campos enviados:", Object.keys(dadosDespesa));
+      console.log(
+        "🔍 Campos com valores:",
+        Object.entries(dadosDespesa).map(([k, v]) => `${k}=${v}`)
+      );
+      console.log(
+        "📋 JSON que será enviado:",
+        JSON.stringify(dadosDespesa, null, 2)
+      );
 
       if (modoEdicao && despesaSelecionada) {
         console.log(`🔄 Atualizando despesa ID ${despesaSelecionada.id}`);
