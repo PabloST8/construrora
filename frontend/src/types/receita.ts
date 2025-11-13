@@ -4,10 +4,11 @@ export interface Receita {
   id?: number;
   obra_id: number;
   obraId?: number; // Compatibilidade
-  obraNome?: string; // Para exibição (JOIN)
+  obra_nome?: string; // ✅ PRIORIDADE: Nome da obra (JOIN) - API Go retorna snake_case
+  obraNome?: string; // Compatibilidade com camelCase
   descricao: string;
   valor: number;
-  data: string; // Data de recebimento
+  data: string; // Data de recebimento (OBRIGATÓRIO no Model Go)
   fonte_receita?:
     | "CONTRATO"
     | "PAGAMENTO_CLIENTE"
@@ -20,13 +21,16 @@ export interface Receita {
   numeroDocumento?: string; // Compatibilidade
   responsavel_id?: number;
   responsavelId?: number; // Compatibilidade
-  responsavelNome?: string; // Para exibição (JOIN)
+  responsavel_nome?: string; // ✅ PRIORIDADE: Nome do responsável (JOIN) - API Go retorna snake_case
+  responsavelNome?: string; // Compatibilidade com camelCase
   observacao?: string;
   observacoes?: string; // Compatibilidade
   created_at?: string;
   updated_at?: string;
   createdAt?: string; // Compatibilidade
   updatedAt?: string; // Compatibilidade
+  // ❌ REMOVIDO: data_recebimento (redundante com 'data')
+  // O Model Go tem apenas 'data' para data de recebimento
 }
 
 // ✅ Receita com relacionamentos (JOIN)

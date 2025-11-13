@@ -32,6 +32,11 @@ import { obraService } from "../services/obraService";
 import { pessoaService } from "../services/pessoaService";
 import type { Obra } from "../types/obra";
 import type { Pessoa } from "../types/pessoa";
+import {
+  validarStringNaoVazia,
+  validarValorMonetario,
+  validarData,
+} from "../utils/validators";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -118,6 +123,7 @@ const Despesas: React.FC = () => {
   const [novaDespesa, setNovaDespesa] = useState<Despesa>({
     obra_id: 0,
     fornecedor_id: 0,
+    pessoa_id: 0,
     descricao: "",
     categoria: "MATERIAL",
     valor: 0,
@@ -125,7 +131,8 @@ const Despesas: React.FC = () => {
     forma_pagamento: "PIX",
     status_pagamento: "PENDENTE",
     data_pagamento: "",
-    observacoes: "",
+    responsavel_pagamento: "",
+    observacao: "",
   });
 
   // Estado dos filtros de busca
@@ -211,14 +218,46 @@ const Despesas: React.FC = () => {
   };
 
   const handleCadastrar = async () => {
+    // Validações completas
     if (
-      !novaDespesa.descricao ||
-      novaDespesa.valor <= 0 ||
+      !novaDespesa.obra_id ||
+      novaDespesa.obra_id === 0 ||
+      !novaDespesa.obraId ||
       novaDespesa.obraId === 0
     ) {
-      toast.error(
-        "❌ Preencha todos os campos obrigatórios (Obra, Descrição, Valor)"
-      );
+      toast.error("⚠️ Selecione a obra");
+      return;
+    }
+
+    if (
+      !novaDespesa.descricao ||
+      !validarStringNaoVazia(novaDespesa.descricao)
+    ) {
+      toast.error("⚠️ Preencha a descrição da despesa");
+      return;
+    }
+
+    if (novaDespesa.descricao.length < 3) {
+      toast.error("⚠️ Descrição deve ter no mínimo 3 caracteres");
+      return;
+    }
+
+    if (!novaDespesa.valor || !validarValorMonetario(novaDespesa.valor)) {
+      toast.error("⚠️ Valor da despesa deve ser maior que zero");
+      return;
+    }
+
+    if (novaDespesa.valor <= 0) {
+      toast.error("⚠️ Valor da despesa deve ser positivo");
+      return;
+    }
+
+    // Validar data de vencimento
+    if (
+      novaDespesa.data_vencimento &&
+      !validarData(novaDespesa.data_vencimento)
+    ) {
+      toast.error("⚠️ Data de vencimento inválida");
       return;
     }
 
@@ -251,6 +290,7 @@ const Despesas: React.FC = () => {
         status_pagamento: novaDespesa.status_pagamento,
         // Campo obrigatório com formato ISO 8601 completo
         data_vencimento: dataFormatada,
+        data: dataFormatada, // ✅ Data da despesa/compra
       };
 
       // REGRA: Se status é PAGO, data_pagamento é OBRIGATÓRIA
@@ -261,6 +301,19 @@ const Despesas: React.FC = () => {
       // Campos opcionais
       if (novaDespesa.fornecedor_id && novaDespesa.fornecedor_id > 0) {
         despesaData.fornecedor_id = Number(novaDespesa.fornecedor_id);
+      }
+
+      if (novaDespesa.pessoa_id && novaDespesa.pessoa_id > 0) {
+        despesaData.pessoa_id = Number(novaDespesa.pessoa_id);
+      }
+
+      if (novaDespesa.responsavel_pagamento) {
+        despesaData.responsavel_pagamento = novaDespesa.responsavel_pagamento;
+      }
+
+      if (novaDespesa.observacao || novaDespesa.observacoes) {
+        despesaData.observacao =
+          novaDespesa.observacao || novaDespesa.observacoes;
       }
 
       // IMPORTANTE: Remover qualquer campo undefined/null antes de enviar
@@ -439,17 +492,50 @@ const Despesas: React.FC = () => {
     try {
       setSalvando(true);
 
-      const dadosAtualizados: Partial<Despesa> = {
-        obraId: despesaEditando.obraId,
+      // ✅ Usar snake_case conforme Model Go
+      const dadosAtualizados: any = {
+        obra_id: despesaEditando.obra_id || despesaEditando.obraId,
         descricao: despesaEditando.descricao,
         categoria: despesaEditando.categoria,
         valor: despesaEditando.valor,
-        formaPagamento: despesaEditando.formaPagamento,
-        statusPagamento: despesaEditando.statusPagamento,
-        dataPagamento: despesaEditando.dataPagamento || undefined,
-        responsavelPagamentoId:
-          despesaEditando.responsavelPagamentoId || undefined,
+        forma_pagamento:
+          despesaEditando.forma_pagamento || despesaEditando.formaPagamento,
+        status_pagamento:
+          despesaEditando.status_pagamento || despesaEditando.statusPagamento,
+        data_vencimento:
+          despesaEditando.data_vencimento || despesaEditando.dataVencimento,
+        data: despesaEditando.data || despesaEditando.dataCadastro,
+        data_pagamento:
+          despesaEditando.data_pagamento ||
+          despesaEditando.dataPagamento ||
+          undefined,
+        responsavel_pagamento:
+          despesaEditando.responsavel_pagamento ||
+          despesaEditando.responsavelPagamento ||
+          undefined,
+        observacao:
+          despesaEditando.observacao ||
+          despesaEditando.observacoes ||
+          undefined,
       };
+
+      // Campos opcionais (IDs)
+      if (despesaEditando.fornecedor_id || despesaEditando.fornecedorId) {
+        dadosAtualizados.fornecedor_id =
+          despesaEditando.fornecedor_id || despesaEditando.fornecedorId;
+      }
+
+      if (despesaEditando.pessoa_id || despesaEditando.pessoaId) {
+        dadosAtualizados.pessoa_id =
+          despesaEditando.pessoa_id || despesaEditando.pessoaId;
+      }
+
+      // Remover campos undefined
+      Object.keys(dadosAtualizados).forEach((key) => {
+        if (dadosAtualizados[key] === undefined) {
+          delete dadosAtualizados[key];
+        }
+      });
 
       await despesaService.atualizar(
         despesaEditando.id!.toString(),
@@ -613,6 +699,45 @@ const Despesas: React.FC = () => {
               </FormControl>
             </Stack>
 
+            {/* ✅ Pessoa (para Mão de Obra) */}
+            <FormControl fullWidth>
+              <InputLabel>Pessoa (Mão de Obra)</InputLabel>
+              <Select
+                name="pessoa_id"
+                value={novaDespesa.pessoa_id?.toString() || "0"}
+                onChange={handleNovaDespesaChange}
+              >
+                <MenuItem value={0}>Nenhuma</MenuItem>
+                {pessoas.map((pessoa) => (
+                  <MenuItem key={pessoa.id} value={pessoa.id}>
+                    {pessoa.nome}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* ✅ Responsável pelo Pagamento */}
+            <TextField
+              fullWidth
+              label="Responsável pelo Pagamento"
+              name="responsavel_pagamento"
+              value={novaDespesa.responsavel_pagamento || ""}
+              onChange={handleNovaDespesaChange}
+              placeholder="Nome de quem efetuou o pagamento"
+            />
+
+            {/* ✅ Observações */}
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Observações"
+              name="observacao"
+              value={novaDespesa.observacao || novaDespesa.observacoes || ""}
+              onChange={handleNovaDespesaChange}
+              placeholder="Observações adicionais sobre a despesa..."
+            />
+
             <Box
               sx={{
                 display: "flex",
@@ -627,6 +752,7 @@ const Despesas: React.FC = () => {
                   setNovaDespesa({
                     obra_id: 0,
                     fornecedor_id: 0,
+                    pessoa_id: 0,
                     descricao: "",
                     categoria: "MATERIAL",
                     valor: 0,
@@ -634,7 +760,8 @@ const Despesas: React.FC = () => {
                     forma_pagamento: "PIX",
                     status_pagamento: "PENDENTE",
                     data_pagamento: "",
-                    observacoes: "",
+                    responsavel_pagamento: "",
+                    observacao: "",
                   })
                 }
               >
@@ -1017,6 +1144,31 @@ const Despesas: React.FC = () => {
                 InputProps={{ readOnly: true }}
                 fullWidth
               />
+
+              {/* ✅ Data da Despesa */}
+              {despesaVisualizando.data && (
+                <TextField
+                  label="Data da Despesa"
+                  value={new Date(despesaVisualizando.data).toLocaleDateString(
+                    "pt-BR"
+                  )}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                />
+              )}
+
+              {/* ✅ Data de Vencimento */}
+              {despesaVisualizando.data_vencimento && (
+                <TextField
+                  label="Data de Vencimento"
+                  value={new Date(
+                    despesaVisualizando.data_vencimento
+                  ).toLocaleDateString("pt-BR")}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                />
+              )}
+
               {despesaVisualizando.dataPagamento && (
                 <TextField
                   label="Data de Pagamento"
@@ -1027,10 +1179,43 @@ const Despesas: React.FC = () => {
                   fullWidth
                 />
               )}
-              {despesaVisualizando.responsavelPagamentoNome && (
+
+              {/* ✅ Fornecedor */}
+              {despesaVisualizando.fornecedorNome && (
+                <TextField
+                  label="Fornecedor"
+                  value={despesaVisualizando.fornecedorNome}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                />
+              )}
+
+              {/* ✅ Pessoa (Mão de Obra) */}
+              {despesaVisualizando.pessoaNome && (
+                <TextField
+                  label="Pessoa (Mão de Obra)"
+                  value={despesaVisualizando.pessoaNome}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                />
+              )}
+
+              {despesaVisualizando.responsavel_pagamento && (
                 <TextField
                   label="Responsável pelo Pagamento"
-                  value={despesaVisualizando.responsavelPagamentoNome}
+                  value={despesaVisualizando.responsavel_pagamento}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                />
+              )}
+
+              {/* ✅ Observações */}
+              {despesaVisualizando.observacao && (
+                <TextField
+                  label="Observações"
+                  multiline
+                  rows={3}
+                  value={despesaVisualizando.observacao}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
@@ -1106,6 +1291,77 @@ const Despesas: React.FC = () => {
                 }
                 fullWidth
               />
+
+              {/* ✅ Data da Despesa */}
+              <TextField
+                label="Data da Despesa"
+                type="date"
+                value={despesaEditando.data || ""}
+                onChange={(e) => handleCampoChange("data", e.target.value)}
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+
+              {/* ✅ Data de Vencimento */}
+              <TextField
+                label="Data de Vencimento"
+                type="date"
+                value={
+                  despesaEditando.data_vencimento ||
+                  despesaEditando.dataVencimento ||
+                  ""
+                }
+                onChange={(e) =>
+                  handleCampoChange("data_vencimento", e.target.value)
+                }
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+
+              {/* ✅ Fornecedor */}
+              <FormControl fullWidth>
+                <InputLabel>Fornecedor</InputLabel>
+                <Select
+                  value={
+                    despesaEditando.fornecedor_id ||
+                    despesaEditando.fornecedorId ||
+                    ""
+                  }
+                  onChange={(e) =>
+                    handleCampoChange("fornecedor_id", Number(e.target.value))
+                  }
+                  label="Fornecedor"
+                >
+                  <MenuItem value="">Nenhum</MenuItem>
+                  {pessoas.map((pessoa) => (
+                    <MenuItem key={pessoa.id} value={pessoa.id}>
+                      {pessoa.nome}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* ✅ Pessoa (Mão de Obra) */}
+              <FormControl fullWidth>
+                <InputLabel>Pessoa (Mão de Obra)</InputLabel>
+                <Select
+                  value={
+                    despesaEditando.pessoa_id || despesaEditando.pessoaId || ""
+                  }
+                  onChange={(e) =>
+                    handleCampoChange("pessoa_id", Number(e.target.value))
+                  }
+                  label="Pessoa (Mão de Obra)"
+                >
+                  <MenuItem value="">Nenhuma</MenuItem>
+                  {pessoas.map((pessoa) => (
+                    <MenuItem key={pessoa.id} value={pessoa.id}>
+                      {pessoa.nome}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <FormControl fullWidth>
                 <InputLabel>Forma de Pagamento</InputLabel>
                 <Select
@@ -1144,26 +1400,38 @@ const Despesas: React.FC = () => {
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
               />
-              <FormControl fullWidth>
-                <InputLabel>Responsável pelo Pagamento</InputLabel>
-                <Select
-                  value={despesaEditando.responsavelPagamentoId || ""}
-                  onChange={(e) =>
-                    handleCampoChange(
-                      "responsavelPagamentoId",
-                      Number(e.target.value)
-                    )
-                  }
-                  label="Responsável pelo Pagamento"
-                >
-                  <MenuItem value="">Nenhum</MenuItem>
-                  {pessoas.map((pessoa) => (
-                    <MenuItem key={pessoa.id} value={pessoa.id}>
-                      {pessoa.nome}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+
+              {/* ✅ Responsável pelo Pagamento (STRING, não ID) */}
+              <TextField
+                label="Responsável pelo Pagamento"
+                value={
+                  despesaEditando.responsavel_pagamento ||
+                  despesaEditando.responsavelPagamento ||
+                  ""
+                }
+                onChange={(e) =>
+                  handleCampoChange("responsavel_pagamento", e.target.value)
+                }
+                fullWidth
+                placeholder="Nome de quem efetuou o pagamento"
+              />
+
+              {/* ✅ Observações */}
+              <TextField
+                label="Observações"
+                multiline
+                rows={3}
+                value={
+                  despesaEditando.observacao ||
+                  despesaEditando.observacoes ||
+                  ""
+                }
+                onChange={(e) =>
+                  handleCampoChange("observacao", e.target.value)
+                }
+                fullWidth
+                placeholder="Observações adicionais..."
+              />
             </Box>
           )}
         </DialogContent>

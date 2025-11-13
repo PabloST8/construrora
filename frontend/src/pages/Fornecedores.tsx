@@ -38,6 +38,15 @@ import {
 import { toast } from "react-toastify";
 import { fornecedorService } from "../services/fornecedorService";
 import { Fornecedor } from "../types/apiGo";
+import MaskedTextField from "../components/MaskedTextField";
+import {
+  validarCPF,
+  validarCNPJ,
+  validarEmail,
+  validarTelefone,
+  validarStringNaoVazia,
+} from "../utils/validators";
+import { removerMascara } from "../utils/masks";
 
 const Fornecedores: React.FC = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -65,6 +74,9 @@ const Fornecedores: React.FC = () => {
     endereco: "",
     cidade: "",
     estado: "",
+    contato_nome: "",
+    contato_telefone: "",
+    contato_email: "",
     ativo: true,
   });
 
@@ -154,17 +166,38 @@ const Fornecedores: React.FC = () => {
       endereco: "",
       cidade: "",
       estado: "",
+      contato_nome: "",
+      contato_telefone: "",
+      contato_email: "",
       ativo: true,
     });
     setModoEdicao(false);
     setDialogAberto(true);
   };
 
-  const abrirDialogEdicao = (fornecedor: Fornecedor) => {
-    setFormData({ ...fornecedor });
+  const abrirDialogEdicao = async (fornecedor: Fornecedor) => {
+    console.log("✏️ Abrindo edição do fornecedor:", fornecedor);
+    console.log("📋 Dados de contato recebidos:", {
+      contato_nome: fornecedor.contato_nome,
+      contato_telefone: fornecedor.contato_telefone,
+      contato_email: fornecedor.contato_email,
+    });
+
+    // Usar os dados que já temos da lista
+    setFormData({
+      ...fornecedor,
+      // ✅ Converter null para "" para os campos aparecerem vazios (editáveis) ao invés de readonly
+      contato_nome: fornecedor.contato_nome ?? "",
+      contato_telefone: fornecedor.contato_telefone ?? "",
+      contato_email: fornecedor.contato_email ?? "",
+    });
     setFornecedorSelecionado(fornecedor);
     setModoEdicao(true);
     setDialogAberto(true);
+
+    console.log(
+      "✅ FormData configurado - campos de contato devem aparecer vazios e editáveis"
+    );
   };
 
   const abrirDialogVisualizacao = (fornecedor: Fornecedor) => {
@@ -174,26 +207,103 @@ const Fornecedores: React.FC = () => {
 
   const salvarFornecedor = async () => {
     try {
-      if (!formData.nome || !formData.documento || !formData.tipo_documento) {
-        toast.error("Preencha todos os campos obrigatórios");
+      // Validações de campos obrigatórios
+      if (!formData.nome || !validarStringNaoVazia(formData.nome)) {
+        toast.error("⚠️ Preencha o nome do fornecedor");
+        return;
+      }
+
+      if (formData.nome.length < 3) {
+        toast.error("⚠️ Nome deve ter no mínimo 3 caracteres");
+        return;
+      }
+
+      if (!formData.documento) {
+        toast.error("⚠️ Preencha o documento (CPF ou CNPJ)");
+        return;
+      }
+
+      if (!formData.tipo_documento) {
+        toast.error("⚠️ Selecione o tipo de documento");
+        return;
+      }
+
+      // Validar formato do documento
+      const documentoLimpo = removerMascara(formData.documento);
+      if (formData.tipo_documento === "CPF") {
+        if (!validarCPF(documentoLimpo)) {
+          toast.error("⚠️ CPF inválido. Verifique os números digitados.");
+          return;
+        }
+      } else if (formData.tipo_documento === "CNPJ") {
+        if (!validarCNPJ(documentoLimpo)) {
+          toast.error("⚠️ CNPJ inválido. Verifique os números digitados.");
+          return;
+        }
+      }
+
+      // Validar email se preenchido
+      if (formData.email && !validarEmail(formData.email)) {
+        toast.error("⚠️ Email inválido. Use o formato: exemplo@dominio.com");
+        return;
+      }
+
+      // Validar telefone se preenchido
+      if (formData.telefone) {
+        const telefoneLimpo = removerMascara(formData.telefone);
+        if (!validarTelefone(telefoneLimpo)) {
+          toast.error(
+            "⚠️ Telefone inválido. Use (00) 00000-0000 ou (00) 0000-0000"
+          );
+          return;
+        }
+      }
+
+      // Validar telefone de contato se preenchido
+      if (formData.contato_telefone) {
+        const telefoneLimpo = removerMascara(formData.contato_telefone);
+        if (!validarTelefone(telefoneLimpo)) {
+          toast.error(
+            "⚠️ Telefone de contato inválido. Use (00) 00000-0000 ou (00) 0000-0000"
+          );
+          return;
+        }
+      }
+
+      // Validar email de contato se preenchido
+      if (formData.contato_email && !validarEmail(formData.contato_email)) {
+        toast.error(
+          "⚠️ Email de contato inválido. Use o formato: exemplo@dominio.com"
+        );
         return;
       }
 
       setLoading(true);
 
+      // ✅ Payload 100% compatível com Model Go (12 campos) - REMOVENDO MÁSCARAS
       const dadosFornecedor: Fornecedor = {
         nome: formData.nome,
         tipo_documento: formData.tipo_documento,
-        documento: formData.documento,
+        documento: removerMascara(formData.documento), // Remover máscara
         email: formData.email,
-        telefone: formData.telefone,
+        telefone: removerMascara(formData.telefone || ""), // Remover máscara
         endereco: formData.endereco,
         cidade: formData.cidade,
         estado: formData.estado,
+        contato_nome: formData.contato_nome || "",
+        contato_telefone: removerMascara(formData.contato_telefone || ""), // Remover máscara
+        contato_email: formData.contato_email || "",
         ativo: Boolean(formData.ativo),
       };
 
       console.log("💾 Salvando fornecedor:", dadosFornecedor);
+      console.log("📤 Dados de contato no payload:", {
+        contato_nome: dadosFornecedor.contato_nome,
+        contato_telefone: dadosFornecedor.contato_telefone,
+        contato_email: dadosFornecedor.contato_email,
+      });
+      console.log("🌐 Payload JSON completo que será enviado para API:");
+      console.log(JSON.stringify(dadosFornecedor, null, 2));
 
       if (modoEdicao && fornecedorSelecionado) {
         await fornecedorService.atualizar(
@@ -492,6 +602,8 @@ const Fornecedores: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, nome: e.target.value })
                 }
+                inputProps={{ maxLength: 200 }}
+                helperText={`${(formData.nome || "").length}/200 caracteres`}
               />
               <FormControl fullWidth required>
                 <InputLabel>Tipo Documento</InputLabel>
@@ -510,14 +622,16 @@ const Fornecedores: React.FC = () => {
               </FormControl>
             </Box>
             <Box sx={{ display: "flex", gap: 2 }}>
-              <TextField
+              <MaskedTextField
                 fullWidth
                 required
+                maskType={formData.tipo_documento === "CNPJ" ? "cnpj" : "cpf"}
                 label={formData.tipo_documento === "CNPJ" ? "CNPJ" : "CPF"}
                 value={formData.documento || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, documento: e.target.value })
+                onChange={(value) =>
+                  setFormData({ ...formData, documento: value })
                 }
+                validateOnBlur={true}
                 placeholder={
                   formData.tipo_documento === "CNPJ"
                     ? "00.000.000/0000-00"
@@ -549,14 +663,23 @@ const Fornecedores: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
+                error={formData.email ? !validarEmail(formData.email) : false}
+                helperText={
+                  formData.email && !validarEmail(formData.email)
+                    ? "Email inválido"
+                    : ""
+                }
+                inputProps={{ maxLength: 100 }}
               />
-              <TextField
+              <MaskedTextField
                 fullWidth
+                maskType="telefone"
                 label="Telefone"
                 value={formData.telefone || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, telefone: e.target.value })
+                onChange={(value) =>
+                  setFormData({ ...formData, telefone: value })
                 }
+                validateOnBlur={true}
                 placeholder="(00) 00000-0000"
               />
             </Box>
@@ -567,6 +690,7 @@ const Fornecedores: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, endereco: e.target.value })
               }
+              inputProps={{ maxLength: 300 }}
             />
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField
@@ -576,15 +700,69 @@ const Fornecedores: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, cidade: e.target.value })
                 }
+                inputProps={{ maxLength: 100 }}
               />
               <TextField
                 fullWidth
                 label="Estado"
                 value={formData.estado || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, estado: e.target.value })
+                  setFormData({
+                    ...formData,
+                    estado: e.target.value.toUpperCase(),
+                  })
                 }
                 placeholder="Ex: SP, RJ, MG"
+                inputProps={{ maxLength: 2 }}
+              />
+            </Box>
+
+            {/* ✅ Dados de Contato */}
+            <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+              📞 Dados do Contato
+            </Typography>
+            <TextField
+              fullWidth
+              label="Nome do Contato"
+              value={formData.contato_nome || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, contato_nome: e.target.value })
+              }
+              placeholder="Nome da pessoa de contato"
+              inputProps={{ maxLength: 200 }}
+            />
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <MaskedTextField
+                fullWidth
+                maskType="telefone"
+                label="Telefone do Contato"
+                value={formData.contato_telefone || ""}
+                onChange={(value) =>
+                  setFormData({ ...formData, contato_telefone: value })
+                }
+                validateOnBlur={true}
+                placeholder="(00) 00000-0000"
+              />
+              <TextField
+                fullWidth
+                label="Email do Contato"
+                type="email"
+                value={formData.contato_email || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, contato_email: e.target.value })
+                }
+                error={
+                  formData.contato_email
+                    ? !validarEmail(formData.contato_email)
+                    : false
+                }
+                helperText={
+                  formData.contato_email &&
+                  !validarEmail(formData.contato_email)
+                    ? "Email inválido"
+                    : ""
+                }
+                inputProps={{ maxLength: 100 }}
               />
             </Box>
           </Box>
@@ -669,6 +847,44 @@ const Fornecedores: React.FC = () => {
                   fullWidth
                 />
               </Box>
+
+              {/* ✅ Dados do Contato */}
+              {(fornecedorSelecionado.contato_nome ||
+                fornecedorSelecionado.contato_telefone ||
+                fornecedorSelecionado.contato_email) && (
+                <>
+                  <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                    📞 Dados do Contato
+                  </Typography>
+                  {fornecedorSelecionado.contato_nome && (
+                    <TextField
+                      label="Nome do Contato"
+                      value={fornecedorSelecionado.contato_nome}
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                    />
+                  )}
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    {fornecedorSelecionado.contato_telefone && (
+                      <TextField
+                        label="Telefone do Contato"
+                        value={fornecedorSelecionado.contato_telefone}
+                        InputProps={{ readOnly: true }}
+                        fullWidth
+                      />
+                    )}
+                    {fornecedorSelecionado.contato_email && (
+                      <TextField
+                        label="Email do Contato"
+                        value={fornecedorSelecionado.contato_email}
+                        InputProps={{ readOnly: true }}
+                        fullWidth
+                      />
+                    )}
+                  </Box>
+                </>
+              )}
+
               <TextField
                 label="Status"
                 value={fornecedorSelecionado.ativo ? "Ativo" : "Inativo"}

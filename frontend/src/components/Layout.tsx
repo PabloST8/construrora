@@ -19,8 +19,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  ExpandLess,
-  ExpandMore,
   AccountCircle,
   ExitToApp,
 } from "@mui/icons-material";
@@ -37,8 +35,6 @@ const Layout: React.FC<LayoutProps> = (props) => {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [expandObras, setExpandObras] = useState(false);
-  const [expandPessoas, setExpandPessoas] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -71,6 +67,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/receitas") return "Gestão de Receitas";
     if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
     if (location.pathname === "/relatorios") return "📊 Relatórios";
+    if (location.pathname === "/relatorios-diario") return "📄 Relatório Diário de Obra";
     if (location.pathname === "/diario") return "Diário de Obra";
     return "Sistema de Gestão de Obras";
   };
@@ -122,106 +119,36 @@ const Layout: React.FC<LayoutProps> = (props) => {
         {/* Obras */}
         <ListItem disablePadding>
           <ListItemButton
-            onClick={() => setExpandObras(!expandObras)}
+            onClick={() => navigate("/obras")}
             sx={{
               color: "white",
+              backgroundColor:
+                location.pathname === "/obras"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="Obra" />
-            {expandObras ? <ExpandLess /> : <ExpandMore />}
+            <ListItemText primary="🏗️ Obras" />
           </ListItemButton>
         </ListItem>
-
-        {expandObras && (
-          <>
-            <ListItem disablePadding sx={{ pl: 2 }}>
-              <ListItemButton
-                onClick={() => navigate("/obras?tab=cadastrar")}
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-                  "&:before": {
-                    content: '"●"',
-                    marginRight: 1,
-                    color: "#4caf50",
-                  },
-                }}
-              >
-                <ListItemText primary="Cadastrar Obra" />
-              </ListItemButton>
-            </ListItem>
-
-            <ListItem disablePadding sx={{ pl: 2 }}>
-              <ListItemButton
-                onClick={() => navigate("/obras?tab=buscar")}
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-                  "&:before": {
-                    content: '"●"',
-                    marginRight: 1,
-                    color: "#4caf50",
-                  },
-                }}
-              >
-                <ListItemText primary="Buscar Obra" />
-              </ListItemButton>
-            </ListItem>
-          </>
-        )}
 
         {/* Pessoas */}
         <ListItem disablePadding>
           <ListItemButton
-            onClick={() => setExpandPessoas(!expandPessoas)}
+            onClick={() => navigate("/pessoas")}
             sx={{
               color: "white",
+              backgroundColor:
+                location.pathname === "/pessoas"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="Pessoa" />
-            {expandPessoas ? <ExpandLess /> : <ExpandMore />}
+            <ListItemText primary="👥 Pessoas" />
           </ListItemButton>
         </ListItem>
-
-        {expandPessoas && (
-          <>
-            <ListItem disablePadding sx={{ pl: 2 }}>
-              <ListItemButton
-                onClick={() => navigate("/pessoas?tab=cadastrar")}
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-                  "&:before": {
-                    content: '"●"',
-                    marginRight: 1,
-                    color: "#4caf50",
-                  },
-                }}
-              >
-                <ListItemText primary="Cadastrar Pessoa" />
-              </ListItemButton>
-            </ListItem>
-
-            <ListItem disablePadding sx={{ pl: 2 }}>
-              <ListItemButton
-                onClick={() => navigate("/pessoas?tab=buscar")}
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-                  "&:before": {
-                    content: '"●"',
-                    marginRight: 1,
-                    color: "#4caf50",
-                  },
-                }}
-              >
-                <ListItemText primary="Buscar Pessoa" />
-              </ListItemButton>
-            </ListItem>
-          </>
-        )}
 
         {/* Despesas */}
         <ListItem disablePadding>
@@ -288,6 +215,23 @@ const Layout: React.FC<LayoutProps> = (props) => {
             }}
           >
             <ListItemText primary="📊 Relatórios" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Relatório Diário de Obra */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/relatorios-diario")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/relatorios-diario"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="📄 Relatório Diário" />
           </ListItemButton>
         </ListItem>
 

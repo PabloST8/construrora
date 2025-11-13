@@ -13,6 +13,7 @@
 - [x] **Autenticação JWT Implementada** ✨
 - [x] **Sistema de Edição Completo** 🎉
 - [x] **Sistema de Visualização Completo** 👁️
+- [x] **Sistema com Conta Admin Única** 🔐
 
 ## ✅ Projeto 100% Completo - CRUD + Visualização Total
 
@@ -20,12 +21,14 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 
 ### Backend (100% Completo)
 
-- ✅ Modelos completos (Usuario, Empresa, Obra, Despesa, DiarioObra, Notificacao)
+- ✅ API Go 1.25 + Gin Framework + PostgreSQL
+- ✅ Modelos completos (Usuario, Pessoa, Obra, Despesa, Receita, Fornecedor, DiarioObra)
 - ✅ Rotas RESTful completas para todos os módulos
-- ✅ Sistema de autenticação JWT
+- ✅ Sistema de autenticação JWT (Access + Refresh tokens)
 - ✅ Middleware de segurança
 - ✅ Validações CPF/CNPJ
-- ✅ Servidor rodando na porta 5000
+- ✅ **Conta Admin Única** (sem sistema de cadastro público)
+- ✅ Servidor rodando na porta 9090
 
 ### Frontend (100% Completo)
 
@@ -276,6 +279,44 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 4. Edite campos e faça upload de nova foto/logo
 5. Clique em "Salvar"
 6. Toast de sucesso + Lista atualizada automaticamente
+
+---
+
+## 🔐 Acesso ao Sistema - Conta Admin Única
+
+### Credenciais Oficiais
+
+**Este sistema NÃO possui cadastro público. Existe apenas UMA conta de administrador:**
+
+```
+Email:    admin@sistema.com
+Senha:    Admin@123
+Perfil:   Administrador (todas as permissões)
+```
+
+### Como Configurar
+
+1. **Execute o script SQL** `create_admin_user.sql` no PostgreSQL:
+
+   ```bash
+   psql -U postgres -d nome_do_banco -f create_admin_user.sql
+   ```
+
+2. **Faça login** em `http://localhost:3000/login` com as credenciais acima
+
+3. **Troque a senha padrão** após o primeiro acesso (recomendado)
+
+### Arquivos de Referência
+
+- 📄 **`create_admin_user.sql`** - Script para criar o usuário admin
+- 📄 **`CREDENCIAIS_ADMIN.md`** - Documentação completa das credenciais
+- 📄 **`SISTEMA_ADMIN_UNICO.md`** - Guia de configuração e segurança
+
+### ⚠️ Importante
+
+- ❌ **Sistema de cadastro removido** - Não há página `/cadastro`
+- 🔒 **Acesso restrito** - Apenas o admin pode usar o sistema
+- 🔑 **Reset de senha** - Disponível via SQL (ver `CREDENCIAIS_ADMIN.md`)
 
 ---
 

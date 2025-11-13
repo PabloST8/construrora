@@ -163,23 +163,11 @@ const Login: React.FC = () => {
 
             <Box sx={{ mt: 3, textAlign: "center" }}>
               <Typography variant="body2" sx={{ color: "#d32f2f", mb: 1 }}>
-                Faça o login utilizando suas credenciais da IF3
+                Acesso exclusivo para administradores
               </Typography>
               <Typography variant="body2" sx={{ color: "#666" }}>
-                Não tem uma conta?{" "}
-                <Box
-                  component="span"
-                  onClick={() => navigate("/cadastro")}
-                  sx={{
-                    color: "#d32f2f",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    "&:hover": { color: "#b71c1c" },
-                  }}
-                >
-                  Cadastre-se aqui
-                </Box>
+                Entre em contato com o administrador do sistema para obter
+                acesso
               </Typography>
             </Box>
           </Box>

@@ -26,7 +26,8 @@ export const receitaService = {
    */
   async buscarPorId(id: number): Promise<Receita> {
     const response = await api.get(`/receitas/${id}`);
-    return response.data;
+    // ✅ Verificar se vem dentro de .data
+    return response.data.data || response.data;
   },
 
   /**
@@ -42,19 +43,24 @@ export const receitaService = {
    * Cria nova receita
    * POST /receitas
    *
-   * IMPORTANTE: A API Go espera data_recebimento no payload
+   * ✅ ATUALIZADO: API Go usa apenas campo 'data' (sem data_recebimento)
    */
   async criar(receita: Receita): Promise<{ id: number }> {
-    // ✅ Converte data para data_recebimento (formato esperado pela API Go)
+    // ✅ Converter data para ISO 8601 completo
+    const dataISO = receita.data.includes("T")
+      ? receita.data
+      : `${receita.data}T00:00:00Z`;
+
+    // ✅ Payload correto para API Go (8 campos do modelo Receita)
     const payload = {
       obra_id: receita.obra_id,
       descricao: receita.descricao,
       valor: receita.valor,
-      data_recebimento: receita.data, // ✅ IMPORTANTE: API Go espera data_recebimento
+      data: dataISO, // ✅ Formato ISO 8601 completo (único campo de data)
       fonte_receita: receita.fonte_receita || "OUTROS",
       numero_documento: receita.numero_documento || "",
       responsavel_id: receita.responsavel_id || null,
-      observacoes: receita.observacao || receita.observacoes || "",
+      observacao: receita.observacao || "",
     };
 
     const response = await api.post("/receitas", payload);
@@ -64,18 +70,25 @@ export const receitaService = {
   /**
    * Atualiza receita existente
    * PUT /receitas/:id
+   *
+   * ✅ ATUALIZADO: API Go usa apenas campo 'data' (sem data_recebimento)
    */
   async atualizar(id: number, receita: Receita): Promise<Receita> {
-    // ✅ Converte data para data_recebimento
+    // ✅ Converter data para ISO 8601 completo
+    const dataISO = receita.data.includes("T")
+      ? receita.data
+      : `${receita.data}T00:00:00Z`;
+
+    // ✅ Payload correto para API Go (8 campos do modelo Receita)
     const payload = {
       obra_id: receita.obra_id,
       descricao: receita.descricao,
       valor: receita.valor,
-      data_recebimento: receita.data, // ✅ IMPORTANTE: API Go espera data_recebimento
+      data: dataISO, // ✅ Formato ISO 8601 completo (único campo de data)
       fonte_receita: receita.fonte_receita || "OUTROS",
       numero_documento: receita.numero_documento || "",
       responsavel_id: receita.responsavel_id || null,
-      observacoes: receita.observacao || receita.observacoes || "",
+      observacao: receita.observacao || "",
     };
 
     const response = await api.put(`/receitas/${id}`, payload);

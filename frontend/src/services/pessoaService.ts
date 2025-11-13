@@ -11,7 +11,9 @@ export const pessoaService = {
   // Listar todas as pessoas
   async listar(): Promise<Pessoa[]> {
     const response = await api.get("/pessoas");
-    return response.data.data || response.data;
+    const data = response.data.data || response.data;
+    // ✅ Garantir que sempre retorne um array
+    return Array.isArray(data) ? data : [];
   },
 
   // Buscar pessoa por ID

@@ -30,6 +30,7 @@ export interface Obra {
   endereco_cidade?: string;
   endereco_estado?: string;
   endereco_cep?: string;
+  foto?: string; // Base64 da foto da obra
   observacoes?: string;
   ativo?: boolean;
   created_at?: string;

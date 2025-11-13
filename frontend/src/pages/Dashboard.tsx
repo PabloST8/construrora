@@ -5,163 +5,130 @@ import {
   CardContent,
   Typography,
   Paper,
-  Chip,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
 } from "@mui/material";
+import { Grid } from "@mui/material";
 import {
-  Construction,
-  Search,
-  PersonAdd,
-  Person,
   AttachMoney,
-  Business,
-  Assessment,
   TrendingUp,
+  TrendingDown,
+  AccountBalanceWallet,
+  Construction,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
 import { obraService } from "../services/obraService";
-import { pessoaService } from "../services/pessoaService";
 import { despesaService } from "../services/despesaService";
-import { fornecedorService } from "../services/fornecedorService";
+import { receitaService } from "../services/receitaService";
 import { toast } from "react-toastify";
+import { formatCurrency } from "../utils/formatters";
+
+interface Obra {
+  id: number;
+  nome: string;
+  status?: string;
+}
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [obras, setObras] = useState<Obra[]>([]);
+  const [obraSelecionada, setObraSelecionada] = useState<number | "todas">(
+    "todas"
+  );
+
   const [estatisticas, setEstatisticas] = useState({
     totalObras: 0,
-    obrasEmAndamento: 0,
-    totalPessoas: 0,
-    totalFornecedores: 0,
+    totalReceitas: 0,
     totalDespesas: 0,
-    valorTotalDespesas: 0,
+    despesasPagas: 0,
     despesasPendentes: 0,
-    valorPendente: 0,
+    saldoCaixa: 0,
   });
 
   useEffect(() => {
-    carregarEstatisticas();
+    carregarObras();
   }, []);
 
-  const carregarEstatisticas = async () => {
+  useEffect(() => {
+    if (obras.length > 0) {
+      carregarEstatisticas();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [obraSelecionada, obras]);
+
+  const carregarObras = async () => {
     try {
       setLoading(true);
-
-      // Carregar dados em paralelo
-      const [obras, pessoas, despesas, fornecedores] = await Promise.all([
-        obraService.listar().catch(() => []),
-        pessoaService.listar().catch(() => []),
-        despesaService.listar().catch(() => []),
-        fornecedorService.listar().catch(() => []),
-      ]);
-
-      // Calcular estatísticas das obras
-      const obrasArray = Array.isArray(obras) ? obras : [];
-      const totalObras = obrasArray.length;
-      const obrasEmAndamento = obrasArray.filter(
-        (obra: any) => obra.status === "em_andamento"
-      ).length;
-
-      // Calcular estatísticas das pessoas
-      const pessoasArray = Array.isArray(pessoas) ? pessoas : [];
-      const totalPessoas = pessoasArray.length;
-
-      // Calcular estatísticas dos fornecedores
-      const fornecedoresArray = Array.isArray(fornecedores) ? fornecedores : [];
-      const totalFornecedores = fornecedoresArray.length;
-
-      // Calcular estatísticas das despesas
-      const despesasArray = Array.isArray(despesas) ? despesas : [];
-      const totalDespesas = despesasArray.length;
-      const valorTotalDespesas = despesasArray.reduce(
-        (acc: number, despesa: any) => acc + (despesa.valor || 0),
-        0
-      );
-      const despesasPendentes = despesasArray.filter(
-        (despesa: any) => despesa.status_pagamento === "PENDENTE"
-      ).length;
-      const valorPendente = despesasArray
-        .filter((despesa: any) => despesa.status_pagamento === "PENDENTE")
-        .reduce((acc: number, despesa: any) => acc + (despesa.valor || 0), 0);
-
-      setEstatisticas({
-        totalObras,
-        obrasEmAndamento,
-        totalPessoas,
-        totalFornecedores,
-        totalDespesas,
-        valorTotalDespesas,
-        despesasPendentes,
-        valorPendente,
-      });
+      const data: any = await obraService.listar();
+      const obrasArray = Array.isArray(data) ? data : data?.data || [];
+      setObras(obrasArray);
     } catch (error) {
-      console.error("❌ Erro ao carregar estatísticas:", error);
-      toast.error("Erro ao carregar estatísticas do dashboard");
+      console.error("❌ Erro ao carregar obras:", error);
+      toast.error("Erro ao carregar obras");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+  const carregarEstatisticas = async () => {
+    try {
+      setLoading(true);
+
+      // Definir filtros com base na obra selecionada
+      const filtros: any = {};
+      if (obraSelecionada !== "todas") {
+        filtros.obra_id = obraSelecionada;
+      }
+
+      // Carregar dados financeiros em paralelo
+      const [despesas, receitas] = await Promise.all([
+        despesaService.listar(filtros).catch(() => []),
+        receitaService.listar(filtros).catch(() => []),
+      ]);
+
+      // Processar despesas
+      const despesasArray = Array.isArray(despesas) ? despesas : [];
+      const totalDespesas = despesasArray.reduce(
+        (acc: number, despesa: any) => acc + (despesa.valor || 0),
+        0
+      );
+      const despesasPagas = despesasArray
+        .filter((despesa: any) => despesa.status_pagamento === "PAGO")
+        .reduce((acc: number, despesa: any) => acc + (despesa.valor || 0), 0);
+      const despesasPendentes = despesasArray
+        .filter((despesa: any) => despesa.status_pagamento === "PENDENTE")
+        .reduce((acc: number, despesa: any) => acc + (despesa.valor || 0), 0);
+
+      // Processar receitas
+      const receitasArray = Array.isArray(receitas) ? receitas : [];
+      const totalReceitas = receitasArray.reduce(
+        (acc: number, receita: any) => acc + (receita.valor || 0),
+        0
+      );
+
+      // Calcular saldo em caixa (Receitas - Despesas Pagas)
+      const saldoCaixa = totalReceitas - despesasPagas;
+
+      setEstatisticas({
+        totalObras: obras.length,
+        totalReceitas,
+        totalDespesas,
+        despesasPagas,
+        despesasPendentes,
+        saldoCaixa,
+      });
+    } catch (error) {
+      console.error("❌ Erro ao carregar estatísticas:", error);
+      toast.error("Erro ao carregar estatísticas financeiras");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const menuItems = [
-    {
-      title: "Despesas",
-      icon: <AttachMoney sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/despesas",
-      color: "#d32f2f",
-      description: "Gestão financeira",
-    },
-    {
-      title: "Fornecedores",
-      icon: <Business sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/fornecedores",
-      color: "#d32f2f",
-      description: "Cadastro de fornecedores",
-    },
-    {
-      title: "Relatórios",
-      icon: <Assessment sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/relatorios",
-      color: "#d32f2f",
-      description: "Análises e relatórios",
-    },
-    {
-      title: "Cadastrar Obras",
-      icon: <Construction sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/obras?tab=cadastrar",
-      color: "#d32f2f",
-      description: "Nova obra",
-    },
-    {
-      title: "Buscar Obras",
-      icon: <Search sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/obras?tab=buscar",
-      color: "#d32f2f",
-      description: "Consultar obras",
-    },
-    {
-      title: "Cadastrar Pessoas",
-      icon: <PersonAdd sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/pessoas?tab=cadastrar",
-      color: "#d32f2f",
-      description: "Nova pessoa",
-    },
-    {
-      title: "Buscar Pessoas",
-      icon: <Person sx={{ fontSize: 40, color: "#d32f2f" }} />,
-      path: "/pessoas?tab=buscar",
-      color: "#d32f2f",
-      description: "Consultar pessoas",
-    },
-  ];
-
-  if (loading) {
+  if (loading && obras.length === 0) {
     return (
       <Box
         sx={{
@@ -177,231 +144,261 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-      {/* Cabeçalho com estatísticas */}
+    <Box sx={{ p: 3 }}>
+      {/* Cabeçalho */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ color: "#d32f2f" }}>
-          📊 Dashboard - Sistema de Gestão de Obras
+        <Typography variant="h4" gutterBottom sx={{ color: "#d32f2f", mb: 3 }}>
+          📊 Dashboard Financeiro
         </Typography>
 
-        {/* Cards de estatísticas usando flexbox */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 3,
-            mt: 2,
-          }}
-        >
-          {/* Card de Obras */}
-          <Box sx={{ flex: "1 1 300px", minWidth: "250px" }}>
-            <Card
-              sx={{ backgroundColor: "#e3f2fd", border: "1px solid #2196f3" }}
+        {/* Filtro por Obra */}
+        <Box sx={{ mb: 3 }}>
+          <FormControl fullWidth sx={{ maxWidth: 400 }}>
+            <InputLabel>Filtrar por Obra</InputLabel>
+            <Select
+              value={obraSelecionada}
+              onChange={(e) => setObraSelecionada(e.target.value as any)}
+              label="Filtrar por Obra"
             >
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <Construction sx={{ color: "#1976d2", mr: 1 }} />
-                  <Typography variant="h6" sx={{ color: "#1976d2" }}>
-                    Obras
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ color: "#1976d2" }}>
-                  {estatisticas.totalObras}
-                </Typography>
-                <Box sx={{ mt: 1 }}>
-                  <Chip
-                    label={`${estatisticas.obrasEmAndamento} em andamento`}
-                    color="success"
-                    size="small"
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-
-          {/* Card de Pessoas */}
-          <Box sx={{ flex: "1 1 300px", minWidth: "250px" }}>
-            <Card
-              sx={{ backgroundColor: "#f3e5f5", border: "1px solid #9c27b0" }}
-            >
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <Person sx={{ color: "#7b1fa2", mr: 1 }} />
-                  <Typography variant="h6" sx={{ color: "#7b1fa2" }}>
-                    Pessoas
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ color: "#7b1fa2" }}>
-                  {estatisticas.totalPessoas}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#7b1fa2", mt: 1 }}>
-                  Cadastradas no sistema
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-
-          {/* Card de Fornecedores */}
-          <Box sx={{ flex: "1 1 300px", minWidth: "250px" }}>
-            <Card
-              sx={{ backgroundColor: "#fff3e0", border: "1px solid #ff9800" }}
-            >
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <Business sx={{ color: "#f57c00", mr: 1 }} />
-                  <Typography variant="h6" sx={{ color: "#f57c00" }}>
-                    Fornecedores
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ color: "#f57c00" }}>
-                  {estatisticas.totalFornecedores}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#f57c00", mt: 1 }}>
-                  Ativos no sistema
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-
-          {/* Card de Despesas */}
-          <Box sx={{ flex: "1 1 300px", minWidth: "250px" }}>
-            <Card
-              sx={{ backgroundColor: "#e8f5e8", border: "1px solid #4caf50" }}
-            >
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <AttachMoney sx={{ color: "#388e3c", mr: 1 }} />
-                  <Typography variant="h6" sx={{ color: "#388e3c" }}>
-                    Despesas
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ color: "#388e3c" }}>
-                  {estatisticas.totalDespesas}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#388e3c", mt: 1 }}>
-                  Total: {formatCurrency(estatisticas.valorTotalDespesas)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
+              <MenuItem value="todas">📋 Todas as Obras</MenuItem>
+              <Divider />
+              {obras.map((obra) => (
+                <MenuItem key={obra.id} value={obra.id}>
+                  🏗️ {obra.nome}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
 
-        {/* Resumo Financeiro */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 2,
-            mt: 2,
-          }}
-        >
-          <Box sx={{ flex: "1 1 400px", minWidth: "300px" }}>
-            <Card
-              sx={{ backgroundColor: "#ffebee", border: "1px solid #f44336" }}
-            >
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <TrendingUp sx={{ color: "#d32f2f", mr: 1 }} />
-                  <Typography variant="h6" sx={{ color: "#d32f2f" }}>
-                    Despesas Pendentes
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ color: "#d32f2f" }}>
-                  {estatisticas.despesasPendentes} despesas
-                </Typography>
-                <Typography variant="h6" sx={{ color: "#d32f2f", mt: 1 }}>
-                  Valor: {formatCurrency(estatisticas.valorPendente)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-          <Box sx={{ flex: "1 1 400px", minWidth: "300px" }}>
-            <Card
-              sx={{ backgroundColor: "#e8f5e8", border: "1px solid #4caf50" }}
-            >
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <Assessment sx={{ color: "#388e3c", mr: 1 }} />
-                  <Typography variant="h6" sx={{ color: "#388e3c" }}>
-                    Total Geral
-                  </Typography>
-                </Box>
-                <Typography variant="h5" sx={{ color: "#388e3c" }}>
-                  {formatCurrency(estatisticas.valorTotalDespesas)}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#388e3c", mt: 1 }}>
-                  Todas as despesas registradas
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
+        {/* Indicador de obra selecionada */}
+        <Typography variant="body1" sx={{ color: "#666", mb: 2 }}>
+          {obraSelecionada === "todas"
+            ? `Exibindo dados de todas as ${estatisticas.totalObras} obras`
+            : `Exibindo dados da obra: ${
+                obras.find((o) => o.id === obraSelecionada)?.nome || ""
+              }`}
+        </Typography>
       </Paper>
 
-      {/* Menu de navegação */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom sx={{ color: "#333", mb: 3 }}>
-          🚀 Acesso Rápido
-        </Typography>
+      {/* Cards Financeiros */}
+      <Grid container spacing={3}>
+        {/* Card: Total de Receitas */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              backgroundColor: "#e8f5e9",
+              border: "2px solid #4caf50",
+              height: "100%",
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <TrendingUp sx={{ fontSize: 40, color: "#388e3c", mr: 2 }} />
+                <Typography variant="h6" sx={{ color: "#388e3c" }}>
+                  Total de Receitas
+                </Typography>
+              </Box>
+              <Typography
+                variant="h4"
+                sx={{ color: "#2e7d32", fontWeight: "bold" }}
+              >
+                {formatCurrency(estatisticas.totalReceitas)}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#388e3c", mt: 1 }}>
+                Valores recebidos
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-              lg: "repeat(4, 1fr)",
-            },
-            gap: 3,
-          }}
-        >
-          {menuItems.map((item, index) => (
-            <Card
-              key={index}
+        {/* Card: Despesas Pagas */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              backgroundColor: "#fff3e0",
+              border: "2px solid #ff9800",
+              height: "100%",
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <AttachMoney sx={{ fontSize: 40, color: "#f57c00", mr: 2 }} />
+                <Typography variant="h6" sx={{ color: "#f57c00" }}>
+                  Despesas Pagas
+                </Typography>
+              </Box>
+              <Typography
+                variant="h4"
+                sx={{ color: "#e65100", fontWeight: "bold" }}
+              >
+                {formatCurrency(estatisticas.despesasPagas)}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#f57c00", mt: 1 }}>
+                Já quitadas
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Card: Despesas Pendentes */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              backgroundColor: "#ffebee",
+              border: "2px solid #f44336",
+              height: "100%",
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <TrendingDown sx={{ fontSize: 40, color: "#d32f2f", mr: 2 }} />
+                <Typography variant="h6" sx={{ color: "#d32f2f" }}>
+                  Despesas Pendentes
+                </Typography>
+              </Box>
+              <Typography
+                variant="h4"
+                sx={{ color: "#c62828", fontWeight: "bold" }}
+              >
+                {formatCurrency(estatisticas.despesasPendentes)}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#d32f2f", mt: 1 }}>
+                A pagar
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Card: Saldo em Caixa */}
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+          <Card
+            sx={{
+              backgroundColor:
+                estatisticas.saldoCaixa >= 0 ? "#e3f2fd" : "#ffebee",
+              border: `2px solid ${
+                estatisticas.saldoCaixa >= 0 ? "#2196f3" : "#f44336"
+              }`,
+              height: "100%",
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <AccountBalanceWallet
+                  sx={{
+                    fontSize: 50,
+                    color: estatisticas.saldoCaixa >= 0 ? "#1976d2" : "#d32f2f",
+                    mr: 2,
+                  }}
+                />
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: estatisticas.saldoCaixa >= 0 ? "#1976d2" : "#d32f2f",
+                  }}
+                >
+                  Saldo em Caixa
+                </Typography>
+              </Box>
+              <Typography
+                variant="h3"
+                sx={{
+                  color: estatisticas.saldoCaixa >= 0 ? "#0d47a1" : "#c62828",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatCurrency(estatisticas.saldoCaixa)}
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: estatisticas.saldoCaixa >= 0 ? "#1976d2" : "#d32f2f",
+                  mt: 1,
+                }}
+              >
+                Receitas - Despesas Pagas
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Card: Total de Despesas */}
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+          <Card
+            sx={{
+              backgroundColor: "#fce4ec",
+              border: "2px solid #e91e63",
+              height: "100%",
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Construction sx={{ fontSize: 50, color: "#c2185b", mr: 2 }} />
+                <Typography variant="h5" sx={{ color: "#c2185b" }}>
+                  Total de Despesas
+                </Typography>
+              </Box>
+              <Typography
+                variant="h3"
+                sx={{ color: "#880e4f", fontWeight: "bold" }}
+              >
+                {formatCurrency(estatisticas.totalDespesas)}
+              </Typography>
+              <Typography variant="body1" sx={{ color: "#c2185b", mt: 1 }}>
+                Pagas + Pendentes
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Resumo Simplificado */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ color: "#333", mb: 2 }}>
+          📈 Resumo Financeiro
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box
               sx={{
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-5px)",
-                  boxShadow: 3,
-                },
-                minHeight: 160,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "white",
-                border: "2px solid #e0e0e0",
+                p: 2,
+                backgroundColor: "#f5f5f5",
                 borderRadius: 2,
+                border: "1px solid #e0e0e0",
               }}
-              onClick={() => navigate(item.path)}
             >
-              <CardContent sx={{ textAlign: "center", p: 2 }}>
-                <Box sx={{ mb: 1 }}>{item.icon}</Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: "#333",
-                    fontWeight: "bold",
-                    fontSize: "1rem",
-                    mb: 1,
-                  }}
-                >
-                  {item.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "#666",
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  {item.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
+              <Typography variant="body2" color="text.secondary">
+                Entrada (Receitas)
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ color: "#4caf50", fontWeight: "bold" }}
+              >
+                + {formatCurrency(estatisticas.totalReceitas)}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box
+              sx={{
+                p: 2,
+                backgroundColor: "#f5f5f5",
+                borderRadius: 2,
+                border: "1px solid #e0e0e0",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Saída (Despesas Pagas)
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ color: "#f44336", fontWeight: "bold" }}
+              >
+                - {formatCurrency(estatisticas.despesasPagas)}
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </Paper>
     </Box>
   );

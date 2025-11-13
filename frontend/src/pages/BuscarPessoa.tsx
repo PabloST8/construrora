@@ -35,6 +35,21 @@ import { toast } from "react-toastify";
 import { Pessoa, PessoaFilters } from "../types/pessoa";
 import { pessoaService } from "../services/pessoaService";
 import { obraService } from "../services/obraService";
+import MaskedTextField from "../components/MaskedTextField";
+import {
+  validarCPF,
+  validarCNPJ,
+  validarEmail,
+  validarTelefone,
+  validarCEP,
+  obterMensagemErro,
+} from "../utils/validators";
+import { removerMascara } from "../utils/masks";
+
+// Tipo auxiliar para edição (permite CPF/CNPJ no select)
+type PessoaEdicao = Omit<Pessoa, "tipo"> & {
+  tipo: "PF" | "PJ" | "CPF" | "CNPJ";
+};
 
 const BuscarPessoa: React.FC = () => {
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
@@ -49,7 +64,9 @@ const BuscarPessoa: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [pessoaEditando, setPessoaEditando] = useState<Pessoa | null>(null);
+  const [pessoaEditando, setPessoaEditando] = useState<PessoaEdicao | null>(
+    null
+  );
   const [pessoaVisualizando, setPessoaVisualizando] = useState<Pessoa | null>(
     null
   );
@@ -166,7 +183,18 @@ const BuscarPessoa: React.FC = () => {
       const pessoa = await pessoaService.buscarPorId(id);
       console.log("📝 Dados carregados para edição:", pessoa);
 
-      setPessoaEditando(pessoa);
+      // ✅ Converter tipo da API (PF/PJ) para Select (CPF/CNPJ)
+      const pessoaFormatada: PessoaEdicao = {
+        ...pessoa,
+        tipo:
+          pessoa.tipo === "PF"
+            ? "CPF"
+            : pessoa.tipo === "PJ"
+            ? "CNPJ"
+            : pessoa.tipo,
+      };
+
+      setPessoaEditando(pessoaFormatada);
       setEditModalOpen(true);
 
       console.log("✅ Modal de edição aberto com sucesso");
@@ -206,16 +234,70 @@ const BuscarPessoa: React.FC = () => {
     if (!pessoaEditando) return;
 
     try {
+      // ✅ VALIDAÇÕES ANTES DE SALVAR
+      // 1. Validar nome
+      if (!pessoaEditando.nome || pessoaEditando.nome.trim().length < 3) {
+        toast.error("Nome deve ter pelo menos 3 caracteres");
+        return;
+      }
+
+      // 2. Validar documento (CPF ou CNPJ)
+      const documentoLimpo = removerMascara(pessoaEditando.documento);
+      if (pessoaEditando.tipo === "PF" || pessoaEditando.tipo === "CPF") {
+        if (!validarCPF(documentoLimpo)) {
+          toast.error("CPF inválido. Verifique os dígitos.");
+          return;
+        }
+      } else {
+        if (!validarCNPJ(documentoLimpo)) {
+          toast.error("CNPJ inválido. Verifique os dígitos.");
+          return;
+        }
+      }
+
+      // 3. Validar email (se preenchido)
+      if (pessoaEditando.email && !validarEmail(pessoaEditando.email)) {
+        toast.error("Email inválido");
+        return;
+      }
+
+      // 4. Validar telefone (se preenchido)
+      if (pessoaEditando.telefone) {
+        const telefoneLimpo = removerMascara(pessoaEditando.telefone);
+        if (!validarTelefone(telefoneLimpo)) {
+          toast.error("Telefone inválido. Use (00) 00000-0000");
+          return;
+        }
+      }
+
+      // 5. Validar CEP (se preenchido)
+      if (pessoaEditando.endereco_cep) {
+        const cepLimpo = removerMascara(pessoaEditando.endereco_cep);
+        if (!validarCEP(cepLimpo)) {
+          toast.error("CEP inválido. Use 00000-000");
+          return;
+        }
+      }
+
       setSalvando(true);
       console.log("🔄 Salvando edição da pessoa:", pessoaEditando);
 
+      // ✅ Converter tipo de volta para API (CPF → PF, CNPJ → PJ)
+      const tipoApi: Pessoa["tipo"] =
+        pessoaEditando.tipo === "CPF"
+          ? "PF"
+          : pessoaEditando.tipo === "CNPJ"
+          ? "PJ"
+          : pessoaEditando.tipo;
+
+      // ✅ REMOVER MÁSCARAS ANTES DE ENVIAR PARA API
       const dadosAtualizados: Pessoa = {
         nome: pessoaEditando.nome,
         email: pessoaEditando.email || "",
-        telefone: pessoaEditando.telefone || "",
-        tipo: pessoaEditando.tipo,
-        documento: pessoaEditando.documento,
-        endereco_cep: pessoaEditando.endereco_cep || "",
+        telefone: removerMascara(pessoaEditando.telefone || ""),
+        tipo: tipoApi, // ✅ Tipo convertido para API
+        documento: removerMascara(pessoaEditando.documento),
+        endereco_cep: removerMascara(pessoaEditando.endereco_cep || ""),
         endereco_rua: pessoaEditando.endereco_rua || "",
         endereco_numero: pessoaEditando.endereco_numero || "",
         endereco_bairro: pessoaEditando.endereco_bairro || "",
@@ -269,7 +351,7 @@ const BuscarPessoa: React.FC = () => {
     }
   };
 
-  const handleCampoChange = (campo: keyof Pessoa, valor: any) => {
+  const handleCampoChange = (campo: keyof PessoaEdicao, valor: any) => {
     if (pessoaEditando) {
       console.log(`📝 Alterando campo ${campo}:`, valor);
 
@@ -612,12 +694,12 @@ const BuscarPessoa: React.FC = () => {
                         <TableCell>
                           <Chip
                             label={
-                              pessoa.tipo === "CPF"
+                              pessoa.tipo === "PF"
                                 ? "Pessoa Física"
                                 : "Pessoa Jurídica"
                             }
                             color={
-                              pessoa.tipo === "CPF" ? "primary" : "secondary"
+                              pessoa.tipo === "PF" ? "primary" : "secondary"
                             }
                             size="small"
                           />
@@ -667,6 +749,10 @@ const BuscarPessoa: React.FC = () => {
                 fullWidth
                 value={pessoaEditando.nome || ""}
                 onChange={(e) => handleCampoChange("nome", e.target.value)}
+                inputProps={{ maxLength: 200 }}
+                helperText={`${
+                  (pessoaEditando.nome || "").length
+                }/200 caracteres`}
               />
 
               {/* Tipo */}
@@ -683,11 +769,18 @@ const BuscarPessoa: React.FC = () => {
               </FormControl>
 
               {/* Documento (CPF/CNPJ) */}
-              <TextField
+              <MaskedTextField
+                maskType={pessoaEditando.tipo === "CPF" ? "cpf" : "cnpj"}
                 label={pessoaEditando.tipo === "CPF" ? "CPF *" : "CNPJ *"}
                 fullWidth
                 value={pessoaEditando.documento || ""}
-                onChange={(e) => handleCampoChange("documento", e.target.value)}
+                onChange={(value) => handleCampoChange("documento", value)}
+                validateOnBlur={true}
+                placeholder={
+                  pessoaEditando.tipo === "CPF"
+                    ? "000.000.000-00"
+                    : "00.000.000/0000-00"
+                }
               />
 
               {/* Email */}
@@ -697,19 +790,31 @@ const BuscarPessoa: React.FC = () => {
                 fullWidth
                 value={pessoaEditando.email || ""}
                 onChange={(e) => handleCampoChange("email", e.target.value)}
+                error={
+                  pessoaEditando.email
+                    ? !validarEmail(pessoaEditando.email)
+                    : false
+                }
+                helperText={
+                  pessoaEditando.email && !validarEmail(pessoaEditando.email)
+                    ? "Email inválido"
+                    : ""
+                }
+                inputProps={{ maxLength: 100 }}
               />
 
               {/* Telefone */}
-              <TextField
+              <MaskedTextField
+                maskType="telefone"
                 label="Telefone"
                 fullWidth
                 value={pessoaEditando.telefone || ""}
-                onChange={(e) => {
-                  console.log("📞 Alterando telefone:", e.target.value);
-                  handleCampoChange("telefone", e.target.value);
+                onChange={(value) => {
+                  console.log("📞 Alterando telefone:", value);
+                  handleCampoChange("telefone", value);
                 }}
-                placeholder="(99) 99999-8888"
-                helperText="Formato: (99) 99999-8888"
+                validateOnBlur={true}
+                placeholder="(00) 00000-0000"
               />
 
               {/* Cargo */}
@@ -721,13 +826,14 @@ const BuscarPessoa: React.FC = () => {
               />
 
               {/* Endereço - CEP */}
-              <TextField
+              <MaskedTextField
+                maskType="cep"
                 label="CEP"
                 fullWidth
                 value={pessoaEditando.endereco_cep || ""}
-                onChange={(e) =>
-                  handleCampoChange("endereco_cep", e.target.value)
-                }
+                onChange={(value) => handleCampoChange("endereco_cep", value)}
+                validateOnBlur={true}
+                placeholder="00000-000"
               />
 
               {/* Endereço - Rua */}
@@ -738,6 +844,7 @@ const BuscarPessoa: React.FC = () => {
                 onChange={(e) =>
                   handleCampoChange("endereco_rua", e.target.value)
                 }
+                inputProps={{ maxLength: 200 }}
               />
 
               <Box sx={{ display: "flex", gap: 2 }}>
@@ -867,7 +974,7 @@ const BuscarPessoa: React.FC = () => {
                 label="Tipo de Pessoa"
                 fullWidth
                 value={
-                  pessoaVisualizando.tipo === "CPF"
+                  pessoaVisualizando.tipo === "PF"
                     ? "Pessoa Física"
                     : "Pessoa Jurídica"
                 }
@@ -876,7 +983,7 @@ const BuscarPessoa: React.FC = () => {
 
               {/* Documento (CPF/CNPJ) */}
               <TextField
-                label={pessoaVisualizando.tipo === "CPF" ? "CPF" : "CNPJ"}
+                label={pessoaVisualizando.tipo === "PF" ? "CPF" : "CNPJ"}
                 fullWidth
                 value={pessoaVisualizando.documento || ""}
                 InputProps={{ readOnly: true }}

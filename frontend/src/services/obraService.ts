@@ -9,12 +9,9 @@ export const obraService = {
     cliente?: string;
   }) => {
     const response = await api.get("/obras", { params });
-    console.log("🔍 Resposta completa da API /obras:", response);
-    console.log("🔍 response.data:", response.data);
 
     // Tenta extrair o array de várias formas possíveis
     const data = response.data.data || response.data;
-    console.log("🔍 Data extraído:", data, "É array?", Array.isArray(data));
 
     // Garantir retorno de array
     return Array.isArray(data) ? data : [];
@@ -22,16 +19,57 @@ export const obraService = {
 
   buscarPorId: async (id: string): Promise<Obra> => {
     const response = await api.get(`/obras/${id}`);
+
+    // 🔍 DEBUG: Verificar resposta completa da API
+    console.log(
+      "📡 Resposta da API /obras/:id:",
+      JSON.stringify(response.data, null, 2)
+    );
+    console.log(
+      "📸 Campo 'foto' na resposta:",
+      response.data.foto ? "PRESENTE" : "AUSENTE/NULL"
+    );
+
     return response.data;
   },
 
   criar: async (obraData: Partial<Obra>) => {
-    const response = await api.post("/obras", obraData);
+    // ✅ Converter datas para ISO 8601 antes de enviar
+    const payload = {
+      ...obraData,
+      data_inicio: obraData.data_inicio
+        ? obraData.data_inicio.includes("T")
+          ? obraData.data_inicio
+          : `${obraData.data_inicio}T00:00:00Z`
+        : undefined,
+      data_fim_prevista: obraData.data_fim_prevista
+        ? obraData.data_fim_prevista.includes("T")
+          ? obraData.data_fim_prevista
+          : `${obraData.data_fim_prevista}T00:00:00Z`
+        : undefined,
+    };
+
+    const response = await api.post("/obras", payload);
     return response.data.data || response.data;
   },
 
   atualizar: async (id: string, obraData: Partial<Obra>) => {
-    const response = await api.put(`/obras/${id}`, obraData);
+    // ✅ Converter datas para ISO 8601 antes de enviar
+    const payload = {
+      ...obraData,
+      data_inicio: obraData.data_inicio
+        ? obraData.data_inicio.includes("T")
+          ? obraData.data_inicio
+          : `${obraData.data_inicio}T00:00:00Z`
+        : null, // ✅ null ao invés de undefined
+      data_fim_prevista: obraData.data_fim_prevista
+        ? obraData.data_fim_prevista.includes("T")
+          ? obraData.data_fim_prevista
+          : `${obraData.data_fim_prevista}T00:00:00Z`
+        : null, // ✅ null ao invés de undefined
+    };
+
+    const response = await api.put(`/obras/${id}`, payload);
     return response.data;
   },
 

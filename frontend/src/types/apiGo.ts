@@ -24,26 +24,27 @@ export interface Fornecedor {
   endereco?: string;
   cidade?: string;
   estado?: string;
+  contato_nome?: string;
+  contato_telefone?: string;
+  contato_email?: string;
   ativo: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
-// ✅ Interface para Diário de Obra 100% match com Model Go
+// ✅ Interface para Diário de Obra 100% match com Model Go (13 campos)
 export interface DiarioObra {
   id?: number;
   obra_id: number;
-  data: string;
-  periodo?: "manha" | "tarde" | "noite" | "integral"; // ✅ Match Model Go (sem acento)
+  data: string; // ISO 8601 format
+  periodo?: string; // "manha" | "tarde" | "noite" | "integral"
   atividades_realizadas: string;
   ocorrencias?: string;
   observacoes?: string;
-  foto?: string; // ✅ Base64 encoded image (Model Go)
-  clima?: "ENSOLARADO" | "NUBLADO" | "CHUVOSO" | "VENTOSO" | "OUTROS"; // ✅ NOVO
-  progresso_percentual?: number; // ✅ NOVO
+  foto?: string; // Base64 encoded image
   responsavel_id?: number;
   aprovado_por_id?: number;
-  status_aprovacao?: "pendente" | "aprovado" | "rejeitado";
+  status_aprovacao?: string; // "pendente" | "aprovado" | "rejeitado"
   createdAt?: string;
   updatedAt?: string;
 }

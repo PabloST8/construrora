@@ -5,20 +5,48 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-export const formatDate = (date: string | Date): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("pt-BR").format(dateObj);
+export const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) return "-";
+
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    // Verifica se dateObj é uma instância de Date válida
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return "-";
+    }
+
+    return new Intl.DateTimeFormat("pt-BR").format(dateObj);
+  } catch (error) {
+    console.error("Erro ao formatar data:", error, date);
+    return "-";
+  }
 };
 
-export const formatDateTime = (date: string | Date): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(dateObj);
+export const formatDateTime = (
+  date: string | Date | null | undefined
+): string => {
+  if (!date) return "-";
+
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    // Verifica se dateObj é uma instância de Date válida
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return "-";
+    }
+
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(dateObj);
+  } catch (error) {
+    console.error("Erro ao formatar data/hora:", error, date);
+    return "-";
+  }
 };
 
 export const formatCpfCnpj = (value: string): string => {

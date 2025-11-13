@@ -34,6 +34,11 @@ import { diarioService } from "../services/diarioService";
 import { obraService } from "../services/obraService";
 import { pessoaService } from "../services/pessoaService";
 import FotoUpload from "../components/FotoUpload";
+import {
+  validarData,
+  validarStringNaoVazia,
+  validarTamanhoMinimo,
+} from "../utils/validators";
 
 interface DiarioForm {
   obra_id: number;
@@ -45,9 +50,7 @@ interface DiarioForm {
   responsavel_id: number;
   aprovado_por_id?: number;
   status_aprovacao: string;
-  clima?: string; // ✅ NOVO - API Go
-  progresso_percentual?: number; // ✅ NOVO - API Go
-  foto?: string; // ✅ NOVO - Base64 da foto
+  foto?: string; // Base64 da foto
 }
 
 interface TabPanelProps {
@@ -78,6 +81,10 @@ const DiarioObras: React.FC = () => {
   const [diarioSelecionado, setDiarioSelecionado] = useState<any>(null);
   const [dadosEdicao, setDadosEdicao] = useState<any>({});
 
+  // Estados para filtros
+  const [filtroObra, setFiltroObra] = useState<number>(0);
+  const [filtroData, setFiltroData] = useState<string>("");
+
   const [novoDiario, setNovoDiario] = useState<DiarioForm>({
     obra_id: 0,
     data: "",
@@ -85,8 +92,6 @@ const DiarioObras: React.FC = () => {
     atividades_realizadas: "",
     responsavel_id: 0,
     status_aprovacao: "pendente",
-    clima: "SOL", // ✅ NOVO
-    progresso_percentual: 0, // ✅ NOVO
   });
 
   // Função para formatar período
@@ -120,14 +125,43 @@ const DiarioObras: React.FC = () => {
   };
 
   const handleCadastrar = async () => {
-    if (
-      !novoDiario.obra_id ||
-      !novoDiario.data ||
-      !novoDiario.periodo ||
-      !novoDiario.atividades_realizadas ||
-      !novoDiario.responsavel_id
-    ) {
-      toast.error("Preencha todos os campos obrigat�rios");
+    // ✅ VALIDAÇÕES ANTES DE SALVAR
+    if (!novoDiario.obra_id || novoDiario.obra_id === 0) {
+      toast.error("Selecione a obra");
+      return;
+    }
+
+    if (!novoDiario.data || !validarData(novoDiario.data)) {
+      toast.error("Data inválida");
+      return;
+    }
+
+    // Validar que a data não é futura
+    const dataEscolhida = new Date(novoDiario.data);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    if (dataEscolhida > hoje) {
+      toast.error("❌ A data do diário não pode ser no futuro");
+      return;
+    }
+
+    if (!novoDiario.periodo) {
+      toast.error("Selecione o período");
+      return;
+    }
+
+    if (!validarStringNaoVazia(novoDiario.atividades_realizadas)) {
+      toast.error("Descreva as atividades realizadas");
+      return;
+    }
+
+    if (!validarTamanhoMinimo(novoDiario.atividades_realizadas, 10)) {
+      toast.error("❌ Atividades realizadas deve ter pelo menos 10 caracteres");
+      return;
+    }
+
+    if (!novoDiario.responsavel_id || novoDiario.responsavel_id === 0) {
+      toast.error("Selecione o responsável");
       return;
     }
 
@@ -141,15 +175,13 @@ const DiarioObras: React.FC = () => {
         return `${data}T00:00:00Z`; // YYYY-MM-DD → YYYY-MM-DDTHH:MM:SSZ
       };
 
-      // Preparar dados para envio (garantir formato correto)
+      // ✅ Preparar dados para envio - 13 campos do modelo Go DiarioObra
       const dadosEnvio: any = {
         obra_id: Number(novoDiario.obra_id),
-        data: adicionarTimestamp(novoDiario.data), // ✅ Convertido para timestamp
+        data: adicionarTimestamp(novoDiario.data), // ISO 8601 format
         periodo: novoDiario.periodo,
         atividades_realizadas: novoDiario.atividades_realizadas,
         status_aprovacao: novoDiario.status_aprovacao || "pendente",
-        clima: novoDiario.clima || "SOL", // ✅ NOVO
-        progresso_percentual: Number(novoDiario.progresso_percentual) || 0, // ✅ NOVO
       };
 
       // ✅ Adicionar foto se houver (já vem em base64 do FotoUpload)
@@ -180,8 +212,6 @@ const DiarioObras: React.FC = () => {
         atividades_realizadas: "",
         responsavel_id: 0,
         status_aprovacao: "pendente",
-        clima: "SOL", // ✅ NOVO
-        progresso_percentual: 0, // ✅ NOVO
       });
       carregarDados();
     } catch (error: any) {
@@ -202,6 +232,24 @@ const DiarioObras: React.FC = () => {
       toast.error("Erro ao excluir");
     }
   };
+
+  // Função para filtrar diários
+  const diariosFiltrados = diarios.filter((diario) => {
+    // Filtro por obra
+    if (filtroObra !== 0 && diario.obra_id !== filtroObra) {
+      return false;
+    }
+
+    // Filtro por data
+    if (filtroData !== "") {
+      const dataDiario = diario.data?.split("T")[0]; // YYYY-MM-DD
+      if (dataDiario !== filtroData) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   // === FUNÇÕES DE VISUALIZAÇÃO ===
   const abrirDialogVisualizacao = async (diario: any) => {
@@ -238,16 +286,14 @@ const DiarioObras: React.FC = () => {
       setDiarioSelecionado(diarioCompleto);
       setDadosEdicao({
         obra_id: diarioCompleto.obra_id,
-        data: formatarData(diarioCompleto.data), // ✅ Formatado para YYYY-MM-DD
+        data: formatarData(diarioCompleto.data), // Formatado para YYYY-MM-DD
         periodo: diarioCompleto.periodo,
         atividades_realizadas: diarioCompleto.atividades_realizadas,
         ocorrencias: diarioCompleto.ocorrencias || "",
         observacoes: diarioCompleto.observacoes || "",
         responsavel_id: diarioCompleto.responsavel_id,
         status_aprovacao: diarioCompleto.status_aprovacao,
-        clima: diarioCompleto.clima || "SOL", // ✅ Clima
-        progresso_percentual: diarioCompleto.progresso_percentual || 0, // ✅ Progresso
-        aprovado_por_id: diarioCompleto.aprovado_por_id || 0, // ✅ Aprovado por
+        aprovado_por_id: diarioCompleto.aprovado_por_id || 0,
       });
       setDialogEdicao(true);
     } catch (error) {
@@ -280,19 +326,28 @@ const DiarioObras: React.FC = () => {
         return `${data}T00:00:00Z`;
       };
 
-      // 1. Atualizar dados do diário
+      // ✅ Preparar dados para atualização - 13 campos do modelo Go DiarioObra
       const dadosParaAtualizar: any = {
         obra_id: Number(dadosEdicao.obra_id),
-        data: adicionarTimestamp(dadosEdicao.data), // ✅ Convertido para timestamp
+        data: adicionarTimestamp(dadosEdicao.data), // ISO 8601 format
         periodo: dadosEdicao.periodo,
         atividades_realizadas: dadosEdicao.atividades_realizadas,
-        ocorrencias: dadosEdicao.ocorrencias || "",
-        observacoes: dadosEdicao.observacoes || "",
         responsavel_id: Number(dadosEdicao.responsavel_id),
         status_aprovacao: dadosEdicao.status_aprovacao,
-        clima: dadosEdicao.clima || "SOL", // ✅ Clima
-        progresso_percentual: Number(dadosEdicao.progresso_percentual) || 0, // ✅ Progresso
       };
+
+      // ✅ Adicionar campos OPCIONAIS somente se tiverem valor (não enviar strings vazias)
+      if (dadosEdicao.ocorrencias && dadosEdicao.ocorrencias.trim() !== "") {
+        dadosParaAtualizar.ocorrencias = dadosEdicao.ocorrencias;
+      }
+
+      if (dadosEdicao.observacoes && dadosEdicao.observacoes.trim() !== "") {
+        dadosParaAtualizar.observacoes = dadosEdicao.observacoes;
+      }
+
+      if (dadosEdicao.foto) {
+        dadosParaAtualizar.foto = dadosEdicao.foto;
+      }
 
       // ✅ Lógica para aprovado_por_id:
       // - PENDENTE: NÃO enviar o campo (será omitido)
@@ -413,17 +468,23 @@ const DiarioObras: React.FC = () => {
                   atividades_realizadas: e.target.value,
                 })
               }
+              inputProps={{ maxLength: 1000 }}
+              helperText={`${novoDiario.atividades_realizadas.length}/1000 caracteres (mínimo 10)`}
             />
 
             <TextField
               fullWidth
               multiline
               rows={2}
-              label="Ocorr�ncias (opcional)"
+              label="Ocorrências (opcional)"
               value={novoDiario.ocorrencias || ""}
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, ocorrencias: e.target.value })
               }
+              inputProps={{ maxLength: 500 }}
+              helperText={`${
+                (novoDiario.ocorrencias || "").length
+              }/500 caracteres`}
             />
 
             <TextField
@@ -435,6 +496,10 @@ const DiarioObras: React.FC = () => {
               onChange={(e) =>
                 setNovoDiario({ ...novoDiario, observacoes: e.target.value })
               }
+              inputProps={{ maxLength: 500 }}
+              helperText={`${
+                (novoDiario.observacoes || "").length
+              }/500 caracteres`}
             />
 
             {/* Upload de Foto */}
@@ -494,8 +559,49 @@ const DiarioObras: React.FC = () => {
       <TabPanel value={tabValue} index={1}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Di�rios Cadastrados ({diarios.length})
+            Diários Cadastrados ({diariosFiltrados.length})
           </Typography>
+
+          {/* Filtros */}
+          <Stack direction="row" spacing={2} sx={{ mb: 3, mt: 2 }}>
+            <FormControl sx={{ minWidth: 250 }}>
+              <InputLabel>Filtrar por Obra</InputLabel>
+              <Select
+                value={filtroObra}
+                onChange={(e) => setFiltroObra(Number(e.target.value))}
+                label="Filtrar por Obra"
+              >
+                <MenuItem value={0}>Todas as obras</MenuItem>
+                {obras.map((o) => (
+                  <MenuItem key={o.id} value={o.id}>
+                    {o.nome}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              type="date"
+              label="Filtrar por Data"
+              value={filtroData}
+              onChange={(e) => setFiltroData(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 200 }}
+            />
+
+            {(filtroObra !== 0 || filtroData !== "") && (
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setFiltroObra(0);
+                  setFiltroData("");
+                }}
+              >
+                Limpar Filtros
+              </Button>
+            )}
+          </Stack>
+
           <Box sx={{ overflowX: "auto", mt: 2 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -509,7 +615,7 @@ const DiarioObras: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {diarios.map((d) => (
+                {diariosFiltrados.map((d) => (
                   <tr key={d.id} style={{ borderBottom: "1px solid #e0e0e0" }}>
                     <td style={{ padding: "12px" }}>
                       <Stack direction="row" spacing={0.5}>

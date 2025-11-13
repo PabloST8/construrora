@@ -13,7 +13,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./components/Login";
-import Cadastro from "./pages/Cadastro";
 import Dashboard from "./pages/Dashboard";
 import Pessoas from "./pages/Pessoas";
 import Obras from "./pages/Obras";
@@ -22,6 +21,7 @@ import Receitas from "./pages/Receitas";
 import Fornecedores from "./pages/Fornecedores";
 import RelatoriosApiGo from "./pages/RelatoriosApiGo";
 import DiarioObras from "./pages/DiarioObras";
+import RelatoriosDiarioObra from "./pages/RelatoriosDiarioObra";
 
 const theme = createTheme({
   palette: {
@@ -73,15 +73,6 @@ function App() {
             />
 
             <Route
-              path="/cadastro"
-              element={
-                <PublicRoute>
-                  <Cadastro />
-                </PublicRoute>
-              }
-            />
-
-            <Route
               path="/"
               element={
                 <ProtectedRoute>
@@ -102,6 +93,7 @@ function App() {
                 element={<div>Empresas - Em desenvolvimento</div>}
               />
               <Route path="relatorios" element={<RelatoriosApiGo />} />
+              <Route path="relatorios-diario" element={<RelatoriosDiarioObra />} />
               <Route
                 path="notificacoes"
                 element={<div>Notificações - Em desenvolvimento</div>}

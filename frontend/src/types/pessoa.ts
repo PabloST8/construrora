@@ -2,7 +2,7 @@
 export interface Pessoa {
   id?: number;
   nome: string;
-  tipo: "CPF" | "CNPJ"; // ✅ Match EXATO com Model Go (json:"tipo")
+  tipo: "PF" | "PJ"; // ✅ Match EXATO com banco PostgreSQL (varchar(2))
   documento: string;
   email?: string;
   telefone?: string;

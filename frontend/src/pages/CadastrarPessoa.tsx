@@ -21,6 +21,16 @@ import SaveIcon from "@mui/icons-material/Save";
 import { toast } from "react-toastify";
 import { Pessoa } from "../types/pessoa";
 import { pessoaService } from "../services/pessoaService";
+import MaskedTextField from "../components/MaskedTextField";
+import {
+  validarCPF,
+  validarCNPJ,
+  validarEmail,
+  validarTelefone,
+  validarCEP,
+  validarStringNaoVazia,
+} from "../utils/validators";
+import { removerMascara } from "../utils/masks";
 
 const estadosBrasil = [
   "AC",
@@ -55,9 +65,9 @@ const estadosBrasil = [
 const CadastrarPessoa: React.FC = () => {
   const [tipoPessoa, setTipoPessoa] = useState<"FISICA" | "JURIDICA">("FISICA");
   const [salvando, setSalvando] = useState(false);
-  const [formData, setFormData] = useState<Pessoa>({
+  const [formData, setFormData] = useState<Partial<Pessoa>>({
     nome: "",
-    tipo: "CPF", // ✅ API Go usa "CPF" ou "CNPJ", não "PF"/"PJ"
+    tipo: "PF", // ✅ API Go usa "PF" (2 chars) ou "PJ" (2 chars)
     documento: "",
     email: "",
     telefone: "",
@@ -68,6 +78,10 @@ const CadastrarPessoa: React.FC = () => {
   const [endereco, setEndereco] = useState({
     cep: "",
     logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
     estado: "",
   });
 
@@ -84,7 +98,7 @@ const CadastrarPessoa: React.FC = () => {
     setTipoPessoa(tipo);
     setFormData({
       ...formData,
-      tipo: tipo === "FISICA" ? "CPF" : "CNPJ", // ✅ API Go usa "CPF"/"CNPJ"
+      tipo: tipo === "FISICA" ? "PF" : "PJ", // ✅ Banco usa "PF" ou "PJ" (varchar 2 chars)
       documento: "",
     });
   };
@@ -111,8 +125,13 @@ const CadastrarPessoa: React.FC = () => {
     e.preventDefault();
 
     // Validações básicas
-    if (!formData.nome) {
+    if (!formData.nome || !validarStringNaoVazia(formData.nome)) {
       toast.error("⚠️ Nome é obrigatório");
+      return;
+    }
+
+    if (formData.nome.length < 3) {
+      toast.error("⚠️ Nome deve ter no mínimo 3 caracteres");
       return;
     }
 
@@ -121,6 +140,46 @@ const CadastrarPessoa: React.FC = () => {
         `⚠️ ${tipoPessoa === "FISICA" ? "CPF" : "CNPJ"} é obrigatório`
       );
       return;
+    }
+
+    // Validar formato do documento
+    const documentoLimpo = removerMascara(formData.documento);
+    if (tipoPessoa === "FISICA") {
+      if (!validarCPF(documentoLimpo)) {
+        toast.error("⚠️ CPF inválido. Verifique os números digitados.");
+        return;
+      }
+    } else {
+      if (!validarCNPJ(documentoLimpo)) {
+        toast.error("⚠️ CNPJ inválido. Verifique os números digitados.");
+        return;
+      }
+    }
+
+    // Validar email se preenchido
+    if (formData.email && !validarEmail(formData.email)) {
+      toast.error("⚠️ Email inválido. Use o formato: exemplo@dominio.com");
+      return;
+    }
+
+    // Validar telefone se preenchido
+    if (formData.telefone) {
+      const telefoneLimpo = removerMascara(formData.telefone);
+      if (!validarTelefone(telefoneLimpo)) {
+        toast.error(
+          "⚠️ Telefone inválido. Use (00) 00000-0000 ou (00) 0000-0000"
+        );
+        return;
+      }
+    }
+
+    // Validar CEP se preenchido
+    if (endereco.cep) {
+      const cepLimpo = removerMascara(endereco.cep);
+      if (!validarCEP(cepLimpo)) {
+        toast.error("⚠️ CEP inválido. Use o formato: 00000-000");
+        return;
+      }
     }
 
     // Validar ao menos uma função selecionada para Pessoa Física
@@ -133,16 +192,20 @@ const CadastrarPessoa: React.FC = () => {
     try {
       setSalvando(true);
 
-      // Preparar dados para API
+      // Preparar dados para API (removendo máscaras)
       const dadosPessoa: Pessoa = {
-        nome: formData.nome,
-        tipo: formData.tipo, // Usar o tipo já convertido
-        documento: formData.documento,
+        nome: formData.nome || "",
+        tipo: formData.tipo || "PF", // Usar o tipo já convertido
+        documento: removerMascara(formData.documento || ""),
         email: formData.email || "",
-        telefone: formData.telefone || "",
+        telefone: removerMascara(formData.telefone || ""),
         cargo: funcoesAtivas.map(([key]) => key).join(", "),
-        endereco_cep: endereco.cep || "",
+        endereco_cep: removerMascara(endereco.cep || ""),
         endereco_rua: endereco.logradouro || "",
+        endereco_numero: endereco.numero || "",
+        endereco_complemento: endereco.complemento || "",
+        endereco_bairro: endereco.bairro || "",
+        endereco_cidade: endereco.cidade || "",
         endereco_estado: endereco.estado || "",
         ativo: true,
       };
@@ -163,14 +226,22 @@ const CadastrarPessoa: React.FC = () => {
       // Limpar formulário após sucesso
       setFormData({
         nome: "",
-        tipo: "CPF", // ✅ API Go usa "CPF" ou "CNPJ"
+        tipo: "PF", // ✅ API Go usa "PF" (2 chars)
         documento: "",
         email: "",
         telefone: "",
         cargo: "",
         ativo: true,
       });
-      setEndereco({ cep: "", logradouro: "", estado: "" });
+      setEndereco({
+        cep: "",
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+      });
       setFuncoes({
         administradorObras: false,
         engenheiro: false,
@@ -315,15 +386,20 @@ const CadastrarPessoa: React.FC = () => {
                 name="nome"
                 value={formData.nome}
                 onChange={handleInputChange}
+                inputProps={{ maxLength: 200 }}
+                helperText={`${(formData.nome || "").length}/200 caracteres`}
               />
 
-              <TextField
+              <MaskedTextField
                 sx={{ flex: "1 1 300px" }}
                 required
+                maskType={tipoPessoa === "FISICA" ? "cpf" : "cnpj"}
                 label={tipoPessoa === "FISICA" ? "CPF" : "CNPJ"}
-                name="documento"
-                value={formData.documento}
-                onChange={handleInputChange}
+                value={formData.documento || ""}
+                onChange={(value) =>
+                  setFormData({ ...formData, documento: value })
+                }
+                validateOnBlur={true}
                 placeholder={
                   tipoPessoa === "FISICA"
                     ? "000.000.000-00"
@@ -408,12 +484,15 @@ const CadastrarPessoa: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            <TextField
+            <MaskedTextField
               sx={{ flex: "1 1 300px" }}
+              maskType="telefone"
               label="Telefone"
-              name="telefone"
-              value={formData.telefone}
-              onChange={handleInputChange}
+              value={formData.telefone || ""}
+              onChange={(value) =>
+                setFormData({ ...formData, telefone: value })
+              }
+              validateOnBlur={true}
               placeholder="(00) 00000-0000"
             />
 
@@ -425,6 +504,13 @@ const CadastrarPessoa: React.FC = () => {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="exemplo@email.com"
+              error={formData.email ? !validarEmail(formData.email) : false}
+              helperText={
+                formData.email && !validarEmail(formData.email)
+                  ? "Email inválido. Use o formato: exemplo@dominio.com"
+                  : ""
+              }
+              inputProps={{ maxLength: 100 }}
             />
           </Box>
 
@@ -434,12 +520,13 @@ const CadastrarPessoa: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            <TextField
+            <MaskedTextField
               sx={{ flex: "1 1 200px" }}
+              maskType="cep"
               label="CEP"
-              name="cep"
-              value={endereco.cep}
-              onChange={handleEnderecoChange}
+              value={endereco.cep || ""}
+              onChange={(value) => setEndereco({ ...endereco, cep: value })}
+              validateOnBlur={true}
               placeholder="00000-000"
             />
 
@@ -448,6 +535,41 @@ const CadastrarPessoa: React.FC = () => {
               label="Logradouro / Rua"
               name="logradouro"
               value={endereco.logradouro}
+              onChange={handleEnderecoChange}
+            />
+
+            <TextField
+              sx={{ flex: "1 1 150px" }}
+              label="Número"
+              name="numero"
+              value={endereco.numero}
+              onChange={handleEnderecoChange}
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <TextField
+              sx={{ flex: "1 1 200px" }}
+              label="Complemento"
+              name="complemento"
+              value={endereco.complemento}
+              onChange={handleEnderecoChange}
+              placeholder="Apto, Bloco, etc."
+            />
+
+            <TextField
+              sx={{ flex: "1 1 200px" }}
+              label="Bairro"
+              name="bairro"
+              value={endereco.bairro}
+              onChange={handleEnderecoChange}
+            />
+
+            <TextField
+              sx={{ flex: "1 1 200px" }}
+              label="Cidade"
+              name="cidade"
+              value={endereco.cidade}
               onChange={handleEnderecoChange}
             />
 

@@ -41,6 +41,12 @@ import type { Receita } from "../types/receita";
 import type { Obra } from "../types/obra";
 import type { Pessoa } from "../types/pessoa";
 import { formatCurrency, formatDate } from "../utils/formatters";
+import {
+  validarValorMonetario,
+  validarData,
+  validarStringNaoVazia,
+  validarTamanhoMinimo,
+} from "../utils/validators";
 
 const Receitas: React.FC = () => {
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -64,6 +70,7 @@ const Receitas: React.FC = () => {
   });
 
   // Formulário
+  // ✅ FormData 100% compatível com Model Go
   const [formData, setFormData] = useState<Partial<Receita>>({
     obra_id: 0,
     descricao: "",
@@ -120,8 +127,6 @@ const Receitas: React.FC = () => {
 
   const carregarReceitas = async () => {
     try {
-      console.log("🔍 Filtros selecionados:", filtros);
-
       // ✅ Se filtrar apenas por obra, usar endpoint específico
       if (
         filtros.obra_id &&
@@ -130,15 +135,10 @@ const Receitas: React.FC = () => {
         !filtros.data_fim &&
         !filtros.responsavel_id
       ) {
-        console.log(
-          "📍 Usando endpoint /receitas/obra/:id para obra_id:",
-          filtros.obra_id
-        );
         const data: any = await receitaService.buscarPorObra(
           parseInt(filtros.obra_id)
         );
         const receitasArray = Array.isArray(data) ? data : data?.data || [];
-        console.log("📊 Receitas retornadas:", receitasArray.length);
         setReceitas(receitasArray);
         return;
       }
@@ -152,12 +152,9 @@ const Receitas: React.FC = () => {
       if (filtros.responsavel_id)
         params.responsavel_id = parseInt(filtros.responsavel_id);
 
-      console.log("🔍 Filtros aplicados (query params):", params);
-
       const data: any = await receitaService.listar(params);
       // ✅ Garantir que sempre seja um array
       const receitasArray = Array.isArray(data) ? data : data?.data || [];
-      console.log("📊 Receitas retornadas:", receitasArray.length);
       setReceitas(receitasArray);
     } catch (error) {
       console.error("Erro ao carregar receitas:", error);
@@ -192,6 +189,7 @@ const Receitas: React.FC = () => {
       descricao: "",
       valor: 0,
       data: new Date().toISOString().split("T")[0],
+      status: "RECEBIDO",
       fonte_receita: "CONTRATO",
       numero_documento: "",
       responsavel_id: 0,
@@ -207,13 +205,30 @@ const Receitas: React.FC = () => {
 
       setModoEdicao(true);
       setReceitaSelecionada(receitaCompleta);
+
+      // ✅ Garantir conversão correta da data
+      let dataFormatada = new Date().toISOString().split("T")[0];
+
+      if (receitaCompleta.data) {
+        try {
+          if (typeof receitaCompleta.data === "string") {
+            dataFormatada = receitaCompleta.data.split("T")[0];
+          } else {
+            // Se for Date ou outro tipo, converte para string primeiro
+            const dataStr = String(receitaCompleta.data);
+            dataFormatada = new Date(dataStr).toISOString().split("T")[0];
+          }
+        } catch (e) {
+          console.warn("Erro ao formatar data, usando data atual:", e);
+        }
+      }
+
       setFormData({
         obra_id: receitaCompleta.obra_id,
         descricao: receitaCompleta.descricao,
         valor: receitaCompleta.valor,
-        data:
-          receitaCompleta.data?.split("T")[0] ||
-          new Date().toISOString().split("T")[0],
+        data: dataFormatada,
+        status: receitaCompleta.status || "RECEBIDO",
         fonte_receita: receitaCompleta.fonte_receita || "CONTRATO",
         numero_documento: receitaCompleta.numero_documento || "",
         responsavel_id: receitaCompleta.responsavel_id || 0,
@@ -252,31 +267,43 @@ const Receitas: React.FC = () => {
 
   const handleSalvar = async () => {
     try {
-      // Validações
+      // ✅ VALIDAÇÕES COMPLETAS ANTES DE SALVAR
+      // 1. Validar obra selecionada
       if (!formData.obra_id || formData.obra_id === 0) {
-        toast.error("Selecione a obra");
+        toast.error("❌ Selecione a obra");
         return;
       }
-      if (!formData.descricao || formData.descricao.trim() === "") {
-        toast.error("Informe a descrição da receita");
+
+      // 2. Validar descrição (mínimo 3 caracteres, não vazia)
+      if (!validarStringNaoVazia(formData.descricao || "")) {
+        toast.error("❌ Informe a descrição da receita");
         return;
       }
-      if (!formData.valor || formData.valor <= 0) {
-        toast.error("Informe um valor válido");
+      if (!validarTamanhoMinimo(formData.descricao || "", 3)) {
+        toast.error("❌ Descrição deve ter pelo menos 3 caracteres");
         return;
       }
-      if (!formData.data) {
-        toast.error("Informe a data de recebimento");
+
+      // 3. Validar valor monetário (maior que 0)
+      if (!validarValorMonetario(formData.valor || 0)) {
+        toast.error("❌ Informe um valor maior que zero");
+        return;
+      }
+
+      // 4. Validar data
+      if (!formData.data || !validarData(formData.data)) {
+        toast.error("❌ Informe uma data válida");
         return;
       }
 
       setLoading(true);
 
+      // ✅ Payload 100% compatível com Model Go (9 campos)
       const receitaParaSalvar: Receita = {
         obra_id: formData.obra_id,
-        descricao: formData.descricao,
-        valor: formData.valor,
-        data: formData.data,
+        descricao: formData.descricao!,
+        valor: formData.valor!,
+        data: formData.data!,
         fonte_receita: formData.fonte_receita || "CONTRATO",
         numero_documento: formData.numero_documento || "",
         responsavel_id: formData.responsavel_id || undefined,
@@ -358,6 +385,28 @@ const Receitas: React.FC = () => {
       OUTROS: "Outros",
     };
     return labels[fonte || ""] || fonte || "Não informado";
+  };
+
+  const getStatusLabel = (status?: string) => {
+    switch (status) {
+      case "RECEBIDO":
+        return "✅ Recebido";
+      case "A_RECEBER":
+        return "⏳ A Receber";
+      default:
+        return "Não informado";
+    }
+  };
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case "RECEBIDO":
+        return "success";
+      case "A_RECEBER":
+        return "warning";
+      default:
+        return "default";
+    }
   };
 
   return (
@@ -521,6 +570,7 @@ const Receitas: React.FC = () => {
                 <TableCell>Obra</TableCell>
                 <TableCell>Descrição</TableCell>
                 <TableCell>Fonte</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell align="right">Valor</TableCell>
                 <TableCell>Data</TableCell>
                 <TableCell>Responsável</TableCell>
@@ -531,7 +581,9 @@ const Receitas: React.FC = () => {
               {receitas.map((receita) => (
                 <TableRow key={receita.id}>
                   <TableCell>{receita.id}</TableCell>
-                  <TableCell>{receita.obraNome || "-"}</TableCell>
+                  <TableCell>
+                    {receita.obra_nome || receita.obraNome || "-"}
+                  </TableCell>
                   <TableCell>{receita.descricao}</TableCell>
                   <TableCell>
                     <Chip
@@ -544,13 +596,22 @@ const Receitas: React.FC = () => {
                       size="small"
                     />
                   </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={getStatusLabel(receita.status)}
+                      color={getStatusColor(receita.status)}
+                      size="small"
+                    />
+                  </TableCell>
                   <TableCell align="right">
                     <Typography color="success.main" fontWeight="bold">
                       {formatCurrency(receita.valor)}
                     </Typography>
                   </TableCell>
                   <TableCell>{formatDate(receita.data)}</TableCell>
-                  <TableCell>{receita.responsavelNome || "-"}</TableCell>
+                  <TableCell>
+                    {receita.responsavel_nome || receita.responsavelNome || "-"}
+                  </TableCell>
                   <TableCell align="center">
                     <IconButton
                       color="primary"
@@ -621,6 +682,10 @@ const Receitas: React.FC = () => {
               fullWidth
               multiline
               rows={2}
+              inputProps={{ maxLength: 500 }}
+              helperText={`${
+                (formData.descricao || "").length
+              }/500 caracteres (mínimo 3)`}
             />
 
             <TextField
@@ -676,6 +741,7 @@ const Receitas: React.FC = () => {
               }
               fullWidth
               placeholder="Nº do contrato, nota fiscal, etc."
+              inputProps={{ maxLength: 100 }}
             />
 
             <FormControl fullWidth>
@@ -699,15 +765,21 @@ const Receitas: React.FC = () => {
               </Select>
             </FormControl>
 
+            {/* ✅ Observações */}
             <TextField
               label="Observações"
-              value={formData.observacao}
+              value={formData.observacao || ""}
               onChange={(e) =>
                 setFormData({ ...formData, observacao: e.target.value })
               }
               fullWidth
               multiline
               rows={3}
+              placeholder="Observações adicionais sobre a receita..."
+              inputProps={{ maxLength: 500 }}
+              helperText={`${
+                (formData.observacao || "").length
+              }/500 caracteres`}
             />
           </Stack>
         </DialogContent>
@@ -749,7 +821,9 @@ const Receitas: React.FC = () => {
                   Obra
                 </Typography>
                 <Typography variant="body1">
-                  {receitaSelecionada.obraNome || "-"}
+                  {receitaSelecionada.obra_nome ||
+                    receitaSelecionada.obraNome ||
+                    "-"}
                 </Typography>
               </Box>
 
@@ -784,7 +858,7 @@ const Receitas: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">
                   Fonte de Receita
                 </Typography>
-                <Typography variant="body1">
+                <Box sx={{ mt: 0.5 }}>
                   <Chip
                     label={getFonteReceitaLabel(
                       receitaSelecionada.fonte_receita ||
@@ -795,7 +869,7 @@ const Receitas: React.FC = () => {
                         receitaSelecionada.fonteReceita
                     )}
                   />
-                </Typography>
+                </Box>
               </Box>
 
               {receitaSelecionada.numero_documento && (
@@ -810,13 +884,15 @@ const Receitas: React.FC = () => {
                 </Box>
               )}
 
-              {receitaSelecionada.responsavelNome && (
+              {(receitaSelecionada.responsavel_nome ||
+                receitaSelecionada.responsavelNome) && (
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     Responsável
                   </Typography>
                   <Typography variant="body1">
-                    {receitaSelecionada.responsavelNome}
+                    {receitaSelecionada.responsavel_nome ||
+                      receitaSelecionada.responsavelNome}
                   </Typography>
                 </Box>
               )}
@@ -839,11 +915,12 @@ const Receitas: React.FC = () => {
                   Data de Cadastro
                 </Typography>
                 <Typography variant="body1">
-                  {formatDate(
-                    receitaSelecionada.created_at ||
-                      receitaSelecionada.createdAt ||
-                      ""
-                  )}
+                  {receitaSelecionada.created_at || receitaSelecionada.createdAt
+                    ? formatDate(
+                        receitaSelecionada.created_at ||
+                          receitaSelecionada.createdAt
+                      )
+                    : "-"}
                 </Typography>
               </Box>
 
@@ -856,8 +933,7 @@ const Receitas: React.FC = () => {
                   <Typography variant="body1">
                     {formatDate(
                       receitaSelecionada.updated_at ||
-                        receitaSelecionada.updatedAt ||
-                        ""
+                        receitaSelecionada.updatedAt
                     )}
                   </Typography>
                 </Box>

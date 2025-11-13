@@ -28,6 +28,7 @@ import { Obra } from "../types/obra";
 import { obraService } from "../services/obraService";
 import { pessoaService } from "../services/pessoaService";
 import { Pessoa } from "../types/pessoa";
+import FotoUpload from "../components/FotoUpload";
 
 const BuscarObra: React.FC = () => {
   const [obras, setObras] = useState<Obra[]>([]);
@@ -64,8 +65,6 @@ const BuscarObra: React.FC = () => {
     setLoading(true);
     try {
       const data = await obraService.listar();
-      console.log("📊 Obras carregadas:", data);
-      console.log("📊 Tipo de data:", typeof data, Array.isArray(data));
 
       // Garantir que data seja sempre um array
       const obrasArray = Array.isArray(data) ? data : [];
@@ -139,6 +138,17 @@ const BuscarObra: React.FC = () => {
     try {
       setLoading(true);
       const obra = await obraService.buscarPorId(id.toString());
+
+      // 🔍 DEBUG: Verificar se a foto está vindo da API
+      console.log(
+        "📸 [VISUALIZAR] Foto recebida da API:",
+        obra.foto ? "SIM (tem foto)" : "NÃO (null/undefined)"
+      );
+      console.log(
+        "📋 [VISUALIZAR] Tamanho da foto:",
+        obra.foto ? `${obra.foto.length} caracteres` : "N/A"
+      );
+
       setObraVisualizando(obra);
       setViewModalOpen(true);
     } catch (error: any) {
@@ -158,7 +168,37 @@ const BuscarObra: React.FC = () => {
     try {
       setLoading(true);
       const obra = await obraService.buscarPorId(id.toString());
-      setObraEditando(obra);
+
+      // 🔍 DEBUG: Verificar se a foto está vindo da API
+      console.log(
+        "📸 Foto recebida da API:",
+        obra.foto ? "SIM (tem foto)" : "NÃO (null/undefined)"
+      );
+      console.log(
+        "📋 Tamanho da foto:",
+        obra.foto ? `${obra.foto.length} caracteres` : "N/A"
+      );
+
+      // ✅ Normalizar status (API retorna maiúsculo, frontend usa minúsculo)
+      const statusNormalizado = (obra.status?.toLowerCase() ||
+        "planejamento") as Obra["status"];
+
+      // ✅ Converter datas ISO para formato yyyy-MM-dd
+      const obraFormatada: Obra = {
+        ...obra,
+        status: statusNormalizado,
+        data_inicio: obra.data_inicio ? obra.data_inicio.split("T")[0] : "",
+        data_fim_prevista: obra.data_fim_prevista
+          ? obra.data_fim_prevista.split("T")[0]
+          : "",
+      };
+
+      console.log(
+        "📸 Foto na obra formatada:",
+        obraFormatada.foto ? "SIM" : "NÃO"
+      );
+
+      setObraEditando(obraFormatada);
       setEditModalOpen(true);
     } catch (error: any) {
       console.error("❌ Erro ao carregar obra:", error);
@@ -212,7 +252,6 @@ const BuscarObra: React.FC = () => {
         status: obraEditando.status,
         orcamento: obraEditando.orcamento,
         contrato_numero: obraEditando.contrato_numero || "",
-        responsavel_id: obraEditando.responsavel_id,
         contratante_id: obraEditando.contratante_id,
         art: obraEditando.art || "",
         endereco_rua: obraEditando.endereco_rua || "",
@@ -221,7 +260,15 @@ const BuscarObra: React.FC = () => {
         endereco_cidade: obraEditando.endereco_cidade || "",
         endereco_estado: obraEditando.endereco_estado || "",
         endereco_cep: obraEditando.endereco_cep || "",
+        observacoes: obraEditando.observacoes || "",
+        ativo: obraEditando.ativo ?? true,
+        foto: obraEditando.foto || "",
       };
+
+      // ✅ Adicionar responsavel_id apenas se houver valor
+      if (obraEditando.responsavel_id) {
+        dadosAtualizados.responsavel_id = obraEditando.responsavel_id;
+      }
 
       await obraService.atualizar(
         obraEditando.id!.toString(),
@@ -783,6 +830,40 @@ const BuscarObra: React.FC = () => {
                   handleCampoChange("endereco_cep", e.target.value)
                 }
               />
+
+              {/* Observações */}
+              <TextField
+                label="Observações"
+                fullWidth
+                multiline
+                rows={4}
+                value={obraEditando.observacoes || ""}
+                onChange={(e) =>
+                  handleCampoChange("observacoes", e.target.value)
+                }
+                placeholder="Observações adicionais sobre a obra..."
+              />
+
+              {/* Ativo */}
+              <FormControl fullWidth>
+                <InputLabel>Status de Ativação</InputLabel>
+                <Select
+                  value={obraEditando.ativo ?? true}
+                  onChange={(e) =>
+                    handleCampoChange("ativo", e.target.value === "true")
+                  }
+                  label="Status de Ativação"
+                >
+                  <MenuItem value="true">✅ Ativa</MenuItem>
+                  <MenuItem value="false">❌ Inativa</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Foto Upload */}
+              <FotoUpload
+                foto={obraEditando.foto || ""}
+                onFotoChange={(foto) => handleCampoChange("foto", foto || "")}
+              />
             </Box>
           )}
         </DialogContent>
@@ -1034,6 +1115,45 @@ const BuscarObra: React.FC = () => {
                     />
                   )}
                 </>
+              )}
+
+              {/* Observações */}
+              {obraVisualizando.observacoes && (
+                <TextField
+                  label="Observações"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={obraVisualizando.observacoes}
+                  InputProps={{ readOnly: true }}
+                />
+              )}
+
+              {/* Ativo */}
+              <TextField
+                label="Status de Ativação"
+                fullWidth
+                value={obraVisualizando.ativo ? "✅ Ativa" : "❌ Inativa"}
+                InputProps={{ readOnly: true }}
+              />
+
+              {/* Foto */}
+              {obraVisualizando.foto && (
+                <Box sx={{ textAlign: "center", mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    📷 Foto da Obra
+                  </Typography>
+                  <img
+                    src={obraVisualizando.foto}
+                    alt="Foto da Obra"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "400px",
+                      borderRadius: "8px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </Box>
               )}
 
               {/* Datas de criação/atualização */}
