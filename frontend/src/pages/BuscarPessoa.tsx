@@ -42,7 +42,6 @@ import {
   validarEmail,
   validarTelefone,
   validarCEP,
-  obterMensagemErro,
 } from "../utils/validators";
 import { removerMascara } from "../utils/masks";
 

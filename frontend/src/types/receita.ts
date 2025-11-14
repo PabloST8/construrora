@@ -9,6 +9,7 @@ export interface Receita {
   descricao: string;
   valor: number;
   data: string; // Data de recebimento (OBRIGATÓRIO no Model Go)
+  status?: string; // Status da receita (RECEBIDO, PENDENTE, etc)
   fonte_receita?:
     | "CONTRATO"
     | "PAGAMENTO_CLIENTE"

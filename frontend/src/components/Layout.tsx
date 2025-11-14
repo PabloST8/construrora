@@ -67,7 +67,6 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/receitas") return "Gestão de Receitas";
     if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
     if (location.pathname === "/relatorios") return "📊 Relatórios";
-    if (location.pathname === "/relatorios-diario") return "📄 Relatório Diário de Obra";
     if (location.pathname === "/diario") return "Diário de Obra";
     return "Sistema de Gestão de Obras";
   };
@@ -215,23 +214,6 @@ const Layout: React.FC<LayoutProps> = (props) => {
             }}
           >
             <ListItemText primary="📊 Relatórios" />
-          </ListItemButton>
-        </ListItem>
-
-        {/* Relatório Diário de Obra */}
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => navigate("/relatorios-diario")}
-            sx={{
-              color: "white",
-              backgroundColor:
-                location.pathname === "/relatorios-diario"
-                  ? "rgba(255,255,255,0.1)"
-                  : "transparent",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-            }}
-          >
-            <ListItemText primary="📄 Relatório Diário" />
           </ListItemButton>
         </ListItem>
 
