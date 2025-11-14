@@ -22,6 +22,8 @@ import {
   Select,
   MenuItem,
   LinearProgress,
+  Card,
+  CardMedia,
   Stack,
 } from "@mui/material";
 import {
@@ -33,6 +35,8 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
   CheckCircle as CheckCircleIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { ocorrenciaService } from "../services/ocorrenciaService";
@@ -42,7 +46,7 @@ import { Ocorrencia, OcorrenciaFormData } from "../types/ocorrencia";
 import { Pessoa } from "../types/pessoa";
 import { formatDate } from "../utils/formatters";
 
-const Ocorrencias: React.FC = () => {
+const OcorrenciasNovo: React.FC = () => {
   const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
   const [obras, setObras] = useState<any[]>([]);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
@@ -52,6 +56,7 @@ const Ocorrencias: React.FC = () => {
   const [ocorrenciaSelecionada, setOcorrenciaSelecionada] =
     useState<Ocorrencia | null>(null);
   const [modoEdicao, setModoEdicao] = useState(false);
+  const [fotosBase64, setFotosBase64] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<OcorrenciaFormData>({
     obra_id: 0,
@@ -130,6 +135,7 @@ const Ocorrencias: React.FC = () => {
       status_resolucao: "pendente",
       acao_tomada: "",
     });
+    setFotosBase64([]);
     setModoEdicao(false);
     setModalAberto(true);
   };
@@ -146,6 +152,12 @@ const Ocorrencias: React.FC = () => {
       status_resolucao: ocorrencia.status_resolucao,
       acao_tomada: ocorrencia.acao_tomada || "",
     });
+    // Carregar fotos existentes
+    const fotosExistentes =
+      ocorrencia.fotos && ocorrencia.fotos.length > 0
+        ? ocorrencia.fotos.map((f) => f.foto)
+        : [];
+    setFotosBase64(fotosExistentes);
     setOcorrenciaSelecionada(ocorrencia);
     setModoEdicao(true);
     setModalAberto(true);
@@ -168,11 +180,26 @@ const Ocorrencias: React.FC = () => {
         ...formData,
       };
 
+      // Sempre enviar o campo fotos
+      dadosParaEnviar.fotos = fotosBase64.map((foto, index) => ({
+        id: modoEdicao ? -1 : 0,
+        entidade_tipo: "ocorrencia",
+        entidade_id: ocorrenciaSelecionada?.id || 0,
+        foto: foto,
+        descricao: `Foto da ocorrência ${index + 1}`,
+        ordem: index,
+        categoria: "OCORRENCIA",
+      }));
+
       if (modoEdicao && ocorrenciaSelecionada) {
-        await ocorrenciaService.atualizar(
-          ocorrenciaSelecionada.id,
-          dadosParaEnviar
+        // Deletar e recriar para substituir fotos
+        console.log(
+          "🔄 Deletando ocorrência antiga para recriar com fotos atualizadas..."
         );
+        await ocorrenciaService.deletar(ocorrenciaSelecionada.id);
+
+        console.log("➕ Recriando ocorrência com fotos corretas...");
+        await ocorrenciaService.criar(dadosParaEnviar);
         toast.success("Ocorrência atualizada com sucesso!");
       } else {
         await ocorrenciaService.criar(dadosParaEnviar);
@@ -301,7 +328,7 @@ const Ocorrencias: React.FC = () => {
           <Typography variant="h5">⚠️ Ocorrências</Typography>
           <Button
             variant="contained"
-            color="error"
+            color="primary"
             startIcon={<AddIcon />}
             onClick={abrirModalCriacao}
           >
@@ -386,9 +413,7 @@ const Ocorrencias: React.FC = () => {
                     <TableCell>{getTipoLabel(ocorrencia.tipo)}</TableCell>
                     <TableCell align="center">
                       <Chip
-                        icon={
-                          getGravidadeIcon(ocorrencia.gravidade) || undefined
-                        }
+                        icon={getGravidadeIcon(ocorrencia.gravidade)}
                         label={ocorrencia.gravidade.toUpperCase()}
                         color={getGravidadeColor(ocorrencia.gravidade) as any}
                         size="small"
@@ -448,7 +473,7 @@ const Ocorrencias: React.FC = () => {
           {modoEdicao ? "✏️ Editar Ocorrência" : "➕ Nova Ocorrência"}
         </DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 2 }}>
             <Box>
               <FormControl fullWidth required>
                 <InputLabel>Obra</InputLabel>
@@ -614,6 +639,112 @@ const Ocorrencias: React.FC = () => {
                 </Select>
               </FormControl>
             </Box>
+
+            {/* Sistema de Upload de Múltiplas Fotos */}
+            <Box>
+              <Typography
+                variant="subtitle2"
+                gutterBottom
+                sx={{ fontWeight: "bold" }}
+              >
+                📸 Fotos da Ocorrência (máx. 3)
+              </Typography>
+
+              {/* Grid de Preview das Fotos */}
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
+                {fotosBase64.map((foto, index) => (
+                  <Card key={index} sx={{ width: 120, position: "relative" }}>
+                    <CardMedia
+                      component="img"
+                      height="120"
+                      image={foto}
+                      alt={`Foto ${index + 1}`}
+                      sx={{ objectFit: "cover" }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        const novasFotos = fotosBase64.filter(
+                          (_, i) => i !== index
+                        );
+                        setFotosBase64(novasFotos);
+                        toast.info("Foto removida");
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        backgroundColor: "rgba(255,255,255,0.9)",
+                        "&:hover": {
+                          backgroundColor: "rgba(255,0,0,0.8)",
+                          color: "white",
+                        },
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Card>
+                ))}
+              </Box>
+
+              {/* Botão Adicionar Foto */}
+              {fotosBase64.length < 3 && (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<PhotoCameraIcon />}
+                  fullWidth
+                >
+                  Adicionar Foto ({fotosBase64.length}/3)
+                  <input
+                    hidden
+                    accept="image/*"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      // Validação de tamanho (5MB)
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("Arquivo muito grande. Máximo 5MB.");
+                        return;
+                      }
+
+                      // Validação de tipo
+                      if (!file.type.startsWith("image/")) {
+                        toast.error(
+                          "Apenas imagens são permitidas (JPG, PNG, GIF)"
+                        );
+                        return;
+                      }
+
+                      // Converter para Base64
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const base64 = reader.result as string;
+                        setFotosBase64([...fotosBase64, base64]);
+                        toast.success("Foto adicionada!");
+                      };
+                      reader.readAsDataURL(file);
+
+                      // Limpar input
+                      e.target.value = "";
+                    }}
+                  />
+                </Button>
+              )}
+
+              {fotosBase64.length >= 3 && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 1 }}
+                >
+                  ✅ Limite de 3 fotos atingido. Remova uma foto para adicionar
+                  outra.
+                </Typography>
+              )}
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -717,6 +848,41 @@ const Ocorrencias: React.FC = () => {
                   </Typography>
                 </>
               )}
+              {ocorrenciaSelecionada.fotos &&
+                ocorrenciaSelecionada.fotos.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      <strong>
+                        📸 Fotos ({ocorrenciaSelecionada.fotos.length}):
+                      </strong>
+                    </Typography>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                      {ocorrenciaSelecionada.fotos.map((foto, index) => (
+                        <Box key={foto.id || index}>
+                          <Card>
+                            <CardMedia
+                              component="img"
+                              height="200"
+                              image={foto.foto}
+                              alt={foto.descricao || `Foto ${index + 1}`}
+                            />
+                            {foto.descricao && (
+                              <Box sx={{ p: 1 }}>
+                                <Typography variant="caption">
+                                  {foto.descricao}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Card>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
             </Box>
           )}
         </DialogContent>
@@ -728,4 +894,4 @@ const Ocorrencias: React.FC = () => {
   );
 };
 
-export default Ocorrencias;
+export default OcorrenciasNovo;

@@ -3,12 +3,12 @@ import { MetadadosDiario, MetadadosDiarioFormData } from "../types/metadados";
 
 export const metadadosService = {
   /**
-   * Listar todos os metadados
-   * GET /diarios-consolidado/metadados
+   * Listar todos os metadados (usando VIEW consolidada)
+   * GET /diarios-consolidado
    */
   async listar(): Promise<MetadadosDiario[]> {
     try {
-      const response = await api.get("/diarios-consolidado/metadados");
+      const response = await api.get("/diarios-consolidado");
       console.log("✅ Metadados carregados:", response.data);
       return response.data.data || [];
     } catch (error) {
@@ -18,14 +18,12 @@ export const metadadosService = {
   },
 
   /**
-   * Buscar metadados por obra
-   * GET /diarios-consolidado/metadados/obra/:obra_id
+   * Buscar metadados por obra (usando VIEW consolidada)
+   * GET /diarios-consolidado/obra/:obra_id
    */
   async buscarPorObra(obraId: number): Promise<MetadadosDiario[]> {
     try {
-      const response = await api.get(
-        `/diarios-consolidado/metadados/obra/${obraId}`
-      );
+      const response = await api.get(`/diarios-consolidado/obra/${obraId}`);
       console.log(`✅ Metadados da obra ${obraId}:`, response.data);
       return response.data.data || [];
     } catch (error) {
@@ -35,19 +33,20 @@ export const metadadosService = {
   },
 
   /**
-   * Buscar metadados por obra e data
-   * GET /diarios-consolidado/metadados/obra/:obra_id/data/:data
+   * Buscar metadados por obra e data (usando VIEW consolidada)
+   * GET /diarios-consolidado/data/:data
    */
   async buscarPorObraEData(
     obraId: number,
     data: string
   ): Promise<MetadadosDiario | null> {
     try {
-      const response = await api.get(
-        `/diarios-consolidado/metadados/obra/${obraId}/data/${data}`
-      );
+      const response = await api.get(`/diarios-consolidado/data/${data}`);
       console.log(`✅ Metadados da obra ${obraId} em ${data}:`, response.data);
-      return response.data.data || null;
+      // Filtra os resultados pela obra
+      const metadados = response.data.data || [];
+      const metadadoObra = metadados.find((m: any) => m.obra_id === obraId);
+      return metadadoObra || null;
     } catch (error) {
       console.error("❌ Erro ao buscar metadados por obra e data:", error);
       throw error;

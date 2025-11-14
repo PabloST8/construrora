@@ -67,7 +67,9 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/receitas") return "Gestão de Receitas";
     if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
     if (location.pathname === "/relatorios") return "📊 Relatórios";
-    if (location.pathname === "/diario") return "Diário de Obra";
+    if (location.pathname === "/diario") return "📖 Diário de Obra";
+    if (location.pathname === "/tarefas") return "✅ Tarefas Realizadas";
+    if (location.pathname === "/ocorrencias") return "⚠️ Ocorrências";
     return "Sistema de Gestão de Obras";
   };
 
@@ -231,6 +233,40 @@ const Layout: React.FC<LayoutProps> = (props) => {
             }}
           >
             <ListItemText primary="📖 Diário de Obra" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Tarefas Realizadas */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/tarefas")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/tarefas"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="✅ Tarefas Realizadas" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Ocorrências */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/ocorrencias")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/ocorrencias"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="⚠️ Ocorrências" />
           </ListItemButton>
         </ListItem>
       </List>

@@ -3,1040 +3,964 @@ import {
   Box,
   Paper,
   Typography,
-  TextField,
   Button,
   Select,
   MenuItem,
   InputLabel,
   FormControl,
   Stack,
-  IconButton,
-  Tabs,
-  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Card,
   CardMedia,
-  Chip,
 } from "@mui/material";
 import {
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  PhotoCamera as PhotoIcon,
-  Close as CloseIcon,
+  Print as PrintIcon,
+  PictureAsPdf as PdfIcon,
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
-import { diarioService } from "../services/diarioService";
 import { obraService } from "../services/obraService";
-import { pessoaService } from "../services/pessoaService";
-import FotoUpload from "../components/FotoUpload";
-import {
-  validarData,
-  validarStringNaoVazia,
-  validarTamanhoMinimo,
-} from "../utils/validators";
+import api from "../services/api";
+import { Obra } from "../types/obra";
+import { Tarefa } from "../types/tarefa";
+import { Ocorrencia } from "../types/ocorrencia";
 
-interface DiarioForm {
-  obra_id: number;
-  data: string;
-  periodo: string;
-  atividades_realizadas: string;
-  ocorrencias?: string;
+// Interfaces COMPLETAS para os dados da API Go
+interface EquipeDiario {
+  id: number;
+  diario_id: number;
+  codigo?: string;
+  descricao: string;
+  quantidade_utilizada: number;
+  horas_trabalhadas?: number;
   observacoes?: string;
-  responsavel_id: number;
-  aprovado_por_id?: number;
-  status_aprovacao: string;
-  foto?: string; // Base64 da foto
+  created_at: string;
+  updated_at?: string;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface EquipamentoDiario {
+  id: number;
+  diario_id: number;
+  codigo?: string;
+  descricao: string;
+  quantidade_utilizada: number;
+  horas_uso?: number;
+  observacoes?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
+interface MaterialDiario {
+  id: number;
+  diario_id: number;
+  codigo?: string;
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+  fornecedor?: string;
+  valor_unitario?: number;
+  valor_total?: number;
+  observacoes?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 const DiarioObras: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0);
-  const [diarios, setDiarios] = useState<any[]>([]);
-  const [obras, setObras] = useState<any[]>([]);
-  const [pessoas, setPessoas] = useState<any[]>([]);
-  const [salvando, setSalvando] = useState(false);
+  const [obras, setObras] = useState<Obra[]>([]);
+  const [obraId, setObraId] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
 
-  // Estados para edição e visualização
-  const [dialogVisualizacao, setDialogVisualizacao] = useState(false);
-  const [dialogEdicao, setDialogEdicao] = useState(false);
-  const [diarioSelecionado, setDiarioSelecionado] = useState<any>(null);
-  const [dadosEdicao, setDadosEdicao] = useState<any>({});
-
-  // Estados para filtros
-  const [filtroObra, setFiltroObra] = useState<number>(0);
-  const [filtroData, setFiltroData] = useState<string>("");
-
-  const [novoDiario, setNovoDiario] = useState<DiarioForm>({
-    obra_id: 0,
-    data: "",
-    periodo: "",
-    atividades_realizadas: "",
-    responsavel_id: 0,
-    status_aprovacao: "pendente",
-  });
-
-  // Função para formatar período
-  const formatarPeriodo = (periodo: string) => {
-    const periodos: Record<string, string> = {
-      manha: "Manhã",
-      tarde: "Tarde",
-      noite: "Noite",
-      integral: "Integral",
-    };
-    return periodos[periodo] || periodo;
-  };
+  // Dados do relatório
+  const [obraSelecionada, setObraSelecionada] = useState<Obra | null>(null);
+  const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+  const [equipe, setEquipe] = useState<EquipeDiario[]>([]);
+  const [equipamentos, setEquipamentos] = useState<EquipamentoDiario[]>([]);
 
   useEffect(() => {
-    carregarDados();
+    carregarObras();
   }, []);
 
-  const carregarDados = async () => {
+  const carregarObras = async () => {
     try {
-      const [diariosRes, obrasRes, pessoasRes] = await Promise.all([
-        diarioService.listar(),
-        obraService.listar(),
-        pessoaService.listar(),
-      ]);
-      setDiarios(Array.isArray(diariosRes) ? diariosRes : []);
-      setObras(Array.isArray(obrasRes) ? obrasRes : []);
-      setPessoas(Array.isArray(pessoasRes) ? pessoasRes : []);
+      const data = await obraService.listar();
+      const obrasArray = Array.isArray(data) ? data : [];
+      setObras(obrasArray);
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
+      console.error("Erro ao carregar obras:", error);
+      toast.error("Erro ao carregar obras");
     }
   };
 
-  const handleCadastrar = async () => {
-    // ✅ VALIDAÇÕES ANTES DE SALVAR
-    if (!novoDiario.obra_id || novoDiario.obra_id === 0) {
-      toast.error("Selecione a obra");
+  const gerarRelatorio = async () => {
+    if (!obraId) {
+      toast.warning("Selecione uma obra");
       return;
     }
 
-    if (!novoDiario.data || !validarData(novoDiario.data)) {
-      toast.error("Data inválida");
-      return;
-    }
-
-    // Validar que a data não é futura
-    const dataEscolhida = new Date(novoDiario.data);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    if (dataEscolhida > hoje) {
-      toast.error("❌ A data do diário não pode ser no futuro");
-      return;
-    }
-
-    if (!novoDiario.periodo) {
-      toast.error("Selecione o período");
-      return;
-    }
-
-    if (!validarStringNaoVazia(novoDiario.atividades_realizadas)) {
-      toast.error("Descreva as atividades realizadas");
-      return;
-    }
-
-    if (!validarTamanhoMinimo(novoDiario.atividades_realizadas, 10)) {
-      toast.error("❌ Atividades realizadas deve ter pelo menos 10 caracteres");
-      return;
-    }
-
-    if (!novoDiario.responsavel_id || novoDiario.responsavel_id === 0) {
-      toast.error("Selecione o responsável");
-      return;
-    }
-
+    setLoading(true);
     try {
-      setSalvando(true);
+      // 1. Buscar dados da obra
+      const obra = obras.find((o) => o.id === obraId);
+      setObraSelecionada(obra || null);
 
-      // Função para adicionar timestamp às datas (API Go requer formato completo)
-      const adicionarTimestamp = (data: string): string => {
-        if (!data) return "";
-        if (data.includes("T")) return data; // Já tem timestamp
-        return `${data}T00:00:00Z`; // YYYY-MM-DD → YYYY-MM-DDTHH:MM:SSZ
-      };
-
-      // ✅ Preparar dados para envio - 13 campos do modelo Go DiarioObra
-      const dadosEnvio: any = {
-        obra_id: Number(novoDiario.obra_id),
-        data: adicionarTimestamp(novoDiario.data), // ISO 8601 format
-        periodo: novoDiario.periodo,
-        atividades_realizadas: novoDiario.atividades_realizadas,
-        status_aprovacao: novoDiario.status_aprovacao || "pendente",
-      };
-
-      // ✅ Adicionar foto se houver (já vem em base64 do FotoUpload)
-      if (novoDiario.foto) {
-        dadosEnvio.foto = novoDiario.foto;
-      }
-
-      // Só adicionar responsavel_id se tiver um valor válido (> 0)
-      if (novoDiario.responsavel_id && Number(novoDiario.responsavel_id) > 0) {
-        dadosEnvio.responsavel_id = Number(novoDiario.responsavel_id);
-      }
-
-      // Adicionar campos opcionais apenas se tiverem valor
-      if (novoDiario.ocorrencias && novoDiario.ocorrencias.trim()) {
-        dadosEnvio.ocorrencias = novoDiario.ocorrencias;
-      }
-      if (novoDiario.observacoes && novoDiario.observacoes.trim()) {
-        dadosEnvio.observacoes = novoDiario.observacoes;
-      }
-      // N�O enviar aprovado_por_id se n�o tiver valor (evita erro de FK)
-
-      await diarioService.criar(dadosEnvio);
-      toast.success("Diário cadastrado com sucesso!");
-      setNovoDiario({
-        obra_id: 0,
-        data: "",
-        periodo: "",
-        atividades_realizadas: "",
-        responsavel_id: 0,
-        status_aprovacao: "pendente",
-      });
-      carregarDados();
-    } catch (error: any) {
-      console.error("? Erro completo:", error);
-      toast.error(error.response?.data?.error || "Erro ao cadastrar di�rio");
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const handleExcluir = async (id: string) => {
-    if (!window.confirm("Deseja excluir este diário?")) return;
-    try {
-      await diarioService.deletar(Number(id));
-      toast.success("Diário excluído!");
-      carregarDados();
-    } catch (error) {
-      toast.error("Erro ao excluir");
-    }
-  };
-
-  // Função para filtrar diários
-  const diariosFiltrados = diarios.filter((diario) => {
-    // Filtro por obra
-    if (filtroObra !== 0 && diario.obra_id !== filtroObra) {
-      return false;
-    }
-
-    // Filtro por data
-    if (filtroData !== "") {
-      const dataDiario = diario.data?.split("T")[0]; // YYYY-MM-DD
-      if (dataDiario !== filtroData) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  // === FUNÇÕES DE VISUALIZAÇÃO ===
-  const abrirDialogVisualizacao = async (diario: any) => {
-    try {
-      console.log("👁️ Abrindo visualização do diário:", diario.id);
-      const diarioCompleto = await diarioService.buscarPorId(diario.id);
-      setDiarioSelecionado(diarioCompleto);
-      setDialogVisualizacao(true);
-    } catch (error) {
-      console.error("Erro ao carregar diário:", error);
-      toast.error("Erro ao carregar dados do diário");
-    }
-  };
-
-  const fecharDialogVisualizacao = () => {
-    setDialogVisualizacao(false);
-    setDiarioSelecionado(null);
-  };
-
-  // === FUNÇÕES DE EDIÇÃO ===
-  const abrirDialogEdicao = async (diario: any) => {
-    try {
-      console.log("✏️ Abrindo edição do diário:", diario.id);
-      const diarioCompleto = await diarioService.buscarPorId(diario.id);
-
-      // Função para formatar data (remover timestamp para exibição no input type="date")
-      const formatarData = (data: string | undefined | null): string => {
-        if (!data) return "";
-        if (data.includes("T")) return data.split("T")[0]; // Remove timestamp
-        // Já está em formato YYYY-MM-DD
-        return data;
-      };
-
-      setDiarioSelecionado(diarioCompleto);
-      setDadosEdicao({
-        obra_id: diarioCompleto.obra_id,
-        data: formatarData(diarioCompleto.data), // Formatado para YYYY-MM-DD
-        periodo: diarioCompleto.periodo,
-        atividades_realizadas: diarioCompleto.atividades_realizadas,
-        ocorrencias: diarioCompleto.ocorrencias || "",
-        observacoes: diarioCompleto.observacoes || "",
-        responsavel_id: diarioCompleto.responsavel_id,
-        status_aprovacao: diarioCompleto.status_aprovacao,
-        aprovado_por_id: diarioCompleto.aprovado_por_id || 0,
-      });
-      setDialogEdicao(true);
-    } catch (error) {
-      console.error("Erro ao carregar diário:", error);
-      toast.error("Erro ao carregar dados do diário");
-    }
-  };
-
-  const fecharDialogEdicao = () => {
-    setDialogEdicao(false);
-    setDiarioSelecionado(null);
-    setDadosEdicao({});
-  };
-
-  const salvarEdicao = async () => {
-    try {
-      setSalvando(true);
-      console.log("💾 Salvando edição do diário:", diarioSelecionado.id);
-
-      // Função para adicionar timestamp às datas (API Go requer formato completo)
-      const adicionarTimestamp = (data: string): string => {
-        if (!data) return "";
-        if (data.includes("T")) return data; // Já tem timestamp
-        // Converter DD/MM/YYYY para YYYY-MM-DD se necessário
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
-          const [dia, mes, ano] = data.split("/");
-          return `${ano}-${mes}-${dia}T00:00:00Z`;
-        }
-        // YYYY-MM-DD → YYYY-MM-DDTHH:MM:SSZ
-        return `${data}T00:00:00Z`;
-      };
-
-      // ✅ Preparar dados para atualização - 13 campos do modelo Go DiarioObra
-      const dadosParaAtualizar: any = {
-        obra_id: Number(dadosEdicao.obra_id),
-        data: adicionarTimestamp(dadosEdicao.data), // ISO 8601 format
-        periodo: dadosEdicao.periodo,
-        atividades_realizadas: dadosEdicao.atividades_realizadas,
-        responsavel_id: Number(dadosEdicao.responsavel_id),
-        status_aprovacao: dadosEdicao.status_aprovacao,
-      };
-
-      // ✅ Adicionar campos OPCIONAIS somente se tiverem valor (não enviar strings vazias)
-      if (dadosEdicao.ocorrencias && dadosEdicao.ocorrencias.trim() !== "") {
-        dadosParaAtualizar.ocorrencias = dadosEdicao.ocorrencias;
-      }
-
-      if (dadosEdicao.observacoes && dadosEdicao.observacoes.trim() !== "") {
-        dadosParaAtualizar.observacoes = dadosEdicao.observacoes;
-      }
-
-      if (dadosEdicao.foto) {
-        dadosParaAtualizar.foto = dadosEdicao.foto;
-      }
-
-      // ✅ Lógica para aprovado_por_id:
-      // - PENDENTE: NÃO enviar o campo (será omitido)
-      // - APROVADO/REJEITADO: Obrigatório (ID > 0)
-      if (dadosEdicao.status_aprovacao !== "pendente") {
-        // Status aprovado ou rejeitado: campo é OBRIGATÓRIO
-        if (
-          !dadosEdicao.aprovado_por_id ||
-          Number(dadosEdicao.aprovado_por_id) === 0
-        ) {
-          const acao =
-            dadosEdicao.status_aprovacao === "aprovado"
-              ? "aprovou"
-              : "rejeitou";
-          toast.error(`Você deve selecionar quem ${acao} o diário.`);
-          setSalvando(false);
-          return;
-        }
-        dadosParaAtualizar.aprovado_por_id = Number(
-          dadosEdicao.aprovado_por_id
+      // 2. Buscar TODAS as tarefas da obra via API Go (endpoint: GET /tarefas?obra_id=X)
+      try {
+        const tarefasResponse = await api.get(`/tarefas`, {
+          params: { obra_id: obraId },
+        });
+        const tarefasData =
+          tarefasResponse.data.data || tarefasResponse.data || [];
+        console.log("📋 Tarefas recebidas:", tarefasData);
+        setTarefas(Array.isArray(tarefasData) ? tarefasData : []);
+      } catch (err) {
+        console.warn(
+          "⚠️ Endpoint /tarefas não encontrado, tentando método alternativo..."
         );
+        // Fallback: Se /tarefas não existir, deixa vazio
+        setTarefas([]);
       }
-      // Se status = pendente, aprovado_por_id NÃO é adicionado ao payload
 
-      await diarioService.atualizar(diarioSelecionado.id, dadosParaAtualizar);
+      // 3. Buscar TODAS as ocorrências da obra via API Go (endpoint: GET /ocorrencias?obra_id=X)
+      try {
+        const ocorrenciasResponse = await api.get(`/ocorrencias`, {
+          params: { obra_id: obraId },
+        });
+        const ocorrenciasData =
+          ocorrenciasResponse.data.data || ocorrenciasResponse.data || [];
+        console.log("⚠️ Ocorrências recebidas:", ocorrenciasData);
+        setOcorrencias(Array.isArray(ocorrenciasData) ? ocorrenciasData : []);
+      } catch (err) {
+        console.warn(
+          "⚠️ Endpoint /ocorrencias não encontrado, tentando método alternativo..."
+        );
+        // Fallback: Se /ocorrencias não existir, deixa vazio
+        setOcorrencias([]);
+      }
 
-      toast.success("Diário atualizado com sucesso!");
+      // 4. Buscar todos os diários da obra para agregar equipe/equipamentos/materiais
+      const diariosResponse = await api.get(`/diarios/obra/${obraId}`);
+      const diariosData =
+        diariosResponse.data.data || diariosResponse.data || [];
+      console.log("📖 Diários da obra:", diariosData);
 
-      // Atualizar lista imediatamente (estado local)
-      const novaListaDiarios = diarios.map((d) =>
-        d.id === diarioSelecionado.id
-          ? { ...d, ...dadosParaAtualizar, id: diarioSelecionado.id }
-          : d
-      );
-      setDiarios(novaListaDiarios);
+      // Arrays consolidados
+      const equipeConsolidada: EquipeDiario[] = [];
+      const equipamentosConsolidados: EquipamentoDiario[] = [];
+      const materiaisConsolidados: MaterialDiario[] = [];
 
-      fecharDialogEdicao();
-      // Recarregar dados do servidor para garantir sincronização
-      setTimeout(() => carregarDados(), 500);
+      // 5. Para cada diário, buscar equipe, equipamentos e materiais
+      for (const diario of diariosData) {
+        try {
+          // Buscar equipe do diário
+          const equipeResp = await api.get(
+            `/equipe-diario/diario/${diario.id}`
+          );
+          const equipeData = equipeResp.data.data || equipeResp.data || [];
+          equipeConsolidada.push(
+            ...(Array.isArray(equipeData) ? equipeData : [])
+          );
+
+          // Buscar equipamentos do diário
+          const equipResp = await api.get(
+            `/equipamento-diario/diario/${diario.id}`
+          );
+          const equipData = equipResp.data.data || equipResp.data || [];
+          equipamentosConsolidados.push(
+            ...(Array.isArray(equipData) ? equipData : [])
+          );
+
+          // Buscar materiais do diário
+          const matResp = await api.get(`/material-diario/diario/${diario.id}`);
+          const matData = matResp.data.data || matResp.data || [];
+          materiaisConsolidados.push(
+            ...(Array.isArray(matData) ? matData : [])
+          );
+        } catch (err) {
+          console.error(`Erro ao buscar dados do diário ${diario.id}:`, err);
+          // Continua com os outros diários mesmo se houver erro
+        }
+      }
+
+      console.log("👷 Equipe consolidada:", equipeConsolidada);
+      console.log("🚜 Equipamentos consolidados:", equipamentosConsolidados);
+
+      setEquipe(equipeConsolidada);
+      setEquipamentos(equipamentosConsolidados);
+
+      toast.success("Relatório gerado com sucesso!");
     } catch (error: any) {
-      console.error("❌ Erro ao salvar edição:", error);
-      toast.error(error.response?.data?.error || "Erro ao salvar alterações");
+      console.error("Erro ao gerar relatório:", error);
+      toast.error(error.response?.data?.error || "Erro ao gerar relatório");
     } finally {
-      setSalvando(false);
+      setLoading(false);
+    }
+  };
+
+  const imprimirRelatorio = () => {
+    window.print();
+  };
+
+  const formatarData = (dataISO: string) => {
+    if (!dataISO) return "N/A";
+    try {
+      // Se já tem horário, usa direto, senão adiciona T00:00:00
+      const dateStr = dataISO.includes("T") ? dataISO : dataISO + "T00:00:00";
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "N/A";
+      return date.toLocaleDateString("pt-BR");
+    } catch {
+      return "N/A";
     }
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
-        <Tab label="Cadastrar" />
-        <Tab label="Listar" />
-      </Tabs>
+    <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontWeight: "bold", mb: 3 }}
+        >
+          📖 DIÁRIO DE OBRAS
+        </Typography>
 
-      <TabPanel value={tabValue} index={0}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Novo Diário de Obra
-          </Typography>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            <FormControl fullWidth required>
-              <InputLabel>Obra</InputLabel>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{ mb: 3 }}
+        >
+          <Box sx={{ flex: "1 1 70%" }}>
+            <FormControl fullWidth>
+              <InputLabel>Obra *</InputLabel>
               <Select
-                value={novoDiario.obra_id}
-                onChange={(e) =>
-                  setNovoDiario({
-                    ...novoDiario,
-                    obra_id: Number(e.target.value),
-                  })
-                }
+                value={obraId}
+                onChange={(e) => setObraId(Number(e.target.value))}
+                label="Obra *"
               >
-                <MenuItem value={0}>Selecione</MenuItem>
-                {obras.map((o) => (
-                  <MenuItem key={o.id} value={o.id}>
-                    {o.nome}
+                <MenuItem value={0}>Selecione uma obra</MenuItem>
+                {obras.map((obra) => (
+                  <MenuItem key={obra.id} value={obra.id}>
+                    {obra.nome}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+          </Box>
 
-            <TextField
-              fullWidth
-              required
-              type="date"
-              label="Data"
-              value={novoDiario.data}
-              onChange={(e) =>
-                setNovoDiario({ ...novoDiario, data: e.target.value })
-              }
-              InputLabelProps={{ shrink: true }}
-            />
-
-            <FormControl fullWidth required>
-              <InputLabel>Período</InputLabel>
-              <Select
-                value={novoDiario.periodo}
-                onChange={(e) =>
-                  setNovoDiario({ ...novoDiario, periodo: e.target.value })
-                }
-              >
-                <MenuItem value="manha">Manhã</MenuItem>
-                <MenuItem value="tarde">Tarde</MenuItem>
-                <MenuItem value="noite">Noite</MenuItem>
-                <MenuItem value="integral">Integral</MenuItem>
-              </Select>
-            </FormControl>
-
-            <TextField
-              fullWidth
-              required
-              multiline
-              rows={4}
-              label="Atividades Realizadas"
-              value={novoDiario.atividades_realizadas}
-              onChange={(e) =>
-                setNovoDiario({
-                  ...novoDiario,
-                  atividades_realizadas: e.target.value,
-                })
-              }
-              inputProps={{ maxLength: 1000 }}
-              helperText={`${novoDiario.atividades_realizadas.length}/1000 caracteres (mínimo 10)`}
-            />
-
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              label="Ocorrências (opcional)"
-              value={novoDiario.ocorrencias || ""}
-              onChange={(e) =>
-                setNovoDiario({ ...novoDiario, ocorrencias: e.target.value })
-              }
-              inputProps={{ maxLength: 500 }}
-              helperText={`${
-                (novoDiario.ocorrencias || "").length
-              }/500 caracteres`}
-            />
-
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              label="Observações (opcional)"
-              value={novoDiario.observacoes || ""}
-              onChange={(e) =>
-                setNovoDiario({ ...novoDiario, observacoes: e.target.value })
-              }
-              inputProps={{ maxLength: 500 }}
-              helperText={`${
-                (novoDiario.observacoes || "").length
-              }/500 caracteres`}
-            />
-
-            {/* Upload de Foto */}
-            <Box
-              sx={{
-                p: 2,
-                border: "1px dashed",
-                borderColor: "grey.400",
-                borderRadius: 1,
-                backgroundColor: "grey.50",
-              }}
-            >
-              <FotoUpload
-                foto={novoDiario.foto}
-                onFotoChange={(fotoBase64) =>
-                  setNovoDiario({
-                    ...novoDiario,
-                    foto: fotoBase64 || undefined,
-                  })
-                }
-                label="Foto do Progresso (opcional)"
-                tamanho={120}
-              />
-            </Box>
-
-            <FormControl fullWidth required>
-              <InputLabel>Responsável</InputLabel>
-              <Select
-                value={novoDiario.responsavel_id}
-                onChange={(e) =>
-                  setNovoDiario({
-                    ...novoDiario,
-                    responsavel_id: Number(e.target.value),
-                  })
-                }
-              >
-                <MenuItem value={0}>Selecione</MenuItem>
-                {pessoas.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.nome}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
+          <Box sx={{ flex: "1 1 30%" }}>
             <Button
+              fullWidth
               variant="contained"
-              onClick={handleCadastrar}
-              disabled={salvando}
+              onClick={gerarRelatorio}
+              disabled={loading || !obraId}
+              sx={{ height: 56 }}
             >
-              {salvando ? <CircularProgress size={24} /> : "Cadastrar"}
+              {loading ? <CircularProgress size={24} /> : "Gerar Relatório"}
+            </Button>
+          </Box>
+        </Stack>
+
+        {obraSelecionada && (
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<PrintIcon />}
+              onClick={imprimirRelatorio}
+            >
+              Imprimir
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<PdfIcon />}
+              onClick={() => toast.info("Exportar PDF em desenvolvimento")}
+            >
+              Exportar PDF
             </Button>
           </Stack>
-        </Paper>
-      </TabPanel>
+        )}
+      </Paper>
 
-      <TabPanel value={tabValue} index={1}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Diários Cadastrados ({diariosFiltrados.length})
-          </Typography>
+      {/* RELATÓRIO CONSOLIDADO */}
+      {obraSelecionada && (
+        <Paper sx={{ p: 4 }} id="relatorio-print">
+          {/* CABEÇALHO */}
+          <Box
+            sx={{
+              textAlign: "center",
+              mb: 3,
+              borderBottom: "2px solid #333",
+              pb: 2,
+            }}
+          >
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+              DIÁRIO DE OBRAS
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 1 }}>
+              OBRA: {obraSelecionada.nome.toUpperCase()}
+            </Typography>
+            {obraSelecionada.contratanteNome && (
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                CONTRATANTE: {obraSelecionada.contratanteNome.toUpperCase()}
+              </Typography>
+            )}
+          </Box>
 
-          {/* Filtros */}
-          <Stack direction="row" spacing={2} sx={{ mb: 3, mt: 2 }}>
-            <FormControl sx={{ minWidth: 250 }}>
-              <InputLabel>Filtrar por Obra</InputLabel>
-              <Select
-                value={filtroObra}
-                onChange={(e) => setFiltroObra(Number(e.target.value))}
-                label="Filtrar por Obra"
-              >
-                <MenuItem value={0}>Todas as obras</MenuItem>
-                {obras.map((o) => (
-                  <MenuItem key={o.id} value={o.id}>
-                    {o.nome}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          {/* INFORMAÇÕES DA OBRA - TABELA COMPLETA */}
+          <TableContainer sx={{ mb: 3, border: "1px solid #000" }}>
+            <Table size="small">
+              <TableBody>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      border: "1px solid #000",
+                      width: "15%",
+                    }}
+                  >
+                    Obra
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid #000", width: "35%" }}>
+                    {obraSelecionada.nome}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      border: "1px solid #000",
+                      width: "15%",
+                    }}
+                  >
+                    Nº CONTRATO
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid #000", width: "35%" }}>
+                    {obraSelecionada.contrato_numero ||
+                      obraSelecionada.contratoNumero ||
+                      "N/A"}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell
+                    sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                  >
+                    Prazo de obra
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid #000" }}>
+                    {obraSelecionada.prazo_dias ||
+                      obraSelecionada.prazoDias ||
+                      "N/A"}{" "}
+                    DIAS
+                  </TableCell>
+                  <TableCell
+                    sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                  >
+                    CONTRATADA
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid #000" }}>
+                    {obraSelecionada.contratanteNome || "N/A"}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell
+                    sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                  >
+                    Responsável técnico
+                  </TableCell>
+                  <TableCell colSpan={3} sx={{ border: "1px solid #000" }}>
+                    {obraSelecionada.responsavelNome || "N/A"}
+                    {obraSelecionada.art &&
+                      ` | Registro: ${obraSelecionada.art}`}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-            <TextField
-              type="date"
-              label="Filtrar por Data"
-              value={filtroData}
-              onChange={(e) => setFiltroData(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={{ minWidth: 200 }}
-            />
-
-            {(filtroObra !== 0 || filtroData !== "") && (
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  setFiltroObra(0);
-                  setFiltroData("");
+          {/* TAREFAS REALIZADAS */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                mb: 1,
+                backgroundColor: "#d0d0d0",
+                p: 1,
+                textAlign: "center",
+                border: "1px solid #000",
+              }}
+            >
+              Tarefas realizadas
+            </Typography>
+            {tarefas.length > 0 ? (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
+                      <TableCell
+                        sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                      >
+                        Descrição
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "100px",
+                        }}
+                        align="center"
+                      >
+                        Data
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "80px",
+                        }}
+                        align="center"
+                      >
+                        Período
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "110px",
+                        }}
+                        align="center"
+                      >
+                        Status
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "80px",
+                        }}
+                        align="center"
+                      >
+                        % Conclusão
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tarefas.map((tarefa, index) => (
+                      <React.Fragment key={tarefa.id || index}>
+                        <TableRow>
+                          <TableCell sx={{ border: "1px solid #000" }}>
+                            {tarefa.descricao}
+                            {tarefa.observacao && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: "block",
+                                  color: "#666",
+                                  fontStyle: "italic",
+                                  mt: 0.5,
+                                }}
+                              >
+                                Obs: {tarefa.observacao}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell
+                            sx={{ border: "1px solid #000" }}
+                            align="center"
+                          >
+                            {formatarData(tarefa.data)}
+                          </TableCell>
+                          <TableCell
+                            sx={{ border: "1px solid #000" }}
+                            align="center"
+                          >
+                            {tarefa.periodo?.toUpperCase() || "INTEGRAL"}
+                          </TableCell>
+                          <TableCell
+                            sx={{ border: "1px solid #000" }}
+                            align="center"
+                          >
+                            {tarefa.status === "em_andamento"
+                              ? "EM ANDAMENTO"
+                              : tarefa.status === "concluida"
+                              ? "CONCLUÍDA"
+                              : tarefa.status === "planejada"
+                              ? "PLANEJADA"
+                              : tarefa.status === "cancelada"
+                              ? "CANCELADA"
+                              : "N/A"}
+                          </TableCell>
+                          <TableCell
+                            sx={{ border: "1px solid #000" }}
+                            align="center"
+                          >
+                            {tarefa.percentual_conclusao !== undefined
+                              ? `${tarefa.percentual_conclusao}%`
+                              : "0%"}
+                          </TableCell>
+                        </TableRow>
+                        {/* Linha de Fotos */}
+                        {tarefa.fotos && tarefa.fotos.length > 0 && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              sx={{
+                                p: 1,
+                                border: "1px solid #000",
+                                backgroundColor: "#f9f9f9",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                  justifyContent: "flex-start",
+                                }}
+                              >
+                                {tarefa.fotos.map((foto, fotoIndex) => (
+                                  <Box
+                                    key={foto.id || fotoIndex}
+                                    sx={{
+                                      flex: 1,
+                                      maxWidth:
+                                        tarefa.fotos!.length === 1
+                                          ? "100%"
+                                          : tarefa.fotos!.length === 2
+                                          ? "50%"
+                                          : "33.33%",
+                                    }}
+                                  >
+                                    <CardMedia
+                                      component="img"
+                                      image={foto.foto}
+                                      alt={`Foto ${fotoIndex + 1}`}
+                                      sx={{
+                                        width: "100%",
+                                        height:
+                                          tarefa.fotos!.length === 1
+                                            ? 600
+                                            : tarefa.fotos!.length === 2
+                                            ? 400
+                                            : 300,
+                                        objectFit: "cover",
+                                        borderRadius: 1,
+                                      }}
+                                    />
+                                  </Box>
+                                ))}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontStyle: "italic",
+                  color: "#666",
+                  p: 2,
+                  border: "1px solid #000",
+                  textAlign: "center",
                 }}
               >
-                Limpar Filtros
-              </Button>
+                Nenhuma tarefa registrada nesta obra.
+              </Typography>
             )}
-          </Stack>
+          </Box>
 
-          <Box sx={{ overflowX: "auto", mt: 2 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#c62828", color: "white" }}>
-                  <th style={{ padding: "12px" }}>Ações</th>
-                  <th style={{ padding: "12px" }}>Data</th>
-                  <th style={{ padding: "12px" }}>Período</th>
-                  <th style={{ padding: "12px" }}>Atividades</th>
-                  <th style={{ padding: "12px" }}>Status</th>
-                  <th style={{ padding: "12px" }}>Fotos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {diariosFiltrados.map((d) => (
-                  <tr key={d.id} style={{ borderBottom: "1px solid #e0e0e0" }}>
-                    <td style={{ padding: "12px" }}>
-                      <Stack direction="row" spacing={0.5}>
-                        {/* Botão Visualizar */}
-                        <IconButton
-                          size="small"
-                          onClick={() => abrirDialogVisualizacao(d)}
-                          sx={{
-                            backgroundColor: "#2196f3",
-                            color: "white",
-                            "&:hover": { backgroundColor: "#1976d2" },
-                          }}
-                          title="Visualizar"
+          {/* OCORRÊNCIAS */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                mb: 1,
+                backgroundColor: "#d0d0d0",
+                p: 1,
+                textAlign: "center",
+                border: "1px solid #000",
+              }}
+            >
+              Ocorrências
+            </Typography>
+            {ocorrencias.length > 0 ? (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
+                      <TableCell
+                        sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                      >
+                        Descrição
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "100px",
+                        }}
+                        align="center"
+                      >
+                        Data
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "100px",
+                        }}
+                        align="center"
+                      >
+                        Tipo
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "80px",
+                        }}
+                        align="center"
+                      >
+                        Gravidade
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "120px",
+                        }}
+                        align="center"
+                      >
+                        Status
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {ocorrencias.map((ocorrencia, index) => (
+                      <TableRow key={ocorrencia.id || index}>
+                        <TableCell sx={{ border: "1px solid #000" }}>
+                          {ocorrencia.descricao}
+                          {ocorrencia.acao_tomada && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                display: "block",
+                                color: "#666",
+                                fontStyle: "italic",
+                                mt: 0.5,
+                              }}
+                            >
+                              Ação: {ocorrencia.acao_tomada}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: "1px solid #000" }}
+                          align="center"
                         >
-                          <ViewIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
+                          {formatarData(ocorrencia.data)}
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: "1px solid #000" }}
+                          align="center"
+                        >
+                          {ocorrencia.tipo === "seguranca"
+                            ? "SEGURANÇA"
+                            : ocorrencia.tipo === "qualidade"
+                            ? "QUALIDADE"
+                            : ocorrencia.tipo === "prazo"
+                            ? "PRAZO"
+                            : ocorrencia.tipo === "custo"
+                            ? "CUSTO"
+                            : ocorrencia.tipo === "clima"
+                            ? "CLIMA"
+                            : ocorrencia.tipo === "ambiental"
+                            ? "AMBIENTAL"
+                            : ocorrencia.tipo === "trabalhista"
+                            ? "TRABALHISTA"
+                            : ocorrencia.tipo === "equipamento"
+                            ? "EQUIPAMENTO"
+                            : ocorrencia.tipo === "material"
+                            ? "MATERIAL"
+                            : "GERAL"}
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: "1px solid #000", fontWeight: "bold" }}
+                          align="center"
+                        >
+                          <span
+                            style={{
+                              color:
+                                ocorrencia.gravidade === "critica"
+                                  ? "#d32f2f"
+                                  : ocorrencia.gravidade === "alta"
+                                  ? "#f57c00"
+                                  : ocorrencia.gravidade === "media"
+                                  ? "#ffa726"
+                                  : "#4caf50",
+                            }}
+                          >
+                            {ocorrencia.gravidade?.toUpperCase() || "N/A"}
+                          </span>
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: "1px solid #000" }}
+                          align="center"
+                        >
+                          {ocorrencia.status_resolucao === "em_tratamento"
+                            ? "EM TRATAMENTO"
+                            : ocorrencia.status_resolucao === "em_analise"
+                            ? "EM ANÁLISE"
+                            : ocorrencia.status_resolucao === "nao_aplicavel"
+                            ? "NÃO APLICÁVEL"
+                            : ocorrencia.status_resolucao?.toUpperCase() ||
+                              "PENDENTE"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          p: 2,
+                        }}
+                      >
+                        Não houve ocorrências
+                      </TableCell>
+                      <TableCell
+                        sx={{ border: "1px solid #000", width: "200px" }}
+                      ></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Box>
 
-                        {/* Botão Editar */}
-                        <IconButton
-                          size="small"
-                          onClick={() => abrirDialogEdicao(d)}
-                          sx={{
-                            backgroundColor: "#ff9800",
-                            color: "white",
-                            "&:hover": { backgroundColor: "#f57c00" },
-                          }}
-                          title="Editar"
+          {/* EQUIPE ENVOLVIDA */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                mb: 1,
+                backgroundColor: "#d0d0d0",
+                p: 1,
+                textAlign: "center",
+                border: "1px solid #000",
+              }}
+            >
+              Equipe envolvida
+            </Typography>
+            {equipe.length > 0 ? (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "100px",
+                        }}
+                      >
+                        Código
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                      >
+                        Descrição
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "200px",
+                        }}
+                        align="center"
+                      >
+                        Quantidade utilizada
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {equipe.map((membro, index) => (
+                      <TableRow key={membro.id || index}>
+                        <TableCell sx={{ border: "1px solid #000" }}>
+                          {membro.codigo || "N/A"}
+                        </TableCell>
+                        <TableCell sx={{ border: "1px solid #000" }}>
+                          {membro.descricao}
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: "1px solid #000" }}
+                          align="center"
                         >
-                          <EditIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
+                          {membro.quantidade_utilizada}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          p: 2,
+                        }}
+                        colSpan={3}
+                      >
+                        Nenhuma equipe registrada
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Box>
 
-                        {/* Botão Excluir */}
-                        <IconButton
-                          size="small"
-                          onClick={() => handleExcluir(d.id!)}
-                          sx={{
-                            backgroundColor: "#f44336",
-                            color: "white",
-                            "&:hover": { backgroundColor: "#d32f2f" },
-                          }}
-                          title="Excluir"
+          {/* EQUIPAMENTOS/MÁQUINAS UTILIZADOS */}
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                mb: 1,
+                backgroundColor: "#d0d0d0",
+                p: 1,
+                textAlign: "center",
+                border: "1px solid #000",
+              }}
+            >
+              Equipamentos/Máquinas utilizados
+            </Typography>
+            {equipamentos.length > 0 ? (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "100px",
+                        }}
+                      >
+                        Código
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: "bold", border: "1px solid #000" }}
+                      >
+                        Descrição
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: "bold",
+                          border: "1px solid #000",
+                          width: "200px",
+                        }}
+                        align="center"
+                      >
+                        Quantidade utilizada
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {equipamentos.map((equip, index) => (
+                      <TableRow key={equip.id || index}>
+                        <TableCell sx={{ border: "1px solid #000" }}>
+                          {equip.codigo || "N/A"}
+                        </TableCell>
+                        <TableCell sx={{ border: "1px solid #000" }}>
+                          {equip.descricao}
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: "1px solid #000" }}
+                          align="center"
                         >
-                          <DeleteIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </Stack>
-                    </td>
-                    <td style={{ padding: "12px" }}>{d.data}</td>
-                    <td style={{ padding: "12px" }}>
-                      {formatarPeriodo(d.periodo)}
-                    </td>
-                    <td style={{ padding: "12px" }}>
-                      {d.atividades_realizadas.substring(0, 50)}...
-                    </td>
-                    <td style={{ padding: "12px" }}>
-                      <Chip
-                        label={d.status_aprovacao}
-                        color={
-                          d.status_aprovacao === "aprovado"
-                            ? "success"
-                            : d.status_aprovacao === "rejeitado"
-                            ? "error"
-                            : "warning"
-                        }
-                        size="small"
-                      />
-                    </td>
-                    <td style={{ padding: "12px" }}>
-                      {d.foto ? (
-                        <Chip
-                          icon={<PhotoIcon />}
-                          label="Com foto"
-                          color="primary"
-                          size="small"
-                        />
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          Sem fotos
-                        </Typography>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          {equip.quantidade_utilizada}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <TableContainer sx={{ border: "1px solid #000" }}>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          border: "1px solid #000",
+                          textAlign: "center",
+                          p: 2,
+                        }}
+                        colSpan={3}
+                      >
+                        Nenhum equipamento registrado
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Box>
+
+          {/* ASSINATURAS */}
+          <Box sx={{ mt: 6, display: "flex", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                textAlign: "center",
+                width: "45%",
+                borderTop: "1px solid #000",
+                pt: 1,
+              }}
+            >
+              <Typography variant="body2">Responsável/Empresa</Typography>
+            </Box>
+            <Box
+              sx={{
+                textAlign: "center",
+                width: "45%",
+                borderTop: "1px solid #000",
+                pt: 1,
+              }}
+            >
+              <Typography variant="body2">Responsável/Prefeitura</Typography>
+            </Box>
+          </Box>
+
+          {/* RODAPÉ */}
+          <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #ddd" }}>
+            <Typography variant="caption" sx={{ color: "#666" }}>
+              Relatório gerado em {new Date().toLocaleDateString("pt-BR")} às{" "}
+              {new Date().toLocaleTimeString("pt-BR")}
+            </Typography>
           </Box>
         </Paper>
-      </TabPanel>
-
-      {/* === DIALOG DE VISUALIZAÇÃO === */}
-      <Dialog
-        open={dialogVisualizacao}
-        onClose={fecharDialogVisualizacao}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          Visualizar Diário de Obra
-          <IconButton onClick={fecharDialogVisualizacao}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {diarioSelecionado && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                  gap: 2,
-                }}
-              >
-                <TextField
-                  fullWidth
-                  label="Data"
-                  value={diarioSelecionado.data || ""}
-                  InputProps={{ readOnly: true }}
-                />
-                <TextField
-                  fullWidth
-                  label="Período"
-                  value={formatarPeriodo(diarioSelecionado.periodo) || ""}
-                  InputProps={{ readOnly: true }}
-                />
-              </Box>
-
-              <TextField
-                fullWidth
-                label="Atividades Realizadas"
-                value={diarioSelecionado.atividades_realizadas || ""}
-                multiline
-                rows={4}
-                InputProps={{ readOnly: true }}
-              />
-
-              {diarioSelecionado.ocorrencias && (
-                <TextField
-                  fullWidth
-                  label="Ocorrências"
-                  value={diarioSelecionado.ocorrencias}
-                  multiline
-                  rows={2}
-                  InputProps={{ readOnly: true }}
-                />
-              )}
-
-              {diarioSelecionado.observacoes && (
-                <TextField
-                  fullWidth
-                  label="Observações"
-                  value={diarioSelecionado.observacoes}
-                  multiline
-                  rows={2}
-                  InputProps={{ readOnly: true }}
-                />
-              )}
-
-              <TextField
-                fullWidth
-                label="Status de Aprovação"
-                value={diarioSelecionado.status_aprovacao || ""}
-                InputProps={{ readOnly: true }}
-              />
-
-              {/* Foto */}
-              {diarioSelecionado.foto && (
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Foto do Diário
-                  </Typography>
-                  <Card sx={{ maxWidth: 600, mx: "auto" }}>
-                    <CardMedia
-                      component="img"
-                      image={diarioSelecionado.foto}
-                      alt="Foto do diário de obra"
-                      sx={{
-                        width: "100%",
-                        height: "auto",
-                        maxHeight: 400,
-                        objectFit: "contain",
-                      }}
-                    />
-                  </Card>
-                </Box>
-              )}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={fecharDialogVisualizacao}>Fechar</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* === DIALOG DE EDIÇÃO === */}
-      <Dialog
-        open={dialogEdicao}
-        onClose={fecharDialogEdicao}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          Editar Diário de Obra
-          <IconButton onClick={fecharDialogEdicao}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {diarioSelecionado && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                  gap: 2,
-                }}
-              >
-                <FormControl fullWidth>
-                  <InputLabel>Obra</InputLabel>
-                  <Select
-                    value={dadosEdicao.obra_id || 0}
-                    onChange={(e) =>
-                      setDadosEdicao({
-                        ...dadosEdicao,
-                        obra_id: Number(e.target.value),
-                      })
-                    }
-                  >
-                    <MenuItem value={0}>Selecione</MenuItem>
-                    {obras.map((o) => (
-                      <MenuItem key={o.id} value={o.id}>
-                        {o.nome}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Data"
-                  value={dadosEdicao.data || ""}
-                  onChange={(e) =>
-                    setDadosEdicao({ ...dadosEdicao, data: e.target.value })
-                  }
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Box>
-
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                  gap: 2,
-                }}
-              >
-                <FormControl fullWidth>
-                  <InputLabel>Período</InputLabel>
-                  <Select
-                    value={dadosEdicao.periodo || ""}
-                    onChange={(e) =>
-                      setDadosEdicao({
-                        ...dadosEdicao,
-                        periodo: e.target.value,
-                      })
-                    }
-                  >
-                    <MenuItem value="manha">Manhã</MenuItem>
-                    <MenuItem value="tarde">Tarde</MenuItem>
-                    <MenuItem value="noite">Noite</MenuItem>
-                    <MenuItem value="integral">Integral</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth>
-                  <InputLabel>Responsável</InputLabel>
-                  <Select
-                    value={dadosEdicao.responsavel_id || 0}
-                    onChange={(e) =>
-                      setDadosEdicao({
-                        ...dadosEdicao,
-                        responsavel_id: Number(e.target.value),
-                      })
-                    }
-                  >
-                    <MenuItem value={0}>Selecione</MenuItem>
-                    {pessoas.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>
-                        {p.nome}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                label="Atividades Realizadas"
-                value={dadosEdicao.atividades_realizadas || ""}
-                onChange={(e) =>
-                  setDadosEdicao({
-                    ...dadosEdicao,
-                    atividades_realizadas: e.target.value,
-                  })
-                }
-              />
-
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                  gap: 2,
-                }}
-              >
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={2}
-                  label="Ocorrências (opcional)"
-                  value={dadosEdicao.ocorrencias || ""}
-                  onChange={(e) =>
-                    setDadosEdicao({
-                      ...dadosEdicao,
-                      ocorrencias: e.target.value,
-                    })
-                  }
-                />
-
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={2}
-                  label="Observações (opcional)"
-                  value={dadosEdicao.observacoes || ""}
-                  onChange={(e) =>
-                    setDadosEdicao({
-                      ...dadosEdicao,
-                      observacoes: e.target.value,
-                    })
-                  }
-                />
-              </Box>
-
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={dadosEdicao.status_aprovacao || "pendente"}
-                  onChange={(e) =>
-                    setDadosEdicao({
-                      ...dadosEdicao,
-                      status_aprovacao: e.target.value,
-                    })
-                  }
-                >
-                  <MenuItem value="pendente">Pendente</MenuItem>
-                  <MenuItem value="aprovado">Aprovado</MenuItem>
-                  <MenuItem value="rejeitado">Rejeitado</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* ✅ Campo Aprovado Por - visível sempre, obrigatório se status ≠ pendente */}
-              <FormControl
-                fullWidth
-                required={dadosEdicao.status_aprovacao !== "pendente"}
-              >
-                <InputLabel>
-                  Aprovado/Rejeitado Por{" "}
-                  {dadosEdicao.status_aprovacao !== "pendente"
-                    ? "*"
-                    : "(opcional)"}
-                </InputLabel>
-                <Select
-                  value={dadosEdicao.aprovado_por_id || 0}
-                  onChange={(e) =>
-                    setDadosEdicao({
-                      ...dadosEdicao,
-                      aprovado_por_id: Number(e.target.value),
-                    })
-                  }
-                >
-                  <MenuItem value={0}>
-                    {dadosEdicao.status_aprovacao === "pendente"
-                      ? "Ninguém"
-                      : "Selecione"}
-                  </MenuItem>
-                  {pessoas.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={fecharDialogEdicao} color="inherit">
-            Cancelar
-          </Button>
-          <Button
-            onClick={salvarEdicao}
-            variant="contained"
-            disabled={salvando}
-            startIcon={salvando ? <CircularProgress size={20} /> : null}
-          >
-            {salvando ? "Salvando..." : "Salvar Alterações"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      )}
     </Box>
   );
 };

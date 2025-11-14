@@ -21,6 +21,8 @@ import Receitas from "./pages/Receitas";
 import Fornecedores from "./pages/Fornecedores";
 import RelatoriosApiGo from "./pages/RelatoriosApiGo";
 import DiarioObras from "./pages/DiarioObras";
+import TarefasRealizadas from "./pages/TarefasRealizadas";
+import Ocorrencias from "./pages/Ocorrencias";
 
 const theme = createTheme({
   palette: {
@@ -87,6 +89,8 @@ function App() {
               <Route path="receitas" element={<Receitas />} />
               <Route path="fornecedores" element={<Fornecedores />} />
               <Route path="diario" element={<DiarioObras />} />
+              <Route path="/tarefas" element={<TarefasRealizadas />} />
+              <Route path="/ocorrencias" element={<Ocorrencias />} />
               <Route
                 path="empresas"
                 element={<div>Empresas - Em desenvolvimento</div>}

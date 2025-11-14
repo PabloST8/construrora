@@ -10,7 +10,18 @@ export const ocorrenciaService = {
     try {
       const response = await api.get("/ocorrencias");
       console.log("✅ Ocorrências carregadas:", response.data);
-      return response.data.data || [];
+      console.log(
+        "📊 Dados brutos da API:",
+        JSON.stringify(response.data, null, 2)
+      );
+
+      const ocorrencias = response.data.data || [];
+      if (ocorrencias.length > 0) {
+        console.log("🔍 Primeira ocorrência completa:", ocorrencias[0]);
+        console.log("📸 Fotos da primeira ocorrência:", ocorrencias[0]?.fotos);
+      }
+
+      return ocorrencias;
     } catch (error) {
       console.error("❌ Erro ao listar ocorrências:", error);
       throw error;

@@ -14,8 +14,9 @@
 - [x] **Sistema de Edição Completo** 🎉
 - [x] **Sistema de Visualização Completo** 👁️
 - [x] **Sistema com Conta Admin Única** 🔐
+- [x] **Upload de Fotos em Tarefas Implementado** 📸
 
-## ✅ Projeto 100% Completo - CRUD + Visualização Total
+## ✅ Projeto 100% Completo - CRUD + Visualização + Upload Total
 
 Sistema completo de gestão de obras com React.js frontend e Node.js backend totalmente implementado, incluindo:
 
@@ -113,6 +114,31 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 - ✅ **Avatar na tabela** (40px, com fallback de inicial)
 - ✅ **3 botões de ação na tabela**
 
+#### **Tarefas Realizadas - CRUD + VIEW 100%** 🔥 NOVO
+
+- ✅ CREATE: Cadastro completo + upload de até 3 fotos + responsável
+- ✅ READ: Busca com filtros (obra, data)
+- ✅ **VIEW: Modal de visualização somente leitura + galeria de fotos** 👁️
+- ✅ **UPDATE: Modal de edição com todos os campos + galeria de fotos** ✏️
+- ✅ DELETE: Exclusão com confirmação 🗑️
+- ✅ **Upload de Múltiplas Fotos**: Sistema completo integrado à API (máx. 3 fotos)
+- ✅ **Preview de Fotos**: Visualização antes de salvar com remoção individual
+- ✅ **Campo Responsável**: Select com lista de pessoas
+- ✅ **Barra de Progresso**: Percentual de conclusão visual
+- ✅ **3 botões de ação na tabela**
+
+**🔥 IMPLEMENTADO** (15/01/2025):
+
+- ✅ Sistema de múltiplas fotos (máx. 3) com preview em grid
+- ✅ Botão "Adicionar Foto" com contador (0/3, 1/3, 2/3, 3/3)
+- ✅ Remoção individual de fotos (botão X em cada foto)
+- ✅ Validações: tamanho (5MB) e tipo (somente imagens)
+- ✅ Galeria de fotos no modal de visualização
+- ✅ Tipo `TarefaFormData` com `fotos?: Foto[]`
+- ✅ Função `handleSalvar` envia array de fotos para API
+- ✅ Estrutura de `Foto` 100% compatível com API Go
+- ✅ Campo `responsavel_id` funcionando perfeitamente
+
 #### **Recursos dos Modais**
 
 **Modal de Visualização:**
@@ -148,7 +174,7 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 - ✅ **Loading states** durante upload
 - ✅ **Armazenamento**: Base64 no banco de dados
 - ✅ **Exibição em tabelas**: Avatar 40px com fallback (primeira letra)
-- ✅ **Implementado em**: Pessoas, Obras, Diário de Obras, Fornecedores
+- ✅ **Implementado em**: Pessoas, Obras, Diário de Obras, Fornecedores, **Tarefas Realizadas** 🔥
 
 ### Próximos Passos para Desenvolvimento
 
@@ -202,18 +228,19 @@ Sistema completo de gestão de obras com React.js frontend e Node.js backend tot
 
 ## 🎯 Status Geral
 
-| Módulo                | Status      | Observações                         |
-| --------------------- | ----------- | ----------------------------------- |
-| Backend API           | ✅ 100%     | Todas as rotas funcionando          |
-| Autenticação JWT      | ✅ 100%     | Interceptor + Refresh implementado  |
-| **Pessoas CRUD**      | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Obras CRUD**        | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Despesas CRUD**     | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Diário de Obras**   | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Fornecedores CRUD** | ✅ **100%** | **CREATE + READ + UPDATE + DELETE** |
-| **Upload de Fotos**   | ✅ **100%** | **4 módulos com sistema completo**  |
-| Dashboard             | ✅ 80%      | Funcionando, melhorias possíveis    |
-| Relatórios            | 🔄 30%      | Estrutura básica                    |
+| Módulo                 | Status      | Observações                                    |
+| ---------------------- | ----------- | ---------------------------------------------- |
+| Backend API            | ✅ 100%     | Todas as rotas funcionando                     |
+| Autenticação JWT       | ✅ 100%     | Interceptor + Refresh implementado             |
+| **Pessoas CRUD**       | ✅ **100%** | **CREATE + READ + UPDATE + DELETE**            |
+| **Obras CRUD**         | ✅ **100%** | **CREATE + READ + UPDATE + DELETE**            |
+| **Despesas CRUD**      | ✅ **100%** | **CREATE + READ + UPDATE + DELETE**            |
+| **Diário de Obras**    | ✅ **100%** | **CREATE + READ + UPDATE + DELETE**            |
+| **Fornecedores CRUD**  | ✅ **100%** | **CREATE + READ + UPDATE + DELETE**            |
+| **Tarefas Realizadas** | ✅ **100%** | **CREATE + READ + UPDATE + DELETE + FOTOS** 🔥 |
+| **Upload de Fotos**    | ✅ **100%** | **5 módulos com sistema completo**             |
+| Dashboard              | ✅ 80%      | Funcionando, melhorias possíveis               |
+| Relatórios             | 🔄 30%      | Estrutura básica                               |
 
 ---
 

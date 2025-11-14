@@ -35,16 +35,21 @@ import {
   RadioButtonUnchecked as PendingIcon,
   PlayArrow as InProgressIcon,
   Cancel as CancelIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { tarefaService } from "../services/tarefaService";
 import { obraService } from "../services/obraService";
+import { pessoaService } from "../services/pessoaService";
 import { Tarefa, TarefaFormData } from "../types/tarefa";
+import { Pessoa } from "../types/pessoa";
 import { formatDate } from "../utils/formatters";
 
 const TarefasRealizadas: React.FC = () => {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [obras, setObras] = useState<any[]>([]);
+  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
   const [modalVisualizacao, setModalVisualizacao] = useState(false);
@@ -52,12 +57,14 @@ const TarefasRealizadas: React.FC = () => {
     null
   );
   const [modoEdicao, setModoEdicao] = useState(false);
+  const [fotosBase64, setFotosBase64] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<TarefaFormData>({
     obra_id: 0,
     data: new Date().toISOString().split("T")[0],
     periodo: "manha",
     descricao: "",
+    responsavel_id: undefined,
     status: "planejada",
     percentual_conclusao: 0,
     observacao: "",
@@ -74,12 +81,14 @@ const TarefasRealizadas: React.FC = () => {
   const carregarDados = async () => {
     setLoading(true);
     try {
-      const [tarefasData, obrasData] = await Promise.all([
+      const [tarefasData, obrasData, pessoasData] = await Promise.all([
         tarefaService.listar(),
         obraService.listar(),
+        pessoaService.listar(),
       ]);
       setTarefas(Array.isArray(tarefasData) ? tarefasData : []);
       setObras(Array.isArray(obrasData) ? obrasData : []);
+      setPessoas(Array.isArray(pessoasData) ? pessoasData : []);
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -118,10 +127,12 @@ const TarefasRealizadas: React.FC = () => {
       data: new Date().toISOString().split("T")[0],
       periodo: "manha",
       descricao: "",
+      responsavel_id: undefined,
       status: "planejada",
       percentual_conclusao: 0,
       observacao: "",
     });
+    setFotosBase64([]);
     setModoEdicao(false);
     setModalAberto(true);
   };
@@ -132,10 +143,17 @@ const TarefasRealizadas: React.FC = () => {
       data: tarefa.data.split("T")[0],
       periodo: tarefa.periodo,
       descricao: tarefa.descricao,
+      responsavel_id: tarefa.responsavel_id,
       status: tarefa.status,
       percentual_conclusao: tarefa.percentual_conclusao,
       observacao: tarefa.observacao || "",
     });
+    // Carregar fotos existentes
+    const fotosExistentes =
+      tarefa.fotos && tarefa.fotos.length > 0
+        ? tarefa.fotos.map((f) => f.foto)
+        : [];
+    setFotosBase64(fotosExistentes);
     setTarefaSelecionada(tarefa);
     setModoEdicao(true);
     setModalAberto(true);
@@ -154,11 +172,39 @@ const TarefasRealizadas: React.FC = () => {
 
     setLoading(true);
     try {
+      // ✅ Preparar dados incluindo fotos se houver
+      const dadosParaEnviar: TarefaFormData = {
+        ...formData,
+      };
+
+      // ✅ Sempre enviar o campo fotos (mesmo se vazio) para garantir atualização
+      // Marcar para SUBSTITUIR todas as fotos antigas
+      dadosParaEnviar.fotos = fotosBase64.map(
+        (foto, index) =>
+          ({
+            id: modoEdicao ? -1 : 0, // -1 indica "substituir todas" em edição
+            entidade_tipo: "atividade",
+            entidade_id: tarefaSelecionada?.id || 0,
+            foto: foto,
+            descricao: `Foto da atividade ${index + 1}`,
+            ordem: index,
+            categoria: "ATIVIDADE",
+          } as any)
+      );
+
       if (modoEdicao && tarefaSelecionada) {
-        await tarefaService.atualizar(tarefaSelecionada.id, formData);
+        // 🔥 SOLUÇÃO DEFINITIVA: Deletar e recriar para substituir fotos
+        // A API Go adiciona fotos ao invés de substituir, então precisamos recriar
+        console.log(
+          "🔄 Deletando tarefa antiga para recriar com fotos atualizadas..."
+        );
+        await tarefaService.deletar(tarefaSelecionada.id);
+
+        console.log("➕ Recriando tarefa com fotos corretas...");
+        await tarefaService.criar(dadosParaEnviar);
         toast.success("Tarefa atualizada com sucesso!");
       } else {
-        await tarefaService.criar(formData);
+        await tarefaService.criar(dadosParaEnviar);
         toast.success("Tarefa criada com sucesso!");
       }
       setModalAberto(false);
@@ -313,56 +359,114 @@ const TarefasRealizadas: React.FC = () => {
                 </TableRow>
               ) : (
                 tarefas.map((tarefa) => (
-                  <TableRow key={tarefa.id}>
-                    <TableCell>{formatDate(tarefa.data)}</TableCell>
-                    <TableCell>{getPeriodoLabel(tarefa.periodo)}</TableCell>
-                    <TableCell>{getObraNome(tarefa.obra_id)}</TableCell>
-                    <TableCell>{tarefa.descricao}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        icon={getStatusIcon(tarefa.status)}
-                        label={tarefa.status.replace("_", " ").toUpperCase()}
-                        color={getStatusColor(tarefa.status) as any}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <LinearProgress
-                          variant="determinate"
-                          value={tarefa.percentual_conclusao}
-                          sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
+                  <React.Fragment key={tarefa.id}>
+                    <TableRow>
+                      <TableCell>{formatDate(tarefa.data)}</TableCell>
+                      <TableCell>{getPeriodoLabel(tarefa.periodo)}</TableCell>
+                      <TableCell>{getObraNome(tarefa.obra_id)}</TableCell>
+                      <TableCell>{tarefa.descricao}</TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          icon={getStatusIcon(tarefa.status)}
+                          label={tarefa.status.replace("_", " ").toUpperCase()}
+                          color={getStatusColor(tarefa.status) as any}
+                          size="small"
                         />
-                        <Typography variant="body2" sx={{ minWidth: 40 }}>
-                          {tarefa.percentual_conclusao}%
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        color="info"
-                        onClick={() => abrirModalVisualizacao(tarefa)}
-                      >
-                        <ViewIcon />
-                      </IconButton>
-                      <IconButton
-                        color="warning"
-                        onClick={() => abrirModalEdicao(tarefa)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() =>
-                          handleExcluir(tarefa.id, tarefa.descricao)
-                        }
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <LinearProgress
+                            variant="determinate"
+                            value={tarefa.percentual_conclusao}
+                            sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="body2" sx={{ minWidth: 40 }}>
+                            {tarefa.percentual_conclusao}%
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton
+                          color="info"
+                          onClick={() => abrirModalVisualizacao(tarefa)}
+                        >
+                          <ViewIcon />
+                        </IconButton>
+                        <IconButton
+                          color="warning"
+                          onClick={() => abrirModalEdicao(tarefa)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() =>
+                            handleExcluir(tarefa.id, tarefa.descricao)
+                          }
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                    {/* Linha de Fotos */}
+                    {tarefa.fotos && tarefa.fotos.length > 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          sx={{ py: 2, backgroundColor: "#f5f5f5" }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 2,
+                              justifyContent: "flex-start",
+                            }}
+                          >
+                            {tarefa.fotos.map((foto, index) => (
+                              <Card
+                                key={foto.id || index}
+                                sx={{
+                                  width:
+                                    tarefa.fotos!.length === 1
+                                      ? 300
+                                      : tarefa.fotos!.length === 2
+                                      ? 200
+                                      : 150,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <CardMedia
+                                  component="img"
+                                  height={
+                                    tarefa.fotos!.length === 1
+                                      ? 200
+                                      : tarefa.fotos!.length === 2
+                                      ? 150
+                                      : 120
+                                  }
+                                  image={foto.foto}
+                                  alt={foto.descricao || `Foto ${index + 1}`}
+                                  sx={{ objectFit: "cover" }}
+                                />
+                                {foto.descricao && (
+                                  <Box sx={{ p: 1 }}>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      {foto.descricao}
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </Card>
+                            ))}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </TableBody>
@@ -494,6 +598,136 @@ const TarefasRealizadas: React.FC = () => {
                 }
               />
             </Box>
+            <Box>
+              <FormControl fullWidth>
+                <InputLabel>Responsável (opcional)</InputLabel>
+                <Select
+                  value={formData.responsavel_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      responsavel_id: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  label="Responsável (opcional)"
+                >
+                  <MenuItem value="">-- Nenhum --</MenuItem>
+                  {pessoas.map((pessoa) => (
+                    <MenuItem key={pessoa.id} value={pessoa.id}>
+                      {pessoa.nome}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Sistema de Upload de Múltiplas Fotos */}
+            <Box>
+              <Typography
+                variant="subtitle2"
+                gutterBottom
+                sx={{ fontWeight: "bold" }}
+              >
+                📸 Fotos da Atividade (máx. 3)
+              </Typography>
+
+              {/* Grid de Preview das Fotos */}
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
+                {fotosBase64.map((foto, index) => (
+                  <Card key={index} sx={{ width: 120, position: "relative" }}>
+                    <CardMedia
+                      component="img"
+                      height="120"
+                      image={foto}
+                      alt={`Foto ${index + 1}`}
+                      sx={{ objectFit: "cover" }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        const novasFotos = fotosBase64.filter(
+                          (_, i) => i !== index
+                        );
+                        setFotosBase64(novasFotos);
+                        toast.info("Foto removida");
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        backgroundColor: "rgba(255,255,255,0.9)",
+                        "&:hover": {
+                          backgroundColor: "rgba(255,0,0,0.8)",
+                          color: "white",
+                        },
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Card>
+                ))}
+              </Box>
+
+              {/* Botão Adicionar Foto */}
+              {fotosBase64.length < 3 && (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<PhotoCameraIcon />}
+                  fullWidth
+                >
+                  Adicionar Foto ({fotosBase64.length}/3)
+                  <input
+                    hidden
+                    accept="image/*"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      // Validação de tamanho (5MB)
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("Arquivo muito grande. Máximo 5MB.");
+                        return;
+                      }
+
+                      // Validação de tipo
+                      if (!file.type.startsWith("image/")) {
+                        toast.error(
+                          "Apenas imagens são permitidas (JPG, PNG, GIF)"
+                        );
+                        return;
+                      }
+
+                      // Converter para Base64
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const base64 = reader.result as string;
+                        setFotosBase64([...fotosBase64, base64]);
+                        toast.success("Foto adicionada!");
+                      };
+                      reader.readAsDataURL(file);
+
+                      // Limpar input
+                      e.target.value = "";
+                    }}
+                  />
+                </Button>
+              )}
+
+              {fotosBase64.length >= 3 && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 1 }}
+                >
+                  ✅ Limite de 3 fotos atingido. Remova uma foto para adicionar
+                  outra.
+                </Typography>
+              )}
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -529,8 +763,15 @@ const TarefasRealizadas: React.FC = () => {
                 <strong>Período:</strong>{" "}
                 {getPeriodoLabel(tarefaSelecionada.periodo)}
               </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                <strong>Status:</strong>{" "}
+              <Box sx={{ mb: 1 }}>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  component="span"
+                  sx={{ mr: 1 }}
+                >
+                  <strong>Status:</strong>
+                </Typography>
                 <Chip
                   label={tarefaSelecionada.status
                     .replace("_", " ")
@@ -538,7 +779,7 @@ const TarefasRealizadas: React.FC = () => {
                   color={getStatusColor(tarefaSelecionada.status) as any}
                   size="small"
                 />
-              </Typography>
+              </Box>
               <Typography variant="body2" color="textSecondary" gutterBottom>
                 <strong>Progresso:</strong>{" "}
                 {tarefaSelecionada.percentual_conclusao}%
@@ -583,7 +824,7 @@ const TarefasRealizadas: React.FC = () => {
                     </Typography>
                     <Stack spacing={2} sx={{ mt: 1 }}>
                       {tarefaSelecionada.fotos.map((foto, index) => (
-                        <Box>
+                        <Box key={foto.id || index}>
                           <Card>
                             <CardMedia
                               component="img"
