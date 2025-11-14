@@ -373,7 +373,9 @@ const Ocorrencias: React.FC = () => {
                     <TableCell>{getTipoLabel(ocorrencia.tipo)}</TableCell>
                     <TableCell align="center">
                       <Chip
-                        icon={getGravidadeIcon(ocorrencia.gravidade) || undefined}
+                        icon={
+                          getGravidadeIcon(ocorrencia.gravidade) || undefined
+                        }
                         label={ocorrencia.gravidade.toUpperCase()}
                         color={getGravidadeColor(ocorrencia.gravidade) as any}
                         size="small"
