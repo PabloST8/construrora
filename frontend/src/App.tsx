@@ -23,6 +23,8 @@ import RelatoriosApiGo from "./pages/RelatoriosApiGo";
 import DiarioObras from "./pages/DiarioObras";
 import TarefasRealizadas from "./pages/TarefasRealizadas";
 import Ocorrencias from "./pages/Ocorrencias";
+import EquipeObra from "./pages/EquipeObra";
+import EquipamentosObra from "./pages/EquipamentosObra";
 
 const theme = createTheme({
   palette: {
@@ -91,6 +93,8 @@ function App() {
               <Route path="diario" element={<DiarioObras />} />
               <Route path="/tarefas" element={<TarefasRealizadas />} />
               <Route path="/ocorrencias" element={<Ocorrencias />} />
+              <Route path="/equipe" element={<EquipeObra />} />
+              <Route path="/equipamentos" element={<EquipamentosObra />} />
               <Route
                 path="empresas"
                 element={<div>Empresas - Em desenvolvimento</div>}

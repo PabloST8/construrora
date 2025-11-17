@@ -894,9 +894,15 @@ const Fornecedores: React.FC = () => {
               {fornecedorSelecionado.created_at && (
                 <TextField
                   label="Data de Criação"
-                  value={new Date(
-                    fornecedorSelecionado.created_at
-                  ).toLocaleDateString("pt-BR")}
+                  value={(() => {
+                    const dateStr = fornecedorSelecionado.created_at.includes(
+                      "T"
+                    )
+                      ? fornecedorSelecionado.created_at.split("T")[0]
+                      : fornecedorSelecionado.created_at;
+                    const [ano, mes, dia] = dateStr.split("-");
+                    return `${dia}/${mes}/${ano}`;
+                  })()}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />

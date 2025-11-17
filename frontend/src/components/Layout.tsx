@@ -70,6 +70,9 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/diario") return "📖 Diário de Obra";
     if (location.pathname === "/tarefas") return "✅ Tarefas Realizadas";
     if (location.pathname === "/ocorrencias") return "⚠️ Ocorrências";
+    if (location.pathname === "/equipe") return "👷 Equipe da Obra";
+    if (location.pathname === "/equipamentos")
+      return "🚜 Equipamentos e Máquinas";
     return "Sistema de Gestão de Obras";
   };
 
@@ -267,6 +270,40 @@ const Layout: React.FC<LayoutProps> = (props) => {
             }}
           >
             <ListItemText primary="⚠️ Ocorrências" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Equipe da Obra */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/equipe")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/equipe"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="👷 Equipe da Obra" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Equipamentos e Máquinas */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => navigate("/equipamentos")}
+            sx={{
+              color: "white",
+              backgroundColor:
+                location.pathname === "/equipamentos"
+                  ? "rgba(255,255,255,0.1)"
+                  : "transparent",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+            }}
+          >
+            <ListItemText primary="🚜 Equipamentos" />
           </ListItemButton>
         </ListItem>
       </List>

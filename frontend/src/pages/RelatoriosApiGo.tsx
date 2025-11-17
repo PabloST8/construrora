@@ -130,7 +130,13 @@ const RelatoriosApiGo: React.FC = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("pt-BR");
+    try {
+      const cleanDate = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+      const [ano, mes, dia] = cleanDate.split("-");
+      return `${dia}/${mes}/${ano}`;
+    } catch {
+      return "N/A";
+    }
   };
 
   const getStatusColor = (

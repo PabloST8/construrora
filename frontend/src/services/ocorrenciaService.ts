@@ -37,6 +37,10 @@ export const ocorrenciaService = {
     data: string
   ): Promise<Ocorrencia[]> {
     try {
+      // ✅ FIX DEFINITIVO: Enviar data diretamente no formato YYYY-MM-DD
+      // A API Go espera formato: "2025-11-14" (sem conversão de timezone)
+      console.log(`🔍 Buscando ocorrências: obra=${obraId}, data=${data}`);
+
       const response = await api.get(
         `/ocorrencias/obra/${obraId}/data/${data}`
       );

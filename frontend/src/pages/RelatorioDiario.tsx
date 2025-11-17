@@ -303,7 +303,13 @@ const RelatorioDiario: React.FC = () => {
                     relatorio.tarefas_realizadas.map((tarefa, index) => (
                       <TableRow key={index}>
                         <TableCell sx={{ whiteSpace: "nowrap" }}>
-                          {new Date(tarefa.data).toLocaleDateString("pt-BR")}
+                          {(() => {
+                            const dateStr = tarefa.data.includes("T")
+                              ? tarefa.data.split("T")[0]
+                              : tarefa.data;
+                            const [ano, mes, dia] = dateStr.split("-");
+                            return `${dia}/${mes}/${ano}`;
+                          })()}
                         </TableCell>
                         <TableCell>{tarefa.descricao}</TableCell>
                       </TableRow>
@@ -556,7 +562,13 @@ const RelatorioDiario: React.FC = () => {
                     />
                     <CardContent>
                       <Typography variant="caption" color="text.secondary">
-                        {new Date(foto.timestamp).toLocaleDateString("pt-BR")}
+                        {(() => {
+                          const dateStr = foto.timestamp.includes("T")
+                            ? foto.timestamp.split("T")[0]
+                            : foto.timestamp;
+                          const [ano, mes, dia] = dateStr.split("-");
+                          return `${dia}/${mes}/${ano}`;
+                        })()}
                       </Typography>
                       {foto.descricao && (
                         <Typography variant="body2">

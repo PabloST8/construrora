@@ -9,9 +9,17 @@ export const formatDate = (date: string | Date | null | undefined): string => {
   if (!date) return "-";
 
   try {
-    const dateObj = typeof date === "string" ? new Date(date) : date;
+    // Se for string no formato ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss), parse manual
+    if (typeof date === "string") {
+      const dateStr = date.includes("T") ? date.split("T")[0] : date;
+      const [ano, mes, dia] = dateStr.split("-");
+      if (ano && mes && dia) {
+        return `${dia}/${mes}/${ano}`;
+      }
+    }
 
-    // Verifica se dateObj é uma instância de Date válida
+    // Fallback para Date object (não deve acontecer com API Go)
+    const dateObj = typeof date === "string" ? new Date(date) : date;
     if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
       return "-";
     }
@@ -29,9 +37,18 @@ export const formatDateTime = (
   if (!date) return "-";
 
   try {
-    const dateObj = typeof date === "string" ? new Date(date) : date;
+    // Se for string no formato ISO com timestamp, parse manual da data
+    if (typeof date === "string" && date.includes("T")) {
+      const [datePart, timePart] = date.split("T");
+      const [ano, mes, dia] = datePart.split("-");
+      const [hora, minuto] = timePart.split(":");
+      if (ano && mes && dia && hora && minuto) {
+        return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+      }
+    }
 
-    // Verifica se dateObj é uma instância de Date válida
+    // Fallback para Date object
+    const dateObj = typeof date === "string" ? new Date(date) : date;
     if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
       return "-";
     }

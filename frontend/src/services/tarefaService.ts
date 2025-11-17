@@ -23,6 +23,10 @@ export const tarefaService = {
    */
   async buscarPorObraEData(obraId: number, data: string): Promise<Tarefa[]> {
     try {
+      // ✅ FIX DEFINITIVO: Enviar data diretamente no formato YYYY-MM-DD
+      // A API Go espera formato: "2025-11-14" (sem conversão de timezone)
+      console.log(`🔍 Buscando tarefas: obra=${obraId}, data=${data}`);
+
       const response = await api.get(`/tarefas/obra/${obraId}/data/${data}`);
       console.log(`✅ Tarefas da obra ${obraId} em ${data}:`, response.data);
       return response.data.data || [];

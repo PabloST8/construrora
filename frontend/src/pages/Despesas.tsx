@@ -1149,9 +1149,13 @@ const Despesas: React.FC = () => {
               {despesaVisualizando.data && (
                 <TextField
                   label="Data da Despesa"
-                  value={new Date(despesaVisualizando.data).toLocaleDateString(
-                    "pt-BR"
-                  )}
+                  value={(() => {
+                    const dateStr = despesaVisualizando.data.includes("T")
+                      ? despesaVisualizando.data.split("T")[0]
+                      : despesaVisualizando.data;
+                    const [ano, mes, dia] = dateStr.split("-");
+                    return `${dia}/${mes}/${ano}`;
+                  })()}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
@@ -1161,9 +1165,14 @@ const Despesas: React.FC = () => {
               {despesaVisualizando.data_vencimento && (
                 <TextField
                   label="Data de Vencimento"
-                  value={new Date(
-                    despesaVisualizando.data_vencimento
-                  ).toLocaleDateString("pt-BR")}
+                  value={(() => {
+                    const dateStr =
+                      despesaVisualizando.data_vencimento.includes("T")
+                        ? despesaVisualizando.data_vencimento.split("T")[0]
+                        : despesaVisualizando.data_vencimento;
+                    const [ano, mes, dia] = dateStr.split("-");
+                    return `${dia}/${mes}/${ano}`;
+                  })()}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />
@@ -1172,9 +1181,15 @@ const Despesas: React.FC = () => {
               {despesaVisualizando.dataPagamento && (
                 <TextField
                   label="Data de Pagamento"
-                  value={new Date(
-                    despesaVisualizando.dataPagamento
-                  ).toLocaleDateString("pt-BR")}
+                  value={(() => {
+                    const dateStr = despesaVisualizando.dataPagamento.includes(
+                      "T"
+                    )
+                      ? despesaVisualizando.dataPagamento.split("T")[0]
+                      : despesaVisualizando.dataPagamento;
+                    const [ano, mes, dia] = dateStr.split("-");
+                    return `${dia}/${mes}/${ano}`;
+                  })()}
                   InputProps={{ readOnly: true }}
                   fullWidth
                 />

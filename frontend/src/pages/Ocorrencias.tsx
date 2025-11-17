@@ -92,9 +92,10 @@ const Ocorrencias: React.FC = () => {
   };
 
   const aplicarFiltros = async () => {
-    if (filtroObra > 0 && filtroData) {
-      setLoading(true);
-      try {
+    setLoading(true);
+    try {
+      if (filtroObra > 0 && filtroData) {
+        // Buscar por obra E data específica (endpoint antigo)
         const ocorrenciasFiltradas = await ocorrenciaService.buscarPorObraEData(
           filtroObra,
           filtroData
@@ -102,13 +103,22 @@ const Ocorrencias: React.FC = () => {
         setOcorrencias(
           Array.isArray(ocorrenciasFiltradas) ? ocorrenciasFiltradas : []
         );
-      } catch (error) {
-        toast.error("Erro ao buscar ocorrências");
-      } finally {
-        setLoading(false);
+      } else if (filtroObra > 0 && !filtroData) {
+        // ✨ NOVO: Buscar TODAS as ocorrências da obra (sem data)
+        // Endpoint: GET /ocorrencias/obra/:obra_id
+        const response = await api.get(`/ocorrencias/obra/${filtroObra}`);
+        const ocorrenciasData = response.data.data || response.data || [];
+        setOcorrencias(Array.isArray(ocorrenciasData) ? ocorrenciasData : []);
+        toast.success(
+          `Histórico completo: ${ocorrenciasData.length} ocorrências`
+        );
+      } else {
+        carregarDados();
       }
-    } else {
-      carregarDados();
+    } catch (error) {
+      toast.error("Erro ao buscar ocorrências");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -342,10 +352,12 @@ const Ocorrencias: React.FC = () => {
             <Button
               variant="contained"
               onClick={aplicarFiltros}
-              disabled={filtroObra === 0 || !filtroData}
+              disabled={filtroObra === 0}
               fullWidth
             >
-              Buscar
+              {filtroData
+                ? "Buscar (Data Específica)"
+                : "Buscar Histórico Completo"}
             </Button>
             <Button variant="outlined" onClick={limparFiltros} fullWidth>
               Limpar

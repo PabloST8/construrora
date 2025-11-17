@@ -54,20 +54,21 @@ interface EquipamentoDiario {
   updated_at?: string;
 }
 
-interface MaterialDiario {
-  id: number;
-  diario_id: number;
-  codigo?: string;
-  descricao: string;
-  quantidade: number;
-  unidade: string;
-  fornecedor?: string;
-  valor_unitario?: number;
-  valor_total?: number;
-  observacoes?: string;
-  created_at: string;
-  updated_at?: string;
-}
+// Interface removida - não utilizada após implementação dos novos endpoints
+// interface MaterialDiario {
+//   id: number;
+//   diario_id: number;
+//   codigo?: string;
+//   descricao: string;
+//   quantidade: number;
+//   unidade: string;
+//   fornecedor?: string;
+//   valor_unitario?: number;
+//   valor_total?: number;
+//   observacoes?: string;
+//   created_at: string;
+//   updated_at?: string;
+// }
 
 const DiarioObras: React.FC = () => {
   const [obras, setObras] = useState<Obra[]>([]);
@@ -103,91 +104,165 @@ const DiarioObras: React.FC = () => {
     }
 
     setLoading(true);
+
+    // Limpar dados anteriores antes de buscar novos
+    setTarefas([]);
+    setOcorrencias([]);
+    setEquipe([]);
+    setEquipamentos([]);
+
     try {
       // 1. Buscar dados da obra
       const obra = obras.find((o) => o.id === obraId);
       setObraSelecionada(obra || null);
 
-      // 2. Buscar TODAS as tarefas da obra via API Go (endpoint: GET /tarefas?obra_id=X)
+      console.log("🔍 Gerando relatório para obra ID:", obraId);
+
+      // 2. ✨ NOVO: Buscar TODAS as tarefas da obra (sem filtro de data)
+      // Endpoint: GET /tarefas/obra/:obra_id
       try {
-        const tarefasResponse = await api.get(`/tarefas`, {
-          params: { obra_id: obraId },
-        });
+        const tarefasResponse = await api.get(`/tarefas/obra/${obraId}`);
         const tarefasData =
           tarefasResponse.data.data || tarefasResponse.data || [];
-        console.log("📋 Tarefas recebidas:", tarefasData);
+        console.log("📋 Tarefas recebidas (histórico completo):", tarefasData);
+        console.log("📋 Quantidade de tarefas:", tarefasData.length);
         setTarefas(Array.isArray(tarefasData) ? tarefasData : []);
       } catch (err) {
         console.warn(
-          "⚠️ Endpoint /tarefas não encontrado, tentando método alternativo..."
+          "⚠️ Endpoint /tarefas/obra/:id não encontrado, tentando fallback..."
         );
-        // Fallback: Se /tarefas não existir, deixa vazio
-        setTarefas([]);
-      }
-
-      // 3. Buscar TODAS as ocorrências da obra via API Go (endpoint: GET /ocorrencias?obra_id=X)
-      try {
-        const ocorrenciasResponse = await api.get(`/ocorrencias`, {
-          params: { obra_id: obraId },
-        });
-        const ocorrenciasData =
-          ocorrenciasResponse.data.data || ocorrenciasResponse.data || [];
-        console.log("⚠️ Ocorrências recebidas:", ocorrenciasData);
-        setOcorrencias(Array.isArray(ocorrenciasData) ? ocorrenciasData : []);
-      } catch (err) {
-        console.warn(
-          "⚠️ Endpoint /ocorrencias não encontrado, tentando método alternativo..."
-        );
-        // Fallback: Se /ocorrencias não existir, deixa vazio
-        setOcorrencias([]);
-      }
-
-      // 4. Buscar todos os diários da obra para agregar equipe/equipamentos/materiais
-      const diariosResponse = await api.get(`/diarios/obra/${obraId}`);
-      const diariosData =
-        diariosResponse.data.data || diariosResponse.data || [];
-      console.log("📖 Diários da obra:", diariosData);
-
-      // Arrays consolidados
-      const equipeConsolidada: EquipeDiario[] = [];
-      const equipamentosConsolidados: EquipamentoDiario[] = [];
-      const materiaisConsolidados: MaterialDiario[] = [];
-
-      // 5. Para cada diário, buscar equipe, equipamentos e materiais
-      for (const diario of diariosData) {
+        // Fallback: Tentar endpoint antigo com query params
         try {
-          // Buscar equipe do diário
-          const equipeResp = await api.get(
-            `/equipe-diario/diario/${diario.id}`
-          );
-          const equipeData = equipeResp.data.data || equipeResp.data || [];
-          equipeConsolidada.push(
-            ...(Array.isArray(equipeData) ? equipeData : [])
-          );
-
-          // Buscar equipamentos do diário
-          const equipResp = await api.get(
-            `/equipamento-diario/diario/${diario.id}`
-          );
-          const equipData = equipResp.data.data || equipResp.data || [];
-          equipamentosConsolidados.push(
-            ...(Array.isArray(equipData) ? equipData : [])
-          );
-
-          // Buscar materiais do diário
-          const matResp = await api.get(`/material-diario/diario/${diario.id}`);
-          const matData = matResp.data.data || matResp.data || [];
-          materiaisConsolidados.push(
-            ...(Array.isArray(matData) ? matData : [])
-          );
-        } catch (err) {
-          console.error(`Erro ao buscar dados do diário ${diario.id}:`, err);
-          // Continua com os outros diários mesmo se houver erro
+          const tarefasResponse = await api.get(`/tarefas`, {
+            params: { obra_id: obraId },
+          });
+          const tarefasData =
+            tarefasResponse.data.data || tarefasResponse.data || [];
+          setTarefas(Array.isArray(tarefasData) ? tarefasData : []);
+        } catch {
+          setTarefas([]);
         }
       }
 
-      console.log("👷 Equipe consolidada:", equipeConsolidada);
-      console.log("🚜 Equipamentos consolidados:", equipamentosConsolidados);
+      // 3. ✨ NOVO: Buscar TODAS as ocorrências da obra (sem filtro de data)
+      // Endpoint: GET /ocorrencias/obra/:obra_id
+      try {
+        const ocorrenciasResponse = await api.get(
+          `/ocorrencias/obra/${obraId}`
+        );
+        const ocorrenciasData =
+          ocorrenciasResponse.data.data || ocorrenciasResponse.data || [];
+        console.log(
+          "⚠️ Ocorrências recebidas (histórico completo):",
+          ocorrenciasData
+        );
+        console.log("⚠️ Quantidade de ocorrências:", ocorrenciasData.length);
+        setOcorrencias(Array.isArray(ocorrenciasData) ? ocorrenciasData : []);
+      } catch (err) {
+        console.warn(
+          "⚠️ Endpoint /ocorrencias/obra/:id não encontrado, tentando fallback..."
+        );
+        // Fallback: Tentar endpoint antigo com query params
+        try {
+          const ocorrenciasResponse = await api.get(`/ocorrencias`, {
+            params: { obra_id: obraId },
+          });
+          const ocorrenciasData =
+            ocorrenciasResponse.data.data || ocorrenciasResponse.data || [];
+          setOcorrencias(Array.isArray(ocorrenciasData) ? ocorrenciasData : []);
+        } catch {
+          setOcorrencias([]);
+        }
+      }
+
+      // 4. ✨ NOVO: Buscar equipe/equipamentos direto da obra (endpoint sem data)
+      // Arrays consolidados
+      let equipeConsolidada: EquipeDiario[] = [];
+      let equipamentosConsolidados: EquipamentoDiario[] = [];
+
+      // Tentar novo endpoint GET /equipe-diario/obra/:obra_id
+      try {
+        const equipeResp = await api.get(`/equipe-diario/obra/${obraId}`);
+        const equipeData = equipeResp.data.data || equipeResp.data || [];
+        equipeConsolidada = Array.isArray(equipeData) ? equipeData : [];
+        console.log(
+          "👷 Equipe consolidada (histórico completo):",
+          equipeConsolidada
+        );
+      } catch (err: any) {
+        console.warn(
+          "⚠️ Endpoint /equipe-diario/obra/:id não encontrado, usando método antigo..."
+        );
+        // Fallback: Buscar por diários
+        try {
+          const diariosResponse = await api.get(`/diarios/obra/${obraId}`);
+          // ✅ FIX: Extrair data corretamente
+          const responseData =
+            diariosResponse.data.data || diariosResponse.data;
+
+          // ✅ FIX: Verificar se responseData é null ou não é um array
+          let diariosData: any[] = [];
+          if (responseData === null || responseData === undefined) {
+            console.warn("⚠️ Nenhum diário encontrado para esta obra");
+            diariosData = [];
+          } else if (Array.isArray(responseData)) {
+            diariosData = responseData;
+          } else {
+            console.warn(
+              "⚠️ diariosData não é um array nem null, convertendo:",
+              responseData
+            );
+            diariosData = [];
+          }
+
+          console.log("📖 Diários da obra:", diariosData);
+
+          // Buscar equipe de cada diário
+          for (const diario of diariosData) {
+            try {
+              const equipeResp = await api.get(
+                `/equipe-diario/diario/${diario.id}`
+              );
+              const equipeData = equipeResp.data.data || equipeResp.data || [];
+              equipeConsolidada.push(
+                ...(Array.isArray(equipeData) ? equipeData : [])
+              );
+            } catch (err2: any) {
+              // ✅ FIX: Não logar erro 500 para cada diário (muito verboso)
+              if (err2.response?.status === 500) {
+                console.warn(
+                  `⚠️ Erro 500 ao buscar equipe do diário ${diario.id} (sem dados cadastrados)`
+                );
+              } else {
+                console.error(
+                  `Erro ao buscar equipe do diário ${diario.id}:`,
+                  err2.message
+                );
+              }
+            }
+          }
+        } catch (diariosErr: any) {
+          console.error("Erro ao buscar diários:", diariosErr.message);
+        }
+      }
+
+      // Buscar equipamentos da obra
+      try {
+        const equipResp = await api.get(`/equipamento-diario/obra/${obraId}`);
+        const equipData = equipResp.data.data || equipResp.data || [];
+        equipamentosConsolidados = Array.isArray(equipData) ? equipData : [];
+        console.log(
+          "🚜 Equipamentos consolidados (histórico completo):",
+          equipamentosConsolidados
+        );
+      } catch (err) {
+        console.warn("⚠️ Endpoint /equipamento-diario/obra/:id não encontrado");
+        equipamentosConsolidados = [];
+      }
+
+      console.log(
+        `✅ Relatório gerado: ${tarefas.length} tarefas, ${ocorrencias.length} ocorrências, ${equipeConsolidada.length} membros de equipe`
+      );
 
       setEquipe(equipeConsolidada);
       setEquipamentos(equipamentosConsolidados);
@@ -208,11 +283,10 @@ const DiarioObras: React.FC = () => {
   const formatarData = (dataISO: string) => {
     if (!dataISO) return "N/A";
     try {
-      // Se já tem horário, usa direto, senão adiciona T00:00:00
-      const dateStr = dataISO.includes("T") ? dataISO : dataISO + "T00:00:00";
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return "N/A";
-      return date.toLocaleDateString("pt-BR");
+      // Parse manual para evitar problema de fuso horário
+      const dateStr = dataISO.includes("T") ? dataISO.split("T")[0] : dataISO;
+      const [ano, mes, dia] = dateStr.split("-");
+      return `${dia}/${mes}/${ano}`;
     } catch {
       return "N/A";
     }
@@ -239,7 +313,16 @@ const DiarioObras: React.FC = () => {
               <InputLabel>Obra *</InputLabel>
               <Select
                 value={obraId}
-                onChange={(e) => setObraId(Number(e.target.value))}
+                onChange={(e) => {
+                  const novaObraId = Number(e.target.value);
+                  setObraId(novaObraId);
+                  // Limpar relatório anterior ao trocar de obra
+                  setObraSelecionada(null);
+                  setTarefas([]);
+                  setOcorrencias([]);
+                  setEquipe([]);
+                  setEquipamentos([]);
+                }}
                 label="Obra *"
               >
                 <MenuItem value={0}>Selecione uma obra</MenuItem>
@@ -516,20 +599,15 @@ const DiarioObras: React.FC = () => {
                                 sx={{
                                   display: "flex",
                                   gap: 1,
-                                  justifyContent: "flex-start",
+                                  justifyContent: "center",
                                 }}
                               >
                                 {tarefa.fotos.map((foto, fotoIndex) => (
                                   <Box
                                     key={foto.id || fotoIndex}
                                     sx={{
-                                      flex: 1,
-                                      maxWidth:
-                                        tarefa.fotos!.length === 1
-                                          ? "100%"
-                                          : tarefa.fotos!.length === 2
-                                          ? "50%"
-                                          : "33.33%",
+                                      width: "33.33%",
+                                      flexShrink: 0,
                                     }}
                                   >
                                     <CardMedia
@@ -538,12 +616,7 @@ const DiarioObras: React.FC = () => {
                                       alt={`Foto ${fotoIndex + 1}`}
                                       sx={{
                                         width: "100%",
-                                        height:
-                                          tarefa.fotos!.length === 1
-                                            ? 600
-                                            : tarefa.fotos!.length === 2
-                                            ? 400
-                                            : 300,
+                                        height: 300,
                                         objectFit: "cover",
                                         borderRadius: 1,
                                       }}

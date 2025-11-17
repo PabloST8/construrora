@@ -339,7 +339,13 @@ const BuscarObra: React.FC = () => {
 
   const formatDate = (date?: string) => {
     if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("pt-BR");
+    try {
+      const dateStr = date.includes("T") ? date.split("T")[0] : date;
+      const [ano, mes, dia] = dateStr.split("-");
+      return `${dia}/${mes}/${ano}`;
+    } catch {
+      return "N/A";
+    }
   };
 
   return (
@@ -958,9 +964,15 @@ const BuscarObra: React.FC = () => {
                   fullWidth
                   value={
                     obraVisualizando.data_inicio
-                      ? new Date(
-                          obraVisualizando.data_inicio
-                        ).toLocaleDateString("pt-BR")
+                      ? (() => {
+                          const dateStr = obraVisualizando.data_inicio.includes(
+                            "T"
+                          )
+                            ? obraVisualizando.data_inicio.split("T")[0]
+                            : obraVisualizando.data_inicio;
+                          const [ano, mes, dia] = dateStr.split("-");
+                          return `${dia}/${mes}/${ano}`;
+                        })()
                       : "Não informado"
                   }
                   InputProps={{ readOnly: true }}
@@ -972,9 +984,14 @@ const BuscarObra: React.FC = () => {
                   fullWidth
                   value={
                     obraVisualizando.data_fim_prevista
-                      ? new Date(
-                          obraVisualizando.data_fim_prevista
-                        ).toLocaleDateString("pt-BR")
+                      ? (() => {
+                          const dateStr =
+                            obraVisualizando.data_fim_prevista.includes("T")
+                              ? obraVisualizando.data_fim_prevista.split("T")[0]
+                              : obraVisualizando.data_fim_prevista;
+                          const [ano, mes, dia] = dateStr.split("-");
+                          return `${dia}/${mes}/${ano}`;
+                        })()
                       : "Não informado"
                   }
                   InputProps={{ readOnly: true }}
