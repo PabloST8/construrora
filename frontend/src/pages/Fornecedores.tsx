@@ -50,6 +50,9 @@ import { removerMascara } from "../utils/masks";
 
 const Fornecedores: React.FC = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [fornecedoresOriginal, setFornecedoresOriginal] = useState<
+    Fornecedor[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [dialogVisualizacao, setDialogVisualizacao] = useState(false);
@@ -117,10 +120,12 @@ const Fornecedores: React.FC = () => {
     setLoading(true);
     try {
       const fornecedoresData = await fornecedorService.listar();
-      console.log("🔍 Fornecedores carregados:", fornecedoresData);
-      setFornecedores(Array.isArray(fornecedoresData) ? fornecedoresData : []);
+      console.log("Fornecedores carregados:", fornecedoresData);
+      const lista = Array.isArray(fornecedoresData) ? fornecedoresData : [];
+      setFornecedores(lista);
+      setFornecedoresOriginal(lista);
     } catch (error) {
-      console.error("❌ Erro ao carregar fornecedores:", error);
+      console.error("Erro ao carregar fornecedores:", error);
       toast.error("Erro ao carregar fornecedores");
     } finally {
       setLoading(false);
@@ -128,10 +133,10 @@ const Fornecedores: React.FC = () => {
   };
 
   const buscarComFiltros = () => {
-    const resultado = fornecedores.filter((fornecedor) => {
+    const resultado = fornecedoresOriginal.filter((fornecedor) => {
       const filtroNome =
         !filtros.nome ||
-        fornecedor.nome.toLowerCase().includes(filtros.nome.toLowerCase());
+        fornecedor.nome.toLowerCase().startsWith(filtros.nome.toLowerCase());
 
       const filtroTipo =
         !filtros.tipo_documento ||
@@ -153,7 +158,8 @@ const Fornecedores: React.FC = () => {
       tipo_documento: "",
       ativo: "",
     });
-    carregarDados();
+    setFornecedores(fornecedoresOriginal);
+    toast.info("Filtros limpos - exibindo todos os fornecedores");
   };
 
   const abrirDialogCriacao = () => {

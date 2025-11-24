@@ -89,8 +89,23 @@ const Dashboard: React.FC = () => {
         receitaService.listar(filtros).catch(() => []),
       ]);
 
+      // FILTRO MANUAL: Backend não filtra corretamente, então filtramos no frontend
+      let despesasArray = Array.isArray(despesas) ? despesas : [];
+      let receitasArray = Array.isArray(receitas) ? receitas : [];
+
+      // Se uma obra específica foi selecionada, filtrar manualmente
+      if (obraSelecionada !== "todas") {
+        const obraIdNum = Number(obraSelecionada);
+
+        despesasArray = despesasArray.filter(
+          (d: any) => d.obra_id === obraIdNum
+        );
+        receitasArray = receitasArray.filter(
+          (r: any) => r.obra_id === obraIdNum
+        );
+      }
+
       // Processar despesas
-      const despesasArray = Array.isArray(despesas) ? despesas : [];
       const totalDespesas = despesasArray.reduce(
         (acc: number, despesa: any) => acc + (despesa.valor || 0),
         0
@@ -103,7 +118,6 @@ const Dashboard: React.FC = () => {
         .reduce((acc: number, despesa: any) => acc + (despesa.valor || 0), 0);
 
       // Processar receitas
-      const receitasArray = Array.isArray(receitas) ? receitas : [];
       const totalReceitas = receitasArray.reduce(
         (acc: number, receita: any) => acc + (receita.valor || 0),
         0
@@ -351,55 +365,6 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-
-      {/* Resumo Simplificado */}
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom sx={{ color: "#333", mb: 2 }}>
-          📈 Resumo Financeiro
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                p: 2,
-                backgroundColor: "#f5f5f5",
-                borderRadius: 2,
-                border: "1px solid #e0e0e0",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Entrada (Receitas)
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{ color: "#4caf50", fontWeight: "bold" }}
-              >
-                + {formatCurrency(estatisticas.totalReceitas)}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                p: 2,
-                backgroundColor: "#f5f5f5",
-                borderRadius: 2,
-                border: "1px solid #e0e0e0",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Saída (Despesas Pagas)
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{ color: "#f44336", fontWeight: "bold" }}
-              >
-                - {formatCurrency(estatisticas.despesasPagas)}
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
     </Box>
   );
 };
