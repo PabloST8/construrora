@@ -106,8 +106,8 @@ const CadastrarObra: React.FC = () => {
       // ✅ Garantir que sempre seja um array
       setPessoas(Array.isArray(listaPessoas) ? listaPessoas : []);
     } catch (error) {
-      console.error("❌ Erro ao carregar pessoas:", error);
-      toast.error("❌ Erro ao carregar lista de pessoas");
+      console.error("Erro ao carregar pessoas:", error);
+      toast.error("Erro ao carregar lista de pessoas");
       setPessoas([]); // ✅ Garantir array vazio em caso de erro
     } finally {
       setCarregandoPessoas(false);
@@ -155,23 +155,23 @@ const CadastrarObra: React.FC = () => {
 
     // Validações completas
     if (!formData.nome || !validarStringNaoVazia(formData.nome)) {
-      toast.error("⚠️ Nome da obra é obrigatório");
+      toast.error("Nome da obra é obrigatório");
       return;
     }
 
     if (formData.nome.length < 3) {
-      toast.error("⚠️ Nome da obra deve ter no mínimo 3 caracteres");
+      toast.error("Nome da obra deve ter no mínimo 3 caracteres");
       return;
     }
 
     if (!formData.data_inicio || !validarData(formData.data_inicio)) {
-      toast.error("⚠️ Data de início inválida ou não preenchida");
+      toast.error("Data de início inválida ou não preenchida");
       return;
     }
 
     if (formData.data_fim_prevista) {
       if (!validarData(formData.data_fim_prevista)) {
-        toast.error("⚠️ Data de fim prevista inválida");
+        toast.error("Data de fim prevista inválida");
         return;
       }
 
@@ -187,13 +187,13 @@ const CadastrarObra: React.FC = () => {
     }
 
     if (!formData.contratante_id || formData.contratante_id === 0) {
-      toast.error("⚠️ Selecione o contratante");
+      toast.error("Selecione o contratante");
       return;
     }
 
     // Validar orçamento se preenchido
     if (formData.orcamento && !validarValorMonetario(formData.orcamento)) {
-      toast.error("⚠️ Orçamento deve ser um valor positivo");
+      toast.error("Orçamento deve ser um valor positivo");
       return;
     }
 
@@ -203,7 +203,7 @@ const CadastrarObra: React.FC = () => {
       !validarInteiroPositivo(formData.prazo_dias) &&
       formData.prazo_dias !== 0
     ) {
-      toast.error("⚠️ Prazo em dias deve ser um número inteiro positivo");
+      toast.error("Prazo em dias deve ser um número inteiro positivo");
       return;
     }
 
@@ -239,7 +239,7 @@ const CadastrarObra: React.FC = () => {
 
       console.log("✅ Obra cadastrada com sucesso:", obraCriada);
 
-      toast.success(`✅ Obra cadastrada com sucesso! ID: ${obraCriada.id}`);
+      toast.success(`Obra cadastrada com sucesso! ID: ${obraCriada.id}`);
 
       // Limpar formulário após sucesso
       setFormData({
@@ -269,15 +269,15 @@ const CadastrarObra: React.FC = () => {
         window.location.href = "/obras";
       }, 2000);
     } catch (error: any) {
-      console.error("❌ Erro ao cadastrar obra:", error);
-      console.error("📥 Resposta da API:", error.response?.data);
+      console.error("Erro ao cadastrar obra:", error);
+      console.error("Resposta da API:", error.response?.data);
 
       const mensagemErro =
         error.response?.data?.error ||
         error.response?.data?.message ||
         "Erro ao cadastrar obra";
 
-      toast.error(`❌ ${mensagemErro}`);
+      toast.error(mensagemErro);
     } finally {
       setSalvando(false);
     }
@@ -541,7 +541,7 @@ const CadastrarObra: React.FC = () => {
                   label="Ativo"
                 >
                   <MenuItem value="true">✅ Ativa</MenuItem>
-                  <MenuItem value="false">❌ Inativa</MenuItem>
+                  <MenuItem value="false">Inativa</MenuItem>
                 </Select>
               </FormControl>
             </Box>

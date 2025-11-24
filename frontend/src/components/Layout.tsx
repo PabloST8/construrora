@@ -66,15 +66,14 @@ const Layout: React.FC<LayoutProps> = (props) => {
     if (location.pathname === "/despesas") return "Gestão de Despesas";
     if (location.pathname === "/receitas") return "Gestão de Receitas";
     if (location.pathname === "/fornecedores") return "Gestão de Fornecedores";
-    if (location.pathname === "/relatorios") return "📊 Relatórios";
+    if (location.pathname === "/relatorios") return "Relatórios";
     if (location.pathname === "/relatorio-fotografico")
-      return "📸 Relatório Fotográfico";
-    if (location.pathname === "/diario") return "📖 Diário de Obra";
-    if (location.pathname === "/tarefas") return "✅ Tarefas Realizadas";
-    if (location.pathname === "/ocorrencias") return "⚠️ Ocorrências";
-    if (location.pathname === "/equipe") return "👷 Equipe da Obra";
-    if (location.pathname === "/equipamentos")
-      return "🚜 Equipamentos e Máquinas";
+      return "Relatório Fotográfico";
+    if (location.pathname === "/diario") return "Diário de Obra";
+    if (location.pathname === "/tarefas") return "Tarefas Realizadas";
+    if (location.pathname === "/ocorrencias") return "Ocorrências";
+    if (location.pathname === "/equipe") return "Equipe da Obra";
+    if (location.pathname === "/equipamentos") return "Equipamentos e Máquinas";
     return "Sistema de Gestão de Obras";
   };
 
@@ -118,7 +117,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="🏠 Tela Inicial" />
+            <ListItemText primary="Tela Inicial" />
           </ListItemButton>
         </ListItem>
 
@@ -135,7 +134,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="🏗️ Obras" />
+            <ListItemText primary="Obras" />
           </ListItemButton>
         </ListItem>
 
@@ -152,7 +151,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="👥 Pessoas" />
+            <ListItemText primary="Pessoas" />
           </ListItemButton>
         </ListItem>
 
@@ -169,7 +168,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="💰 Despesas" />
+            <ListItemText primary="Despesas" />
           </ListItemButton>
         </ListItem>
 
@@ -186,7 +185,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="💵 Receitas" />
+            <ListItemText primary="Receitas" />
           </ListItemButton>
         </ListItem>
 
@@ -203,7 +202,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="🏪 Fornecedores" />
+            <ListItemText primary="Fornecedores" />
           </ListItemButton>
         </ListItem>
 
@@ -220,7 +219,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="📊 Relatórios" />
+            <ListItemText primary="Relatórios" />
           </ListItemButton>
         </ListItem>
 
@@ -237,7 +236,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="📸 Relatório Fotográfico" />
+            <ListItemText primary="Relatório Fotográfico" />
           </ListItemButton>
         </ListItem>
 
@@ -254,7 +253,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="📖 Diário de Obra" />
+            <ListItemText primary="Diário de Obra" />
           </ListItemButton>
         </ListItem>
 
@@ -271,7 +270,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="✅ Tarefas Realizadas" />
+            <ListItemText primary="Tarefas Realizadas" />
           </ListItemButton>
         </ListItem>
 
@@ -288,7 +287,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="⚠️ Ocorrências" />
+            <ListItemText primary="Ocorrências" />
           </ListItemButton>
         </ListItem>
 
@@ -305,7 +304,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="👷 Equipe da Obra" />
+            <ListItemText primary="Equipe da Obra" />
           </ListItemButton>
         </ListItem>
 
@@ -322,7 +321,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
             }}
           >
-            <ListItemText primary="🚜 Equipamentos" />
+            <ListItemText primary="Equipamentos" />
           </ListItemButton>
         </ListItem>
       </List>

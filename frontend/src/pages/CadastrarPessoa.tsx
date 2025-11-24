@@ -126,19 +126,17 @@ const CadastrarPessoa: React.FC = () => {
 
     // Validações básicas
     if (!formData.nome || !validarStringNaoVazia(formData.nome)) {
-      toast.error("⚠️ Nome é obrigatório");
+      toast.error("Nome é obrigatório");
       return;
     }
 
     if (formData.nome.length < 3) {
-      toast.error("⚠️ Nome deve ter no mínimo 3 caracteres");
+      toast.error("Nome deve ter no mínimo 3 caracteres");
       return;
     }
 
     if (!formData.documento) {
-      toast.error(
-        `⚠️ ${tipoPessoa === "FISICA" ? "CPF" : "CNPJ"} é obrigatório`
-      );
+      toast.error(`${tipoPessoa === "FISICA" ? "CPF" : "CNPJ"} é obrigatório`);
       return;
     }
 
@@ -146,19 +144,19 @@ const CadastrarPessoa: React.FC = () => {
     const documentoLimpo = removerMascara(formData.documento);
     if (tipoPessoa === "FISICA") {
       if (!validarCPF(documentoLimpo)) {
-        toast.error("⚠️ CPF inválido. Verifique os números digitados.");
+        toast.error("CPF inválido. Verifique os números digitados.");
         return;
       }
     } else {
       if (!validarCNPJ(documentoLimpo)) {
-        toast.error("⚠️ CNPJ inválido. Verifique os números digitados.");
+        toast.error("CNPJ inválido. Verifique os números digitados.");
         return;
       }
     }
 
     // Validar email se preenchido
     if (formData.email && !validarEmail(formData.email)) {
-      toast.error("⚠️ Email inválido. Use o formato: exemplo@dominio.com");
+      toast.error("Email inválido. Use o formato: exemplo@dominio.com");
       return;
     }
 
@@ -166,9 +164,7 @@ const CadastrarPessoa: React.FC = () => {
     if (formData.telefone) {
       const telefoneLimpo = removerMascara(formData.telefone);
       if (!validarTelefone(telefoneLimpo)) {
-        toast.error(
-          "⚠️ Telefone inválido. Use (00) 00000-0000 ou (00) 0000-0000"
-        );
+        toast.error("Telefone inválido. Use (00) 00000-0000 ou (00) 0000-0000");
         return;
       }
     }
@@ -177,7 +173,7 @@ const CadastrarPessoa: React.FC = () => {
     if (endereco.cep) {
       const cepLimpo = removerMascara(endereco.cep);
       if (!validarCEP(cepLimpo)) {
-        toast.error("⚠️ CEP inválido. Use o formato: 00000-000");
+        toast.error("CEP inválido. Use o formato: 00000-000");
         return;
       }
     }
@@ -185,7 +181,7 @@ const CadastrarPessoa: React.FC = () => {
     // Validar ao menos uma função selecionada para Pessoa Física
     const funcoesAtivas = Object.entries(funcoes).filter(([_, value]) => value);
     if (tipoPessoa === "FISICA" && funcoesAtivas.length === 0) {
-      toast.error("⚠️ Selecione ao menos uma função");
+      toast.error("Selecione ao menos uma função");
       return;
     }
 
@@ -210,15 +206,15 @@ const CadastrarPessoa: React.FC = () => {
         ativo: true,
       };
 
-      console.log("📝 Enviando pessoa para API:", dadosPessoa);
-      console.log("📤 Payload JSON:", JSON.stringify(dadosPessoa, null, 2));
+      console.log("Enviando pessoa para API:", dadosPessoa);
+      console.log("Payload JSON:", JSON.stringify(dadosPessoa, null, 2));
 
       const pessoaCriada = await pessoaService.criar(dadosPessoa);
 
-      console.log("✅ Pessoa cadastrada com sucesso:", pessoaCriada);
+      console.log("Pessoa cadastrada com sucesso:", pessoaCriada);
 
       toast.success(
-        `✅ ${
+        `${
           tipoPessoa === "FISICA" ? "Pessoa" : "Empresa"
         } cadastrada com sucesso! ID: ${pessoaCriada.id}`
       );
@@ -256,10 +252,10 @@ const CadastrarPessoa: React.FC = () => {
         window.location.href = "/pessoas";
       }, 2000);
     } catch (error: any) {
-      console.error("❌ Erro ao cadastrar pessoa:", error);
-      console.error("📥 Resposta da API:", error.response?.data);
-      console.error("📊 Status HTTP:", error.response?.status);
-      console.error("📋 Detalhes:", error.response?.data?.details);
+      console.error("Erro ao cadastrar pessoa:", error);
+      console.error("Resposta da API:", error.response?.data);
+      console.error("Status HTTP:", error.response?.status);
+      console.error("Detalhes:", error.response?.data?.details);
 
       // Mensagens de erro específicas
       let mensagemErro = "Erro ao cadastrar pessoa";
@@ -274,7 +270,7 @@ const CadastrarPessoa: React.FC = () => {
           details.includes("pessoa_documento_key") ||
           serverError.includes("documento")
         ) {
-          mensagemErro = `⚠️ Este ${
+          mensagemErro = `Este ${
             tipoPessoa === "FISICA" ? "CPF" : "CNPJ"
           } já está cadastrado no sistema.`;
         }
@@ -283,7 +279,7 @@ const CadastrarPessoa: React.FC = () => {
           details.includes("pessoa_email_key") ||
           serverError.includes("email")
         ) {
-          mensagemErro = "⚠️ Este email já está cadastrado no sistema.";
+          mensagemErro = "Este email já está cadastrado no sistema.";
         }
         // Outros erros 400
         else {
@@ -299,7 +295,7 @@ const CadastrarPessoa: React.FC = () => {
           "Erro desconhecido";
       }
 
-      toast.error(`❌ ${mensagemErro}`);
+      toast.error(mensagemErro);
     } finally {
       setSalvando(false);
     }

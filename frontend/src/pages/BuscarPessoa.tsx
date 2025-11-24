@@ -103,11 +103,11 @@ const BuscarPessoa: React.FC = () => {
       setPessoas(pessoasArray);
       setPessoasFiltradas(pessoasArray);
 
-      toast.success(`✅ ${pessoasArray.length} pessoa(s) carregada(s)`);
+      toast.success(`${pessoasArray.length} pessoa(s) carregada(s)`);
       console.log("✅ Estados atualizados com sucesso");
     } catch (error: any) {
       console.error("❌ Erro ao carregar pessoas:", error);
-      toast.error("❌ Erro ao carregar pessoas");
+      toast.error("Erro ao carregar pessoas");
       setPessoas([]);
       setPessoasFiltradas([]);
     } finally {
@@ -159,7 +159,7 @@ const BuscarPessoa: React.FC = () => {
     }
 
     setPessoasFiltradas(pessoasFiltradasTemp);
-    toast.success(`🔍 ${pessoasFiltradasTemp.length} pessoa(s) encontrada(s)`);
+    toast.success(`${pessoasFiltradasTemp.length} pessoa(s) encontrada(s)`);
   };
 
   const handleLimparFiltros = () => {
@@ -171,7 +171,7 @@ const BuscarPessoa: React.FC = () => {
       funcao: "",
     });
     setPessoasFiltradas(pessoas);
-    toast.info("🔄 Filtros limpos");
+    toast.info("Filtros limpos");
   };
 
   const handleEditar = async (id: number) => {
@@ -198,8 +198,8 @@ const BuscarPessoa: React.FC = () => {
 
       console.log("✅ Modal de edição aberto com sucesso");
     } catch (error: any) {
-      console.error("❌ Erro ao carregar pessoa para edição:", error);
-      toast.error("❌ Erro ao carregar dados da pessoa");
+      console.error("Erro ao carregar pessoa para edição:", error);
+      toast.error("Erro ao carregar dados da pessoa");
     } finally {
       setLoading(false);
     }
@@ -212,8 +212,8 @@ const BuscarPessoa: React.FC = () => {
       setPessoaVisualizando(pessoa);
       setViewModalOpen(true);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar pessoa:", error);
-      toast.error("❌ Erro ao carregar dados da pessoa");
+      console.error("Erro ao carregar pessoa:", error);
+      toast.error("Erro ao carregar dados da pessoa");
     } finally {
       setLoading(false);
     }
@@ -333,7 +333,7 @@ const BuscarPessoa: React.FC = () => {
       setPessoas(novaListaPessoas);
       setPessoasFiltradas(novaListaFiltrada);
 
-      toast.success("✅ Pessoa atualizada com sucesso!");
+      toast.success("Pessoa atualizada com sucesso!");
       handleFecharModal();
 
       // Recarregar dados do servidor para garantir sincronização
@@ -344,7 +344,7 @@ const BuscarPessoa: React.FC = () => {
       console.error("❌ Erro ao atualizar pessoa:", error);
       const mensagem =
         error.response?.data?.error || "Erro ao atualizar pessoa";
-      toast.error(`❌ ${mensagem}`);
+      toast.error(mensagem);
     } finally {
       setSalvando(false);
     }
@@ -421,8 +421,8 @@ const BuscarPessoa: React.FC = () => {
       console.log(`✅ Pessoa ${pessoaNome} não possui associações ativas`);
       return false; // Não tem associações
     } catch (error) {
-      console.error("❌ Erro ao verificar associações:", error);
-      toast.error("❌ Erro ao verificar associações da pessoa");
+      console.error("Erro ao verificar associações:", error);
+      toast.error("Erro ao verificar associações da pessoa");
       return true; // Em caso de erro, impedir exclusão por segurança
     }
   };
@@ -453,7 +453,7 @@ const BuscarPessoa: React.FC = () => {
       console.log(`🔄 Executando exclusão para: ${nomePessoa}`);
       await pessoaService.deletar(id.toString());
 
-      toast.success(`✅ ${nomePessoa} foi excluída com sucesso!`);
+      toast.success(`${nomePessoa} foi excluída com sucesso!`);
       console.log(`✅ Exclusão concluída para: ${nomePessoa}`);
 
       carregarPessoas(); // Recarregar lista
@@ -476,7 +476,7 @@ const BuscarPessoa: React.FC = () => {
           { autoClose: 8000 }
         );
       } else {
-        toast.error(`❌ ${errorMessage}`);
+        toast.error(errorMessage);
       }
     }
   };
