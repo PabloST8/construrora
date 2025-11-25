@@ -1,4 +1,4 @@
-// ✅ Componente reutilizável para upload de foto (base64)
+// Componente reutilizável para upload de foto (base64)
 import React, { useState } from "react";
 import {
   Box,

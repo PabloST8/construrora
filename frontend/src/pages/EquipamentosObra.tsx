@@ -215,7 +215,7 @@ const EquipamentosObra: React.FC = () => {
           gutterBottom
           sx={{ fontWeight: "bold", mb: 3 }}
         >
-          🚜 EQUIPAMENTOS E MÁQUINAS
+          EQUIPAMENTOS E MÁQUINAS
         </Typography>
 
         <Box sx={{ display: "flex", gap: 2, mb: 3 }}>

@@ -215,22 +215,22 @@ const Fornecedores: React.FC = () => {
     try {
       // Validações de campos obrigatórios
       if (!formData.nome || !validarStringNaoVazia(formData.nome)) {
-        toast.error("⚠️ Preencha o nome do fornecedor");
+        toast.error("Preencha o nome do fornecedor");
         return;
       }
 
       if (formData.nome.length < 3) {
-        toast.error("⚠️ Nome deve ter no mínimo 3 caracteres");
+        toast.error("Nome deve ter no mínimo 3 caracteres");
         return;
       }
 
       if (!formData.documento) {
-        toast.error("⚠️ Preencha o documento (CPF ou CNPJ)");
+        toast.error("Preencha o documento (CPF ou CNPJ)");
         return;
       }
 
       if (!formData.tipo_documento) {
-        toast.error("⚠️ Selecione o tipo de documento");
+        toast.error("Selecione o tipo de documento");
         return;
       }
 
@@ -238,19 +238,19 @@ const Fornecedores: React.FC = () => {
       const documentoLimpo = removerMascara(formData.documento);
       if (formData.tipo_documento === "CPF") {
         if (!validarCPF(documentoLimpo)) {
-          toast.error("⚠️ CPF inválido. Verifique os números digitados.");
+          toast.error("CPF inválido. Verifique os números digitados.");
           return;
         }
       } else if (formData.tipo_documento === "CNPJ") {
         if (!validarCNPJ(documentoLimpo)) {
-          toast.error("⚠️ CNPJ inválido. Verifique os números digitados.");
+          toast.error("CNPJ inválido. Verifique os números digitados.");
           return;
         }
       }
 
       // Validar email se preenchido
       if (formData.email && !validarEmail(formData.email)) {
-        toast.error("⚠️ Email inválido. Use o formato: exemplo@dominio.com");
+        toast.error("Email inválido. Use o formato: exemplo@dominio.com");
         return;
       }
 
@@ -259,7 +259,7 @@ const Fornecedores: React.FC = () => {
         const telefoneLimpo = removerMascara(formData.telefone);
         if (!validarTelefone(telefoneLimpo)) {
           toast.error(
-            "⚠️ Telefone inválido. Use (00) 00000-0000 ou (00) 0000-0000"
+            "Telefone inválido. Use (00) 00000-0000 ou (00) 0000-0000"
           );
           return;
         }
@@ -270,7 +270,7 @@ const Fornecedores: React.FC = () => {
         const telefoneLimpo = removerMascara(formData.contato_telefone);
         if (!validarTelefone(telefoneLimpo)) {
           toast.error(
-            "⚠️ Telefone de contato inválido. Use (00) 00000-0000 ou (00) 0000-0000"
+            "Telefone de contato inválido. Use (00) 00000-0000 ou (00) 0000-0000"
           );
           return;
         }
@@ -279,7 +279,7 @@ const Fornecedores: React.FC = () => {
       // Validar email de contato se preenchido
       if (formData.contato_email && !validarEmail(formData.contato_email)) {
         toast.error(
-          "⚠️ Email de contato inválido. Use o formato: exemplo@dominio.com"
+          "Email de contato inválido. Use o formato: exemplo@dominio.com"
         );
         return;
       }

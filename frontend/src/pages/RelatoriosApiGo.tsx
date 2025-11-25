@@ -1,4 +1,4 @@
-// ✅ RelatoriosApiGo.tsx - Sistema COMPLETO usando os 5 endpoints da API Go
+// RelatoriosApiGo.tsx - Sistema COMPLETO usando os 5 endpoints da API Go
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -84,9 +84,9 @@ const RelatoriosApiGo: React.FC = () => {
     setError(null);
 
     try {
-      console.log("🔍 Carregando TODOS os relatórios da obra:", obraId);
+      console.log("Carregando TODOS os relatórios da obra:", obraId);
 
-      // 🎯 Busca TODOS os 5 relatórios de uma vez
+      // Busca TODOS os 5 relatórios de uma vez
       const todos = await relatoriosApiGoService.obterTodosRelatoriosObra(
         Number(obraId)
       );
@@ -99,23 +99,23 @@ const RelatoriosApiGo: React.FC = () => {
         profissionais: todos.profissionais,
       });
 
-      console.log("✅ Relatórios carregados:", todos);
+      console.log("Relatórios carregados:", todos);
       console.log(
-        "🔍 Tipo de despesas:",
+        "Tipo de despesas:",
         Array.isArray(todos.despesas) ? "ARRAY" : typeof todos.despesas
       );
       console.log(
-        "🔍 Tipo de pagamentos:",
+        "Tipo de pagamentos:",
         Array.isArray(todos.pagamentos) ? "ARRAY" : typeof todos.pagamentos
       );
       if (Array.isArray(todos.despesas) && todos.despesas.length > 0) {
-        console.log("🔍 Estrutura despesas[0]:", todos.despesas[0]);
+        console.log("Estrutura despesas[0]:", todos.despesas[0]);
       }
       if (Array.isArray(todos.pagamentos) && todos.pagamentos.length > 0) {
-        console.log("🔍 Estrutura pagamentos[0]:", todos.pagamentos[0]);
+        console.log("Estrutura pagamentos[0]:", todos.pagamentos[0]);
       }
     } catch (error) {
-      console.error("❌ Erro ao carregar relatórios:", error);
+      console.error("Erro ao carregar relatórios:", error);
       setError("Erro ao carregar relatórios. Verifique a conexão com a API.");
     } finally {
       setLoading(false);
@@ -152,7 +152,7 @@ const RelatoriosApiGo: React.FC = () => {
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          📊 Relatórios Completos (API Go)
+          Relatórios Completos (API Go)
         </Typography>
 
         {/* Seletor de Obra */}
@@ -206,11 +206,11 @@ const RelatoriosApiGo: React.FC = () => {
         {/* Tabs de Relatórios */}
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-            <Tab label="💰 Financeiro" />
-            <Tab label="📦 Despesas" />
-            <Tab label="💳 Pagamentos" />
-            <Tab label="🔨 Materiais" />
-            <Tab label="👷 Profissionais" />
+            <Tab label="Financeiro" />
+            <Tab label="Despesas" />
+            <Tab label="Pagamentos" />
+            <Tab label="Materiais" />
+            <Tab label="Profissionais" />
           </Tabs>
         </Box>
 

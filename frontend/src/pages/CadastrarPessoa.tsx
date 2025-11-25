@@ -67,7 +67,7 @@ const CadastrarPessoa: React.FC = () => {
   const [salvando, setSalvando] = useState(false);
   const [formData, setFormData] = useState<Partial<Pessoa>>({
     nome: "",
-    tipo: "PF", // ✅ API Go usa "PF" (2 chars) ou "PJ" (2 chars)
+    tipo: "PF", // API Go usa "PF" (2 chars) ou "PJ" (2 chars)
     documento: "",
     email: "",
     telefone: "",
@@ -98,7 +98,7 @@ const CadastrarPessoa: React.FC = () => {
     setTipoPessoa(tipo);
     setFormData({
       ...formData,
-      tipo: tipo === "FISICA" ? "PF" : "PJ", // ✅ Banco usa "PF" ou "PJ" (varchar 2 chars)
+      tipo: tipo === "FISICA" ? "PF" : "PJ", // Banco usa "PF" ou "PJ" (varchar 2 chars)
       documento: "",
     });
   };
@@ -222,7 +222,7 @@ const CadastrarPessoa: React.FC = () => {
       // Limpar formulário após sucesso
       setFormData({
         nome: "",
-        tipo: "PF", // ✅ API Go usa "PF" (2 chars)
+        tipo: "PF", // API Go usa "PF" (2 chars)
         documento: "",
         email: "",
         telefone: "",
@@ -607,7 +607,7 @@ const CadastrarPessoa: React.FC = () => {
                 px: 4,
               }}
             >
-              {salvando ? "Salvando..." : "💾 Salvar"}
+              {salvando ? "Salvando..." : "Salvar"}
             </Button>
           </Box>
         </form>

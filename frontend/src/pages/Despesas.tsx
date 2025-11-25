@@ -156,7 +156,7 @@ const Despesas: React.FC = () => {
   const carregarDespesas = async () => {
     try {
       const response = await despesaService.listar();
-      console.log("📊 Despesas carregadas:", response);
+      console.log("Despesas carregadas:", response);
 
       // Extrair array de despesas da resposta
       // O cast para `any` é usado para lidar com formatos de resposta diferentes
@@ -182,10 +182,10 @@ const Despesas: React.FC = () => {
       }));
 
       setDespesas(despesasConvertidas);
-      toast.success(`✅ ${despesasConvertidas.length} despesa(s) carregada(s)`);
+      toast.success(`${despesasConvertidas.length} despesa(s) carregada(s)`);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar despesas:", error);
-      toast.error("❌ Erro ao carregar despesas");
+      console.error("Erro ao carregar despesas:", error);
+      toast.error("Erro ao carregar despesas");
       setDespesas([]);
     }
   };
@@ -195,7 +195,7 @@ const Despesas: React.FC = () => {
       const data = await obraService.listar();
       setObras(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("❌ Erro ao carregar obras:", error);
+      console.error("Erro ao carregar obras:", error);
     }
   };
 
@@ -204,7 +204,7 @@ const Despesas: React.FC = () => {
       const data = await pessoaService.listar();
       setPessoas(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("❌ Erro ao carregar pessoas:", error);
+      console.error("Erro ao carregar pessoas:", error);
     }
   };
 
@@ -225,7 +225,7 @@ const Despesas: React.FC = () => {
       !novaDespesa.obraId ||
       novaDespesa.obraId === 0
     ) {
-      toast.error("⚠️ Selecione a obra");
+      toast.error("Selecione a obra");
       return;
     }
 
@@ -233,22 +233,22 @@ const Despesas: React.FC = () => {
       !novaDespesa.descricao ||
       !validarStringNaoVazia(novaDespesa.descricao)
     ) {
-      toast.error("⚠️ Preencha a descrição da despesa");
+      toast.error("Preencha a descrição da despesa");
       return;
     }
 
     if (novaDespesa.descricao.length < 3) {
-      toast.error("⚠️ Descrição deve ter no mínimo 3 caracteres");
+      toast.error("Descrição deve ter no mínimo 3 caracteres");
       return;
     }
 
     if (!novaDespesa.valor || !validarValorMonetario(novaDespesa.valor)) {
-      toast.error("⚠️ Valor da despesa deve ser maior que zero");
+      toast.error("Valor da despesa deve ser maior que zero");
       return;
     }
 
     if (novaDespesa.valor <= 0) {
-      toast.error("⚠️ Valor da despesa deve ser positivo");
+      toast.error("Valor da despesa deve ser positivo");
       return;
     }
 
@@ -257,7 +257,7 @@ const Despesas: React.FC = () => {
       novaDespesa.data_vencimento &&
       !validarData(novaDespesa.data_vencimento)
     ) {
-      toast.error("⚠️ Data de vencimento inválida");
+      toast.error("Data de vencimento inválida");
       return;
     }
 
@@ -269,7 +269,7 @@ const Despesas: React.FC = () => {
         (o) => o.id === Number(novaDespesa.obraId)
       );
       if (!obraSelecionada) {
-        toast.error("❌ Obra não encontrada");
+        toast.error("Obra não encontrada");
         setSalvando(false);
         return;
       }
@@ -290,7 +290,7 @@ const Despesas: React.FC = () => {
         status_pagamento: novaDespesa.status_pagamento,
         // Campo obrigatório com formato ISO 8601 completo
         data_vencimento: dataFormatada,
-        data: dataFormatada, // ✅ Data da despesa/compra
+        data: dataFormatada, // Data da despesa/compra
       };
 
       // REGRA: Se status é PAGO, data_pagamento é OBRIGATÓRIA
@@ -328,11 +328,11 @@ const Despesas: React.FC = () => {
       });
 
       console.log(
-        "📤 Enviando despesa para API Go:",
+        "Enviando despesa para API Go:",
         JSON.stringify(despesaData, null, 2)
       );
       await despesaService.criar(despesaData);
-      toast.success("✅ Despesa cadastrada com sucesso!");
+      toast.success("Despesa cadastrada com sucesso!");
 
       // Limpar formulário
       setNovaDespesa({
@@ -351,15 +351,15 @@ const Despesas: React.FC = () => {
       // Recarregar despesas
       carregarDespesas();
     } catch (error: any) {
-      console.error("❌ Erro ao cadastrar despesa:", error);
-      console.error("📋 Resposta do servidor:", error.response?.data);
-      console.error("📋 Status:", error.response?.status);
-      console.error("📋 Headers:", error.response?.headers);
+      console.error("Erro ao cadastrar despesa:", error);
+      console.error("Resposta do servidor:", error.response?.data);
+      console.error("Status:", error.response?.status);
+      console.error("Headers:", error.response?.headers);
       const mensagem =
         error.response?.data?.error ||
         error.response?.data?.message ||
         "Erro ao cadastrar despesa";
-      toast.error(`❌ ${mensagem}`);
+      toast.error(mensagem);
     } finally {
       setSalvando(false);
     }
@@ -389,7 +389,7 @@ const Despesas: React.FC = () => {
         params.data_inicio = `${filtros.dataInicio}T00:00:00Z`;
       if (filtros.dataFim) params.data_fim = `${filtros.dataFim}T23:59:59Z`;
 
-      console.log("🔍 Buscando despesas com filtros:", params);
+      console.log("Buscando despesas com filtros:", params);
       const response = await despesaService.listar(params);
 
       // Extrair array de despesas da resposta (response.data ou response)
@@ -412,15 +412,13 @@ const Despesas: React.FC = () => {
         dataPagamento: d.data_pagamento ? d.data_pagamento.split("T")[0] : "",
       }));
 
-      console.log("📊 Despesas encontradas:", despesasConvertidas);
+      console.log("Despesas encontradas:", despesasConvertidas);
       setDespesas(despesasConvertidas);
-      toast.success(
-        `🔍 ${despesasConvertidas.length} despesa(s) encontrada(s)`
-      );
+      toast.success(`${despesasConvertidas.length} despesa(s) encontrada(s)`);
     } catch (error: any) {
-      console.error("❌ Erro ao buscar despesas:", error);
-      console.error("📋 Resposta do servidor:", error.response?.data);
-      toast.error("❌ Erro ao buscar despesas");
+      console.error("Erro ao buscar despesas:", error);
+      console.error("Resposta do servidor:", error.response?.data);
+      toast.error("Erro ao buscar despesas");
       setDespesas([]);
     } finally {
       setBuscando(false);
@@ -436,7 +434,7 @@ const Despesas: React.FC = () => {
       dataFim: "",
     });
     carregarDespesas();
-    toast.info("🔄 Filtros limpos");
+    toast.info("Filtros limpos");
   };
 
   const handleVisualizar = async (id: number) => {
@@ -445,8 +443,8 @@ const Despesas: React.FC = () => {
       setDespesaVisualizando(despesa);
       setViewModalOpen(true);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar despesa:", error);
-      toast.error("❌ Erro ao carregar dados da despesa");
+      console.error("Erro ao carregar despesa:", error);
+      toast.error("Erro ao carregar dados da despesa");
     }
   };
 
@@ -456,8 +454,8 @@ const Despesas: React.FC = () => {
       setDespesaEditando(despesa);
       setEditModalOpen(true);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar despesa:", error);
-      toast.error("❌ Erro ao carregar dados da despesa");
+      console.error("Erro ao carregar despesa:", error);
+      toast.error("Erro ao carregar dados da despesa");
     }
   };
 
@@ -468,11 +466,11 @@ const Despesas: React.FC = () => {
 
     try {
       await despesaService.deletar(id.toString());
-      toast.success("✅ Despesa excluída com sucesso!");
+      toast.success("Despesa excluída com sucesso!");
       carregarDespesas();
     } catch (error: any) {
-      console.error("❌ Erro ao excluir despesa:", error);
-      toast.error("❌ Erro ao excluir despesa");
+      console.error("Erro ao excluir despesa:", error);
+      toast.error("Erro ao excluir despesa");
     }
   };
 
@@ -541,14 +539,14 @@ const Despesas: React.FC = () => {
         despesaEditando.id!.toString(),
         dadosAtualizados
       );
-      toast.success("✅ Despesa atualizada com sucesso!");
+      toast.success("Despesa atualizada com sucesso!");
       handleFecharModalEdicao();
       carregarDespesas();
     } catch (error: any) {
-      console.error("❌ Erro ao atualizar despesa:", error);
+      console.error("Erro ao atualizar despesa:", error);
       const mensagem =
         error.response?.data?.error || "Erro ao atualizar despesa";
-      toast.error(`❌ ${mensagem}`);
+      toast.error(mensagem);
     } finally {
       setSalvando(false);
     }
@@ -716,7 +714,7 @@ const Despesas: React.FC = () => {
               </Select>
             </FormControl>
 
-            {/* ✅ Responsável pelo Pagamento */}
+            {/* Responsável pelo Pagamento */}
             <TextField
               fullWidth
               label="Responsável pelo Pagamento"
@@ -726,7 +724,7 @@ const Despesas: React.FC = () => {
               placeholder="Nome de quem efetuou o pagamento"
             />
 
-            {/* ✅ Observações */}
+            {/* Observações */}
             <TextField
               fullWidth
               multiline
@@ -1307,7 +1305,7 @@ const Despesas: React.FC = () => {
                 fullWidth
               />
 
-              {/* ✅ Data da Despesa */}
+              {/* Data da Despesa */}
               <TextField
                 label="Data da Despesa"
                 type="date"
@@ -1317,7 +1315,7 @@ const Despesas: React.FC = () => {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
 
-              {/* ✅ Data de Vencimento */}
+              {/* Data de Vencimento */}
               <TextField
                 label="Data de Vencimento"
                 type="date"
@@ -1416,7 +1414,7 @@ const Despesas: React.FC = () => {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
 
-              {/* ✅ Responsável pelo Pagamento (STRING, não ID) */}
+              {/* Responsável pelo Pagamento (STRING, não ID) */}
               <TextField
                 label="Responsável pelo Pagamento"
                 value={
@@ -1431,7 +1429,7 @@ const Despesas: React.FC = () => {
                 placeholder="Nome de quem efetuou o pagamento"
               />
 
-              {/* ✅ Observações */}
+              {/* Observações */}
               <TextField
                 label="Observações"
                 multiline

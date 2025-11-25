@@ -78,13 +78,13 @@ const BuscarPessoa: React.FC = () => {
   const carregarPessoas = async () => {
     try {
       setLoading(true);
-      console.log("🔍 Carregando pessoas da API...");
+      console.log("Carregando pessoas da API...");
 
       const data = await pessoaService.listar();
 
-      console.log("📊 Pessoas carregadas:", data);
+      console.log("Pessoas carregadas:", data);
       console.log(
-        "📊 Tipo de data:",
+        "Tipo de data:",
         typeof data,
         "É array?",
         Array.isArray(data)
@@ -104,9 +104,9 @@ const BuscarPessoa: React.FC = () => {
       setPessoasFiltradas(pessoasArray);
 
       toast.success(`${pessoasArray.length} pessoa(s) carregada(s)`);
-      console.log("✅ Estados atualizados com sucesso");
+      console.log("Estados atualizados com sucesso");
     } catch (error: any) {
-      console.error("❌ Erro ao carregar pessoas:", error);
+      console.error("Erro ao carregar pessoas:", error);
       toast.error("Erro ao carregar pessoas");
       setPessoas([]);
       setPessoasFiltradas([]);
@@ -125,7 +125,7 @@ const BuscarPessoa: React.FC = () => {
   };
 
   const handleBuscar = () => {
-    console.log("🔍 Aplicando filtros:", filtros);
+    console.log("Aplicando filtros:", filtros);
 
     let pessoasFiltradasTemp = [...pessoas];
 
@@ -177,12 +177,12 @@ const BuscarPessoa: React.FC = () => {
   const handleEditar = async (id: number) => {
     try {
       setLoading(true);
-      console.log(`🔄 Iniciando edição da pessoa ID: ${id}`);
+      console.log(`Iniciando edição da pessoa ID: ${id}`);
 
       const pessoa = await pessoaService.buscarPorId(id);
-      console.log("📝 Dados carregados para edição:", pessoa);
+      console.log("Dados carregados para edição:", pessoa);
 
-      // ✅ Converter tipo da API (PF/PJ) para Select (CPF/CNPJ)
+      // Converter tipo da API (PF/PJ) para Select (CPF/CNPJ)
       const pessoaFormatada: PessoaEdicao = {
         ...pessoa,
         tipo:
@@ -196,7 +196,7 @@ const BuscarPessoa: React.FC = () => {
       setPessoaEditando(pessoaFormatada);
       setEditModalOpen(true);
 
-      console.log("✅ Modal de edição aberto com sucesso");
+      console.log("Modal de edição aberto com sucesso");
     } catch (error: any) {
       console.error("Erro ao carregar pessoa para edição:", error);
       toast.error("Erro ao carregar dados da pessoa");
@@ -233,7 +233,7 @@ const BuscarPessoa: React.FC = () => {
     if (!pessoaEditando) return;
 
     try {
-      // ✅ VALIDAÇÕES ANTES DE SALVAR
+      // VALIDAÇÕES ANTES DE SALVAR
       // 1. Validar nome
       if (!pessoaEditando.nome || pessoaEditando.nome.trim().length < 3) {
         toast.error("Nome deve ter pelo menos 3 caracteres");
@@ -279,9 +279,9 @@ const BuscarPessoa: React.FC = () => {
       }
 
       setSalvando(true);
-      console.log("🔄 Salvando edição da pessoa:", pessoaEditando);
+      console.log("Salvando edição da pessoa:", pessoaEditando);
 
-      // ✅ Converter tipo de volta para API (CPF → PF, CNPJ → PJ)
+      // Converter tipo de volta para API (CPF → PF, CNPJ → PJ)
       const tipoApi: Pessoa["tipo"] =
         pessoaEditando.tipo === "CPF"
           ? "PF"
@@ -289,12 +289,12 @@ const BuscarPessoa: React.FC = () => {
           ? "PJ"
           : pessoaEditando.tipo;
 
-      // ✅ REMOVER MÁSCARAS ANTES DE ENVIAR PARA API
+      // REMOVER MÁSCARAS ANTES DE ENVIAR PARA API
       const dadosAtualizados: Pessoa = {
         nome: pessoaEditando.nome,
         email: pessoaEditando.email || "",
         telefone: removerMascara(pessoaEditando.telefone || ""),
-        tipo: tipoApi, // ✅ Tipo convertido para API
+        tipo: tipoApi, // Tipo convertido para API
         documento: removerMascara(pessoaEditando.documento),
         endereco_cep: removerMascara(pessoaEditando.endereco_cep || ""),
         endereco_rua: pessoaEditando.endereco_rua || "",
@@ -307,14 +307,14 @@ const BuscarPessoa: React.FC = () => {
         ativo: pessoaEditando.ativo !== undefined ? pessoaEditando.ativo : true, // Campo obrigatório
       };
 
-      console.log("📤 Dados a serem enviados:", dadosAtualizados);
+      console.log("Dados a serem enviados:", dadosAtualizados);
 
       // Chamar API de atualização
       const pessoaAtualizada = await pessoaService.atualizar(
         pessoaEditando.id!,
         dadosAtualizados
       );
-      console.log("✅ Pessoa atualizada na API:", pessoaAtualizada);
+      console.log("Pessoa atualizada na API:", pessoaAtualizada);
 
       // Atualizar estado local IMEDIATAMENTE
       const novaListaPessoas = pessoas.map((p) =>
@@ -341,7 +341,7 @@ const BuscarPessoa: React.FC = () => {
         carregarPessoas();
       }, 500);
     } catch (error: any) {
-      console.error("❌ Erro ao atualizar pessoa:", error);
+      console.error("Erro ao atualizar pessoa:", error);
       const mensagem =
         error.response?.data?.error || "Erro ao atualizar pessoa";
       toast.error(mensagem);
@@ -352,14 +352,14 @@ const BuscarPessoa: React.FC = () => {
 
   const handleCampoChange = (campo: keyof PessoaEdicao, valor: any) => {
     if (pessoaEditando) {
-      console.log(`📝 Alterando campo ${campo}:`, valor);
+      console.log(`Alterando campo ${campo}:`, valor);
 
       const pessoaAtualizada = {
         ...pessoaEditando,
         [campo]: valor,
       };
 
-      console.log("📝 Pessoa atualizada no estado:", pessoaAtualizada);
+      console.log("Pessoa atualizada no estado:", pessoaAtualizada);
       setPessoaEditando(pessoaAtualizada);
     }
   };
@@ -370,12 +370,12 @@ const BuscarPessoa: React.FC = () => {
   ): Promise<boolean> => {
     try {
       console.log(
-        `🔍 Verificando associações para pessoa ID ${pessoaId} (${pessoaNome})`
+        `Verificando associações para pessoa ID ${pessoaId} (${pessoaNome})`
       );
 
       // Buscar todas as obras
       const obras = await obraService.listar();
-      console.log("📊 Obras encontradas:", obras);
+      console.log("Obras encontradas:", obras);
 
       // Verificar se a pessoa é responsável ou contratante de alguma obra ativa
       const obrasAssociadas = obras.filter((obra) => {
@@ -384,7 +384,7 @@ const BuscarPessoa: React.FC = () => {
         const obraAtiva =
           obra.status !== "concluida" && obra.status !== "cancelada";
 
-        console.log(`🔍 Obra ${obra.nome}:`, {
+        console.log(`Obra ${obra.nome}:`, {
           ehResponsavel,
           ehContratante,
           obraAtiva,
@@ -396,7 +396,7 @@ const BuscarPessoa: React.FC = () => {
         return (ehResponsavel || ehContratante) && obraAtiva;
       });
 
-      console.log("🔗 Obras associadas ativas:", obrasAssociadas);
+      console.log("Obras associadas ativas:", obrasAssociadas);
 
       if (obrasAssociadas.length > 0) {
         const nomesObras = obrasAssociadas.map((obra) => obra.nome).join(", ");
@@ -407,18 +407,18 @@ const BuscarPessoa: React.FC = () => {
           : "contratante";
 
         console.log(
-          `❌ Pessoa ${pessoaNome} está associada às obras: ${nomesObras}`
+          `Pessoa ${pessoaNome} está associada às obras: ${nomesObras}`
         );
 
         toast.error(
-          `❌ Não é possível excluir. ${pessoaNome} é ${tipoAssociacao} da(s) obra(s): ${nomesObras}`,
+          `Não é possível excluir. ${pessoaNome} é ${tipoAssociacao} da(s) obra(s): ${nomesObras}`,
           { autoClose: 8000 }
         );
 
         return true; // Tem associações
       }
 
-      console.log(`✅ Pessoa ${pessoaNome} não possui associações ativas`);
+      console.log(`Pessoa ${pessoaNome} não possui associações ativas`);
       return false; // Não tem associações
     } catch (error) {
       console.error("Erro ao verificar associações:", error);
@@ -433,32 +433,32 @@ const BuscarPessoa: React.FC = () => {
       const pessoa = pessoas.find((p) => p.id === id);
       const nomePessoa = pessoa?.nome || `ID ${id}`;
 
-      console.log(`🗑️ Iniciando processo de exclusão para: ${nomePessoa}`);
+      console.log(`Iniciando processo de exclusão para: ${nomePessoa}`);
 
       // Verificar se há associações com obras ativas
       const temAssociacoes = await verificarAssociacaoObras(id, nomePessoa);
 
       if (temAssociacoes) {
-        console.log(`❌ Exclusão cancelada - pessoa tem associações ativas`);
+        console.log(`Exclusão cancelada - pessoa tem associações ativas`);
         return; // Bloquear exclusão
       }
 
       // Confirmar exclusão apenas se não há associações
-      const confirmMessage = `Tem certeza que deseja excluir ${nomePessoa}?\n\n⚠️ Esta ação não pode ser desfeita!`;
+      const confirmMessage = `Tem certeza que deseja excluir ${nomePessoa}?\n\nEsta ação não pode ser desfeita!`;
       if (!window.confirm(confirmMessage)) {
-        console.log("❌ Exclusão cancelada pelo usuário");
+        console.log("Exclusão cancelada pelo usuário");
         return;
       }
 
-      console.log(`🔄 Executando exclusão para: ${nomePessoa}`);
+      console.log(`Executando exclusão para: ${nomePessoa}`);
       await pessoaService.deletar(id.toString());
 
       toast.success(`${nomePessoa} foi excluída com sucesso!`);
-      console.log(`✅ Exclusão concluída para: ${nomePessoa}`);
+      console.log(`Exclusão concluída para: ${nomePessoa}`);
 
       carregarPessoas(); // Recarregar lista
     } catch (error: any) {
-      console.error("❌ Erro ao excluir pessoa:", error);
+      console.error("Erro ao excluir pessoa:", error);
 
       // Verificar se é erro de restrição de integridade
       const errorMessage =
@@ -472,7 +472,7 @@ const BuscarPessoa: React.FC = () => {
         errorMessage.includes("constraint")
       ) {
         toast.error(
-          "❌ Não é possível excluir. Usuário está associado a uma obra ativa.",
+          "Não é possível excluir. Usuário está associado a uma obra ativa.",
           { autoClose: 8000 }
         );
       } else {
@@ -597,7 +597,7 @@ const BuscarPessoa: React.FC = () => {
                   "&:hover": { bgcolor: "#45a049" },
                 }}
               >
-                🔍 Buscar
+                Buscar
               </Button>
             </Box>
           </Box>
@@ -734,14 +734,14 @@ const BuscarPessoa: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          ✏️ Editar Pessoa {pessoaEditando?.nome && `- ${pessoaEditando.nome}`}
+          Editar Pessoa {pessoaEditando?.nome && `- ${pessoaEditando.nome}`}
         </DialogTitle>
         <DialogContent>
           {pessoaEditando && (
             <Box
               sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
             >
-              {/* ✅ NOVO - Upload de Foto */}
+              {/* NOVO - Upload de Foto */}
               {/* Nome */}
               <TextField
                 label="Nome Completo *"
@@ -809,7 +809,7 @@ const BuscarPessoa: React.FC = () => {
                 fullWidth
                 value={pessoaEditando.telefone || ""}
                 onChange={(value) => {
-                  console.log("📞 Alterando telefone:", value);
+                  console.log("Alterando telefone:", value);
                   handleCampoChange("telefone", value);
                 }}
                 validateOnBlur={true}
@@ -944,7 +944,7 @@ const BuscarPessoa: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          👁️ Visualizar Pessoa{" "}
+          Visualizar Pessoa{" "}
           {pessoaVisualizando?.nome && `- ${pessoaVisualizando.nome}`}
         </DialogTitle>
         <DialogContent>

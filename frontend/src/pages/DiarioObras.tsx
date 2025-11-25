@@ -116,7 +116,7 @@ const DiarioObras: React.FC = () => {
       const obra = obras.find((o) => o.id === obraId);
       setObraSelecionada(obra || null);
 
-      console.log("🔍 Gerando relatório para obra ID:", obraId);
+      console.log("Gerando relatório para obra ID:", obraId);
 
       // 2. ✨ NOVO: Buscar TODAS as tarefas da obra (sem filtro de data)
       // Endpoint: GET /tarefas/obra/:obra_id
@@ -124,8 +124,8 @@ const DiarioObras: React.FC = () => {
         const tarefasResponse = await api.get(`/tarefas/obra/${obraId}`);
         const tarefasData =
           tarefasResponse.data.data || tarefasResponse.data || [];
-        console.log("📋 Tarefas recebidas (histórico completo):", tarefasData);
-        console.log("📋 Quantidade de tarefas:", tarefasData.length);
+        console.log("Tarefas recebidas (histórico completo):", tarefasData);
+        console.log("Quantidade de tarefas:", tarefasData.length);
         setTarefas(Array.isArray(tarefasData) ? tarefasData : []);
       } catch (err) {
         console.warn(
@@ -156,7 +156,7 @@ const DiarioObras: React.FC = () => {
           "⚠️ Ocorrências recebidas (histórico completo):",
           ocorrenciasData
         );
-        console.log("⚠️ Quantidade de ocorrências:", ocorrenciasData.length);
+        console.log("Quantidade de ocorrências:", ocorrenciasData.length);
         setOcorrencias(Array.isArray(ocorrenciasData) ? ocorrenciasData : []);
       } catch (err) {
         console.warn(
@@ -203,7 +203,7 @@ const DiarioObras: React.FC = () => {
           // ✅ FIX: Verificar se responseData é null ou não é um array
           let diariosData: any[] = [];
           if (responseData === null || responseData === undefined) {
-            console.warn("⚠️ Nenhum diário encontrado para esta obra");
+            console.warn("Nenhum diário encontrado para esta obra");
             diariosData = [];
           } else if (Array.isArray(responseData)) {
             diariosData = responseData;
@@ -215,7 +215,7 @@ const DiarioObras: React.FC = () => {
             diariosData = [];
           }
 
-          console.log("📖 Diários da obra:", diariosData);
+          console.log("Diários da obra:", diariosData);
 
           // Buscar equipe de cada diário
           for (const diario of diariosData) {
@@ -256,7 +256,7 @@ const DiarioObras: React.FC = () => {
           equipamentosConsolidados
         );
       } catch (err) {
-        console.warn("⚠️ Endpoint /equipamento-diario/obra/:id não encontrado");
+        console.warn("Endpoint /equipamento-diario/obra/:id não encontrado");
         equipamentosConsolidados = [];
       }
 

@@ -57,7 +57,7 @@ const BuscarObra: React.FC = () => {
       const data = await pessoaService.listar();
       setPessoas(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("❌ Erro ao carregar pessoas:", error);
+      console.error("Erro ao carregar pessoas:", error);
     }
   };
 
@@ -73,7 +73,7 @@ const BuscarObra: React.FC = () => {
       setObrasFiltradas(obrasArray);
       toast.success(`${obrasArray.length} obra(s) carregada(s)`);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar obras:", error);
+      console.error("Erro ao carregar obras:", error);
       toast.error(error.response?.data?.error || "Erro ao carregar obras");
       // Garantir que seja array mesmo em caso de erro
       setObras([]);
@@ -139,21 +139,21 @@ const BuscarObra: React.FC = () => {
       setLoading(true);
       const obra = await obraService.buscarPorId(id.toString());
 
-      // 🔍 DEBUG: Verificar se a foto está vindo da API
+      // DEBUG: Verificar se a foto está vindo da API
       console.log(
-        "📸 [VISUALIZAR] Foto recebida da API:",
+        "[VISUALIZAR] Foto recebida da API:",
         obra.foto ? "SIM (tem foto)" : "NÃO (null/undefined)"
       );
       console.log(
-        "📋 [VISUALIZAR] Tamanho da foto:",
+        "[VISUALIZAR] Tamanho da foto:",
         obra.foto ? `${obra.foto.length} caracteres` : "N/A"
       );
 
       setObraVisualizando(obra);
       setViewModalOpen(true);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar obra:", error);
-      toast.error("❌ Erro ao carregar dados da obra");
+      console.error("Erro ao carregar obra:", error);
+      toast.error("Erro ao carregar dados da obra");
     } finally {
       setLoading(false);
     }
@@ -169,21 +169,21 @@ const BuscarObra: React.FC = () => {
       setLoading(true);
       const obra = await obraService.buscarPorId(id.toString());
 
-      // 🔍 DEBUG: Verificar se a foto está vindo da API
+      // DEBUG: Verificar se a foto está vindo da API
       console.log(
-        "📸 Foto recebida da API:",
+        "Foto recebida da API:",
         obra.foto ? "SIM (tem foto)" : "NÃO (null/undefined)"
       );
       console.log(
-        "📋 Tamanho da foto:",
+        "Tamanho da foto:",
         obra.foto ? `${obra.foto.length} caracteres` : "N/A"
       );
 
-      // ✅ Normalizar status (API retorna maiúsculo, frontend usa minúsculo)
+      // Normalizar status (API retorna maiúsculo, frontend usa minúsculo)
       const statusNormalizado = (obra.status?.toLowerCase() ||
         "planejamento") as Obra["status"];
 
-      // ✅ Converter datas ISO para formato yyyy-MM-dd
+      // Converter datas ISO para formato yyyy-MM-dd
       const obraFormatada: Obra = {
         ...obra,
         status: statusNormalizado,
@@ -194,15 +194,15 @@ const BuscarObra: React.FC = () => {
       };
 
       console.log(
-        "📸 Foto na obra formatada:",
+        "Foto na obra formatada:",
         obraFormatada.foto ? "SIM" : "NÃO"
       );
 
       setObraEditando(obraFormatada);
       setEditModalOpen(true);
     } catch (error: any) {
-      console.error("❌ Erro ao carregar obra:", error);
-      toast.error("❌ Erro ao carregar dados da obra");
+      console.error("Erro ao carregar obra:", error);
+      toast.error("Erro ao carregar dados da obra");
     } finally {
       setLoading(false);
     }
@@ -215,11 +215,11 @@ const BuscarObra: React.FC = () => {
 
     try {
       await obraService.deletar(id.toString());
-      toast.success("✅ Obra excluída com sucesso!");
+      toast.success("Obra excluída com sucesso!");
       carregarObras();
     } catch (error: any) {
-      console.error("❌ Erro ao excluir obra:", error);
-      toast.error("❌ Erro ao excluir obra");
+      console.error("Erro ao excluir obra:", error);
+      toast.error("Erro ao excluir obra");
     }
   };
 
@@ -265,7 +265,7 @@ const BuscarObra: React.FC = () => {
         foto: obraEditando.foto || "",
       };
 
-      // ✅ Adicionar responsavel_id apenas se houver valor
+      // Adicionar responsavel_id apenas se houver valor
       if (obraEditando.responsavel_id) {
         dadosAtualizados.responsavel_id = obraEditando.responsavel_id;
       }
@@ -274,13 +274,13 @@ const BuscarObra: React.FC = () => {
         obraEditando.id!.toString(),
         dadosAtualizados
       );
-      toast.success("✅ Obra atualizada com sucesso!");
+      toast.success("Obra atualizada com sucesso!");
       handleFecharModal();
       carregarObras();
     } catch (error: any) {
-      console.error("❌ Erro ao atualizar obra:", error);
+      console.error("Erro ao atualizar obra:", error);
       const mensagem = error.response?.data?.error || "Erro ao atualizar obra";
-      toast.error(`❌ ${mensagem}`);
+      toast.error(mensagem);
     } finally {
       setSalvando(false);
     }
@@ -627,7 +627,7 @@ const BuscarObra: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          ✏️ Editar Obra {obraEditando?.nome && `- ${obraEditando.nome}`}
+          Editar Obra {obraEditando?.nome && `- ${obraEditando.nome}`}
         </DialogTitle>
         <DialogContent>
           {obraEditando && (
@@ -860,8 +860,8 @@ const BuscarObra: React.FC = () => {
                   }
                   label="Status de Ativação"
                 >
-                  <MenuItem value="true">✅ Ativa</MenuItem>
-                  <MenuItem value="false">❌ Inativa</MenuItem>
+                  <MenuItem value="true">Ativa</MenuItem>
+                  <MenuItem value="false">Inativa</MenuItem>
                 </Select>
               </FormControl>
 
@@ -895,7 +895,7 @@ const BuscarObra: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          👁️ Visualizar Obra{" "}
+          Visualizar Obra{" "}
           {obraVisualizando?.nome && `- ${obraVisualizando.nome}`}
         </DialogTitle>
         <DialogContent>
@@ -1065,7 +1065,7 @@ const BuscarObra: React.FC = () => {
                     variant="subtitle1"
                     sx={{ mt: 1, fontWeight: "bold" }}
                   >
-                    📍 Endereço
+                    Endereço
                   </Typography>
 
                   {/* Endereço - Rua */}
@@ -1150,7 +1150,7 @@ const BuscarObra: React.FC = () => {
               <TextField
                 label="Status de Ativação"
                 fullWidth
-                value={obraVisualizando.ativo ? "✅ Ativa" : "❌ Inativa"}
+                value={obraVisualizando.ativo ? "Ativa" : "Inativa"}
                 InputProps={{ readOnly: true }}
               />
 
@@ -1158,7 +1158,7 @@ const BuscarObra: React.FC = () => {
               {obraVisualizando.foto && (
                 <Box sx={{ textAlign: "center", mt: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    📷 Foto da Obra
+                    Foto da Obra
                   </Typography>
                   <img
                     src={obraVisualizando.foto}

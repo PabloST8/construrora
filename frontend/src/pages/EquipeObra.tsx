@@ -220,7 +220,7 @@ const EquipeObra: React.FC = () => {
           gutterBottom
           sx={{ fontWeight: "bold", mb: 3 }}
         >
-          👷 EQUIPE DA OBRA
+          EQUIPE DA OBRA
         </Typography>
 
         <Box sx={{ display: "flex", gap: 2, mb: 3 }}>

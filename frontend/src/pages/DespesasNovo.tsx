@@ -115,7 +115,7 @@ const Despesas: React.FC = () => {
   const carregarDados = async () => {
     setLoading(true);
     try {
-      console.log("🔄 Carregando dados das despesas...");
+      console.log("Carregando dados das despesas...");
 
       // Limpar estados antes de recarregar
       setDespesas([]);
@@ -131,10 +131,10 @@ const Despesas: React.FC = () => {
           pessoaService.listar(),
         ]);
 
-      console.log("🔍 Despesas carregadas:", despesasData);
-      console.log("🔍 Obras carregadas:", obrasData);
-      console.log("🔍 Fornecedores carregados:", fornecedoresData);
-      console.log("🔍 Pessoas carregadas:", pessoasData);
+      console.log("Despesas carregadas:", despesasData);
+      console.log("Obras carregadas:", obrasData);
+      console.log("Fornecedores carregados:", fornecedoresData);
+      console.log("Pessoas carregadas:", pessoasData);
 
       // Aguardar um tick para garantir que os estados foram limpos
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -151,10 +151,10 @@ const Despesas: React.FC = () => {
       setFornecedores(fornecedoresArray);
       setPessoas(pessoasArray);
 
-      console.log("✅ Estados atualizados com sucesso");
+      console.log("Estados atualizados com sucesso");
     } catch (error) {
-      console.error("❌ Erro ao carregar dados:", error);
-      toast.error("❌ Erro ao carregar dados");
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados");
       setDespesas([]);
       setObras([]);
       setFornecedores([]);
@@ -171,11 +171,11 @@ const Despesas: React.FC = () => {
         Object.entries(filtros).filter(([_, valor]) => valor !== "")
       );
 
-      console.log("🔍 Buscando com filtros:", filtrosLimpos);
+      console.log("Buscando com filtros:", filtrosLimpos);
       const resultado = await despesaService.buscarComFiltros(filtrosLimpos);
       setDespesas(Array.isArray(resultado) ? resultado : []);
     } catch (error) {
-      console.error("❌ Erro ao buscar com filtros:", error);
+      console.error("Erro ao buscar com filtros:", error);
       toast.error("Erro ao aplicar filtros");
     } finally {
       setLoading(false);
@@ -251,7 +251,7 @@ const Despesas: React.FC = () => {
       status_pagamento: despesa.status_pagamento || "PENDENTE",
     });
 
-    console.log("📝 FormData após edição:", {
+    console.log("FormData após edição:", {
       data: formatarData(despesa.data),
       data_vencimento: formatarData(despesa.data_vencimento),
       data_pagamento: formatarData(despesa.data_pagamento),
@@ -369,9 +369,9 @@ const Despesas: React.FC = () => {
       }
       // ✅ Se não for PAGO, NÃO enviar data_pagamento (nem string vazia)
 
-      console.log("💾 Salvando despesa:", dadosDespesa);
-      console.log("💾 Dados originais do form:", formData);
-      console.log("🔍 Campos enviados:", Object.keys(dadosDespesa));
+      console.log("Salvando despesa:", dadosDespesa);
+      console.log("Dados originais do form:", formData);
+      console.log("Campos enviados:", Object.keys(dadosDespesa));
       console.log(
         "🔍 Campos com valores:",
         Object.entries(dadosDespesa).map(([k, v]) => `${k}=${v}`)
@@ -397,19 +397,19 @@ const Despesas: React.FC = () => {
             : d
         );
 
-        console.log("📤 Nova lista de despesas:", novaListaDespesas);
+        console.log("Nova lista de despesas:", novaListaDespesas);
         setDespesas(novaListaDespesas);
 
-        toast.success("✅ Despesa atualizada com sucesso!");
+        toast.success("Despesa atualizada com sucesso!");
 
         // Recarregar dados do servidor para garantir sincronização
         setTimeout(() => {
           carregarDados();
         }, 500);
       } else {
-        console.log("🆕 Criando nova despesa");
+        console.log("Criando nova despesa");
         await despesaService.criar(dadosDespesa as Despesa);
-        toast.success("✅ Despesa criada com sucesso!");
+        toast.success("Despesa criada com sucesso!");
         carregarDados();
       }
 
@@ -431,9 +431,9 @@ const Despesas: React.FC = () => {
         data_pagamento: "",
       });
     } catch (error: any) {
-      console.error("❌ Erro ao salvar despesa:", error);
-      console.error("❌ Response data:", error.response?.data);
-      console.error("❌ Response status:", error.response?.status);
+      console.error("Erro ao salvar despesa:", error);
+      console.error("Response data:", error.response?.data);
+      console.error("Response status:", error.response?.status);
       console.error("❌ Response headers:", error.response?.headers);
 
       let mensagem = "Erro ao salvar despesa";

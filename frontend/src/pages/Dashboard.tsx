@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
       const obrasArray = Array.isArray(data) ? data : data?.data || [];
       setObras(obrasArray);
     } catch (error) {
-      console.error("❌ Erro ao carregar obras:", error);
+      console.error("Erro ao carregar obras:", error);
       toast.error("Erro ao carregar obras");
     } finally {
       setLoading(false);
@@ -135,7 +135,7 @@ const Dashboard: React.FC = () => {
         saldoCaixa,
       });
     } catch (error) {
-      console.error("❌ Erro ao carregar estatísticas:", error);
+      console.error("Erro ao carregar estatísticas:", error);
       toast.error("Erro ao carregar estatísticas financeiras");
     } finally {
       setLoading(false);
@@ -162,7 +162,7 @@ const Dashboard: React.FC = () => {
       {/* Cabeçalho */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h4" gutterBottom sx={{ color: "#d32f2f", mb: 3 }}>
-          📊 Dashboard Financeiro
+          Dashboard Financeiro
         </Typography>
 
         {/* Filtro por Obra */}
@@ -174,11 +174,11 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setObraSelecionada(e.target.value as any)}
               label="Filtrar por Obra"
             >
-              <MenuItem value="todas">📋 Todas as Obras</MenuItem>
+              <MenuItem value="todas">Todas as Obras</MenuItem>
               <Divider />
               {obras.map((obra) => (
                 <MenuItem key={obra.id} value={obra.id}>
-                  🏗️ {obra.nome}
+                  {obra.nome}
                 </MenuItem>
               ))}
             </Select>

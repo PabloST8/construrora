@@ -200,7 +200,7 @@ const TarefasRealizadas: React.FC = () => {
         );
         await tarefaService.deletar(tarefaSelecionada.id);
 
-        console.log("➕ Recriando tarefa com fotos corretas...");
+        console.log("Recriando tarefa com fotos corretas...");
         await tarefaService.criar(dadosParaEnviar);
         toast.success("Tarefa atualizada com sucesso!");
       } else {

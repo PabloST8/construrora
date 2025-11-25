@@ -96,19 +96,19 @@ const CadastrarObra: React.FC = () => {
       setCarregandoPessoas(true);
       const listaPessoas = await pessoaService.listar();
       console.log(
-        "📥 Pessoas carregadas:",
+        "Pessoas carregadas:",
         listaPessoas,
         "Tipo:",
         typeof listaPessoas,
         "É array?",
         Array.isArray(listaPessoas)
       );
-      // ✅ Garantir que sempre seja um array
+      // Garantir que sempre seja um array
       setPessoas(Array.isArray(listaPessoas) ? listaPessoas : []);
     } catch (error) {
       console.error("Erro ao carregar pessoas:", error);
       toast.error("Erro ao carregar lista de pessoas");
-      setPessoas([]); // ✅ Garantir array vazio em caso de erro
+      setPessoas([]); // Garantir array vazio em caso de erro
     } finally {
       setCarregandoPessoas(false);
     }
@@ -179,9 +179,7 @@ const CadastrarObra: React.FC = () => {
       if (
         !validarIntervaloData(formData.data_inicio, formData.data_fim_prevista)
       ) {
-        toast.error(
-          "⚠️ Data de fim prevista deve ser posterior à data de início"
-        );
+        toast.error("Data de fim prevista deve ser posterior à data de início");
         return;
       }
     }
@@ -233,11 +231,11 @@ const CadastrarObra: React.FC = () => {
         foto: fotoBase64 || "",
       };
 
-      console.log("📝 Enviando obra para API:", dadosObra);
+      console.log("Enviando obra para API:", dadosObra);
 
       const obraCriada = await obraService.criar(dadosObra);
 
-      console.log("✅ Obra cadastrada com sucesso:", obraCriada);
+      console.log("Obra cadastrada com sucesso:", obraCriada);
 
       toast.success(`Obra cadastrada com sucesso! ID: ${obraCriada.id}`);
 
@@ -540,7 +538,7 @@ const CadastrarObra: React.FC = () => {
                   }}
                   label="Ativo"
                 >
-                  <MenuItem value="true">✅ Ativa</MenuItem>
+                  <MenuItem value="true">Ativa</MenuItem>
                   <MenuItem value="false">Inativa</MenuItem>
                 </Select>
               </FormControl>
@@ -580,7 +578,7 @@ const CadastrarObra: React.FC = () => {
                 px: 4,
               }}
             >
-              {salvando ? "Salvando..." : "💾 Salvar"}
+              {salvando ? "Salvando..." : "Salvar"}
             </Button>
           </Box>
         </form>

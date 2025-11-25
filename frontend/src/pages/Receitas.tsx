@@ -270,29 +270,29 @@ const Receitas: React.FC = () => {
       // ✅ VALIDAÇÕES COMPLETAS ANTES DE SALVAR
       // 1. Validar obra selecionada
       if (!formData.obra_id || formData.obra_id === 0) {
-        toast.error("❌ Selecione a obra");
+        toast.error("Selecione a obra");
         return;
       }
 
       // 2. Validar descrição (mínimo 3 caracteres, não vazia)
       if (!validarStringNaoVazia(formData.descricao || "")) {
-        toast.error("❌ Informe a descrição da receita");
+        toast.error("Informe a descrição da receita");
         return;
       }
       if (!validarTamanhoMinimo(formData.descricao || "", 3)) {
-        toast.error("❌ Descrição deve ter pelo menos 3 caracteres");
+        toast.error("Descrição deve ter pelo menos 3 caracteres");
         return;
       }
 
       // 3. Validar valor monetário (maior que 0)
       if (!validarValorMonetario(formData.valor || 0)) {
-        toast.error("❌ Informe um valor maior que zero");
+        toast.error("Informe um valor maior que zero");
         return;
       }
 
       // 4. Validar data
       if (!formData.data || !validarData(formData.data)) {
-        toast.error("❌ Informe uma data válida");
+        toast.error("Informe uma data válida");
         return;
       }
 
