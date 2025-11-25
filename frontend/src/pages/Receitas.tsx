@@ -76,6 +76,7 @@ const Receitas: React.FC = () => {
     descricao: "",
     valor: 0,
     data: new Date().toISOString().split("T")[0],
+    status: "a_receber",
     fonte_receita: "CONTRATO",
     numero_documento: "",
     responsavel_id: 0,
@@ -85,6 +86,8 @@ const Receitas: React.FC = () => {
   // Resumo financeiro
   const [resumo, setResumo] = useState({
     total: 0,
+    recebido: 0,
+    aReceber: 0,
     quantidade: 0,
   });
 
@@ -98,9 +101,17 @@ const Receitas: React.FC = () => {
     // ✅ Garantir que receitas é um array
     const receitasArray = Array.isArray(receitas) ? receitas : [];
     const total = receitasArray.reduce((acc, r) => acc + (r.valor || 0), 0);
+    const recebido = receitasArray
+      .filter((r) => r.status === "recebido")
+      .reduce((acc, r) => acc + (r.valor || 0), 0);
+    const aReceber = receitasArray
+      .filter((r) => r.status === "a_receber")
+      .reduce((acc, r) => acc + (r.valor || 0), 0);
 
     setResumo({
       total,
+      recebido,
+      aReceber,
       quantidade: receitasArray.length,
     });
   }, [receitas]);
@@ -189,7 +200,7 @@ const Receitas: React.FC = () => {
       descricao: "",
       valor: 0,
       data: new Date().toISOString().split("T")[0],
-      status: "RECEBIDO",
+      status: "a_receber",
       fonte_receita: "CONTRATO",
       numero_documento: "",
       responsavel_id: 0,
@@ -228,7 +239,7 @@ const Receitas: React.FC = () => {
         descricao: receitaCompleta.descricao,
         valor: receitaCompleta.valor,
         data: dataFormatada,
-        status: receitaCompleta.status || "RECEBIDO",
+        status: receitaCompleta.status || "a_receber",
         fonte_receita: receitaCompleta.fonte_receita || "CONTRATO",
         numero_documento: receitaCompleta.numero_documento || "",
         responsavel_id: receitaCompleta.responsavel_id || 0,
@@ -292,7 +303,11 @@ const Receitas: React.FC = () => {
 
       // 4. Validar data
       if (!formData.data || !validarData(formData.data)) {
-        toast.error("Informe uma data válida");
+        const labelData =
+          formData.status === "recebido"
+            ? "data de recebimento"
+            : "data prevista";
+        toast.error(`Informe a ${labelData}`);
         return;
       }
 
@@ -304,6 +319,7 @@ const Receitas: React.FC = () => {
         descricao: formData.descricao!,
         valor: formData.valor!,
         data: formData.data!,
+        status: formData.status || "a_receber",
         fonte_receita: formData.fonte_receita || "CONTRATO",
         numero_documento: formData.numero_documento || "",
         responsavel_id: formData.responsavel_id || undefined,
@@ -389,10 +405,15 @@ const Receitas: React.FC = () => {
 
   const getStatusLabel = (status?: string) => {
     switch (status) {
+      case "recebido":
       case "RECEBIDO":
-        return "✅ Recebido";
+        return "Recebido";
+      case "a_receber":
       case "A_RECEBER":
-        return "⏳ A Receber";
+        return "A Receber";
+      case "cancelado":
+      case "CANCELADO":
+        return "Cancelado";
       default:
         return "Não informado";
     }
@@ -400,10 +421,15 @@ const Receitas: React.FC = () => {
 
   const getStatusColor = (status?: string) => {
     switch (status) {
+      case "recebido":
       case "RECEBIDO":
         return "success";
+      case "a_receber":
       case "A_RECEBER":
         return "warning";
+      case "cancelado":
+      case "CANCELADO":
+        return "error";
       default:
         return "default";
     }
@@ -418,7 +444,7 @@ const Receitas: React.FC = () => {
         mb={3}
       >
         <Typography variant="h4" component="h1">
-          💵 Receitas
+          Receitas
         </Typography>
         <Button
           variant="contained"
@@ -433,15 +459,29 @@ const Receitas: React.FC = () => {
       {/* Resumo Financeiro */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
-          📊 Resumo Financeiro
+          Resumo Financeiro
         </Typography>
         <Stack direction="row" spacing={4}>
           <Box>
             <Typography variant="body2" color="text.secondary">
               Total de Receitas
             </Typography>
+            <Typography variant="h5">{formatCurrency(resumo.total)}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Recebido (Caixa)
+            </Typography>
             <Typography variant="h5" color="success.main">
-              {formatCurrency(resumo.total)}
+              {formatCurrency(resumo.recebido)}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              A Receber (Previsto)
+            </Typography>
+            <Typography variant="h5" color="warning.main">
+              {formatCurrency(resumo.aReceber)}
             </Typography>
           </Box>
           <Box>
@@ -456,7 +496,7 @@ const Receitas: React.FC = () => {
       {/* Filtros */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
-          🔍 Filtros
+          Filtros
         </Typography>
         <Stack direction="row" spacing={2} flexWrap="wrap">
           <FormControl sx={{ minWidth: 200 }}>
@@ -650,7 +690,7 @@ const Receitas: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {modoEdicao ? "✏️ Editar Receita" : "➕ Nova Receita"}
+          {modoEdicao ? "Editar Receita" : "Nova Receita"}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -700,8 +740,27 @@ const Receitas: React.FC = () => {
               inputProps={{ min: 0, step: 0.01 }}
             />
 
+            <FormControl fullWidth required>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+                label="Status"
+              >
+                <MenuItem value="a_receber">A Receber</MenuItem>
+                <MenuItem value="recebido">Recebido</MenuItem>
+                <MenuItem value="cancelado">Cancelado</MenuItem>
+              </Select>
+            </FormControl>
+
             <TextField
-              label="Data de Recebimento"
+              label={
+                formData.status === "recebido"
+                  ? "Data de Recebimento"
+                  : "Data Prevista"
+              }
               type="date"
               value={formData.data}
               onChange={(e) =>
@@ -710,6 +769,11 @@ const Receitas: React.FC = () => {
               required
               fullWidth
               InputLabelProps={{ shrink: true }}
+              helperText={
+                formData.status === "recebido"
+                  ? "Data em que o valor foi efetivamente recebido"
+                  : "Data prevista para recebimento"
+              }
             />
 
             <FormControl fullWidth required>
@@ -765,7 +829,6 @@ const Receitas: React.FC = () => {
               </Select>
             </FormControl>
 
-            {/* ✅ Observações */}
             <TextField
               label="Observações"
               value={formData.observacao || ""}
@@ -805,7 +868,7 @@ const Receitas: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>👁️ Detalhes da Receita</DialogTitle>
+        <DialogTitle>Detalhes da Receita</DialogTitle>
         <DialogContent>
           {receitaSelecionada && (
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -853,6 +916,29 @@ const Receitas: React.FC = () => {
                   {formatDate(receitaSelecionada.data)}
                 </Typography>
               </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Status
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <Chip
+                    label={getStatusLabel(receitaSelecionada.status)}
+                    color={getStatusColor(receitaSelecionada.status)}
+                  />
+                </Box>
+              </Box>
+
+              {receitaSelecionada.data_pagamento_programado && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Data de Pagamento Programado
+                  </Typography>
+                  <Typography variant="body1">
+                    {formatDate(receitaSelecionada.data_pagamento_programado)}
+                  </Typography>
+                </Box>
+              )}
 
               <Box>
                 <Typography variant="caption" color="text.secondary">

@@ -117,13 +117,12 @@ const Dashboard: React.FC = () => {
         .filter((despesa: any) => despesa.status_pagamento === "PENDENTE")
         .reduce((acc: number, despesa: any) => acc + (despesa.valor || 0), 0);
 
-      // Processar receitas
-      const totalReceitas = receitasArray.reduce(
-        (acc: number, receita: any) => acc + (receita.valor || 0),
-        0
-      );
+      // Processar receitas - Apenas receitas RECEBIDAS contam no caixa
+      const totalReceitas = receitasArray
+        .filter((receita: any) => receita.status === "recebido")
+        .reduce((acc: number, receita: any) => acc + (receita.valor || 0), 0);
 
-      // Calcular saldo em caixa (Receitas - Despesas Pagas)
+      // Calcular saldo em caixa (Receitas Recebidas - Despesas Pagas)
       const saldoCaixa = totalReceitas - despesasPagas;
 
       setEstatisticas({

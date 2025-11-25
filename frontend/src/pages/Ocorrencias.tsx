@@ -35,6 +35,7 @@ import {
   CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { toast } from "react-toastify";
+import api from "../services/api";
 import { ocorrenciaService } from "../services/ocorrenciaService";
 import { obraService } from "../services/obraService";
 import { pessoaService } from "../services/pessoaService";

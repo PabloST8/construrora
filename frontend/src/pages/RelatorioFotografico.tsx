@@ -98,7 +98,7 @@ const RelatorioFotografico: React.FC = () => {
         </Typography>
 
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Box sx={{ flexBasis: { xs: "100%", md: "50%" }, px: 1 }}>
             <FormControl fullWidth>
               <InputLabel>Selecione a Obra</InputLabel>
               <Select
@@ -114,9 +114,9 @@ const RelatorioFotografico: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={3}>
+          <Box sx={{ flexBasis: { xs: "100%", md: "25%" }, px: 1 }}>
             <Button
               fullWidth
               variant="contained"
@@ -127,10 +127,10 @@ const RelatorioFotografico: React.FC = () => {
             >
               {loading ? <CircularProgress size={24} /> : "Gerar Relatório"}
             </Button>
-          </Grid>
+          </Box>
 
           {relatorio && (
-            <Grid item xs={12} md={3}>
+            <Box sx={{ flexBasis: { xs: "100%", md: "25%" }, px: 1 }}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -140,7 +140,7 @@ const RelatorioFotografico: React.FC = () => {
               >
                 Imprimir
               </Button>
-            </Grid>
+            </Box>
           )}
         </Grid>
       </Paper>
@@ -186,34 +186,34 @@ const RelatorioFotografico: React.FC = () => {
               </Box>
             )}
 
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box>
                 <Typography variant="body1">
                   <strong>Nome da Obra:</strong>{" "}
                   {relatorio.resumo_obra.nome_obra}
                 </Typography>
-              </Grid>
-              <Grid item xs={12}>
+              </Box>
+              <Box>
                 <Typography variant="body1">
                   <strong>Localização:</strong>{" "}
                   {relatorio.resumo_obra.localizacao}
                 </Typography>
-              </Grid>
-              <Grid item xs={12}>
+              </Box>
+              <Box>
                 <Typography variant="body1">
                   <strong>Contrato Nº:</strong>{" "}
                   {relatorio.resumo_obra.contrato_numero}
                 </Typography>
-              </Grid>
+              </Box>
               {relatorio.resumo_obra.descricao_breve && (
-                <Grid item xs={12}>
+                <Box>
                   <Typography variant="body1">
                     <strong>Descrição:</strong>{" "}
                     {relatorio.resumo_obra.descricao_breve}
                   </Typography>
-                </Grid>
+                </Box>
               )}
-            </Grid>
+            </Box>
           </Box>
 
           <Divider sx={{ my: 3 }} />
@@ -235,9 +235,18 @@ const RelatorioFotografico: React.FC = () => {
                 </Typography>
               </Box>
             ) : (
-              <Grid container spacing={3}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                 {relatorio.fotos.map((foto, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={foto.id}>
+                  <Box
+                    key={foto.id}
+                    sx={{
+                      flexBasis: {
+                        xs: "100%",
+                        sm: "calc(50% - 12px)",
+                        md: "calc(33.333% - 16px)",
+                      },
+                    }}
+                  >
                     <Card>
                       <CardMedia
                         component="img"
@@ -263,9 +272,9 @@ const RelatorioFotografico: React.FC = () => {
                         )}
                       </CardContent>
                     </Card>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             )}
           </Box>
 

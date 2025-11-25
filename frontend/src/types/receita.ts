@@ -26,6 +26,8 @@ export interface Receita {
   responsavelNome?: string; // Compatibilidade com camelCase
   observacao?: string;
   observacoes?: string; // Compatibilidade
+  data_pagamento_programado?: string; // Data programada de recebimento (novo campo)
+  dataPagamentoProgramado?: string; // Compatibilidade
   created_at?: string;
   updated_at?: string;
   createdAt?: string; // Compatibilidade

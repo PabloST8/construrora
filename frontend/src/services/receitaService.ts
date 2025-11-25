@@ -21,6 +21,15 @@ export const receitaService = {
   },
 
   /**
+   * Lista receitas pendentes (status a_receber)
+   * GET /receitas/pendentes
+   */
+  async listarPendentes(): Promise<Receita[]> {
+    const response = await api.get("/receitas/pendentes");
+    return response.data.data || response.data;
+  },
+
+  /**
    * Busca receita por ID
    * GET /receitas/:id
    */
@@ -51,12 +60,13 @@ export const receitaService = {
       ? receita.data
       : `${receita.data}T00:00:00Z`;
 
-    // ✅ Payload correto para API Go (8 campos do modelo Receita)
+    // ✅ Payload correto para API Go (9 campos do modelo Receita)
     const payload = {
       obra_id: receita.obra_id,
       descricao: receita.descricao,
       valor: receita.valor,
-      data: dataISO, // ✅ Formato ISO 8601 completo (único campo de data)
+      data: dataISO, // ✅ Formato ISO 8601 completo (campo de data único)
+      status: receita.status || "a_receber",
       fonte_receita: receita.fonte_receita || "OUTROS",
       numero_documento: receita.numero_documento || "",
       responsavel_id: receita.responsavel_id || null,
@@ -79,12 +89,13 @@ export const receitaService = {
       ? receita.data
       : `${receita.data}T00:00:00Z`;
 
-    // ✅ Payload correto para API Go (8 campos do modelo Receita)
+    // ✅ Payload correto para API Go (9 campos do modelo Receita)
     const payload = {
       obra_id: receita.obra_id,
       descricao: receita.descricao,
       valor: receita.valor,
-      data: dataISO, // ✅ Formato ISO 8601 completo (único campo de data)
+      data: dataISO, // ✅ Formato ISO 8601 completo (campo de data único)
+      status: receita.status || "a_receber",
       fonte_receita: receita.fonte_receita || "OUTROS",
       numero_documento: receita.numero_documento || "",
       responsavel_id: receita.responsavel_id || null,

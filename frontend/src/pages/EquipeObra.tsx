@@ -46,13 +46,6 @@ interface EquipeMembro {
   updated_at?: string;
 }
 
-interface Diario {
-  id: number;
-  obra_id: number;
-  data: string;
-  periodo: string;
-}
-
 const EquipeObra: React.FC = () => {
   const [obras, setObras] = useState<Obra[]>([]);
   const [equipe, setEquipe] = useState<EquipeMembro[]>([]);
